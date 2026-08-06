@@ -293,7 +293,7 @@ jobs:
 
             <div align="center">
             <br/>
-            <img src="https://raw.githubusercontent.com/foxstudio-201/VoxelXClient/main/public/icon.png" width="80" height="80" alt="Dino Isekai Logo" />
+            <img src="https://raw.githubusercontent.com/foxstudio-201/dinoisekailauncher/main/public/icon.png" width="80" height="80" alt="Dino Isekai Logo" />
             <h1>Dino Isekai</h1>
             <p><strong>The Ultimate Minecraft Launcher</strong><br/>Manage profiles, install mods, and launch any Minecraft version — all in one place.</p>
             <p>
@@ -307,7 +307,7 @@ jobs:
             <img src="https://img.shields.io/badge/license-MIT-22c55e?style=flat-square&labelColor=0a0a0a" alt="License" />
             </p>
             <p>
-            <a href="https://voxelxclient.vercel.app">🌐 Website</a> &nbsp;·&nbsp;
+            <a href="https://github.com/foxstudio-201/dinoisekailauncher">🌐 GitHub</a> &nbsp;·&nbsp;
             <a href="https://join.foxstudio.site">💬 Discord</a>
             </p>
             </div>
