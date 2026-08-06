@@ -150,6 +150,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('launcher:predownload:progress', handler)
   },
   isGameRunning:   (opts)       => ipcRenderer.invoke('launcher:isRunning', opts),
+  checkDataSync:   ()           => ipcRenderer.invoke('dataSync:check'),
+  runDataSync:     ()           => ipcRenderer.invoke('dataSync:run'),
+  onDataSyncProgress: (cb) => {
+    const handler = (_e, data) => cb(data)
+    ipcRenderer.on('dinosync:progress', handler)
+    return () => ipcRenderer.removeListener('dinosync:progress', handler)
+  },
   listRunningGames: ()          => ipcRenderer.invoke('launcher:listRunning'),
   getProfileStats: (opts) => ipcRenderer.invoke('launcher:getStats', opts),
   getProfileAnalytics: (opts) => ipcRenderer.invoke('launcher:getAnalytics', opts),

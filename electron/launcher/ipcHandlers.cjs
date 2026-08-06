@@ -40,6 +40,7 @@ const { resolveVersion }      = require('./vanilla/versionResolver.cjs')
 const { ensureJava }          = require('./java/javaManager.cjs')
 const { downloadAssets }      = require('./vanilla/assetManager.cjs')
 const { setupForge }          = require('./forge/forgeLoader.cjs')
+const { runDataSync, checkDataSync } = require('./dataSync.cjs')
 const { searchProjects, getProject, getProjectVersions, installVersion, getGameVersions, getCategories } = require('./modrinth/modrinthSearch.cjs')
 const cfSearch = require('./curseforge/curseForgeSearch.cjs')
 const technicSearch = require('./technic/technicSearch.cjs')
@@ -570,6 +571,7 @@ function registerLauncherHandlers(getTrustedWindow) {
   // Pre-download a profile's game resources (version JSON, Java, assets and
   // loader libraries) into the shared LAUNCHER_DIR cache so the first launch
   // is fast — assets already cached are skipped, only what's missing is fetched.
+  // Tiến trình chia theo từng giai đoạn, mỗi giai đoạn chạy 0% → 100%.
   ipcMain.handle('launcher:preDownload', async (e, { profileId }) => {
     const win = getTrustedWindow(e)
     if (!win) return { error: 'Unauthorized' }
@@ -581,47 +583,102 @@ function registerLauncherHandlers(getTrustedWindow) {
     if (!fs.existsSync(launcherDir)) fs.mkdirSync(launcherDir, { recursive: true })
     const runtimesDir = path.join(DATA_DIR, 'runtimes')
 
-    function sendProgress(data) {
-      if (!win.isDestroyed()) win.webContents.send('launcher:predownload:progress', data)
+    function formatEta(ms) {
+      if (ms == null || !isFinite(ms) || ms < 0) return null
+      const s = Math.round(ms / 1000)
+      if (s < 60) return `~${s}s`
+      const m = Math.floor(s / 60)
+      if (m < 60) return `~${m}p ${s % 60}s`
+      return `~${Math.floor(m / 60)}g ${m % 60}p`
+    }
+
+    let phaseStart = Date.now()
+    let phaseRatio = 0
+    function emit(phase, item, percent, opts = {}) {
+      if (opts.done != null && opts.total) phaseRatio = opts.done / opts.total
+      const ratio = Math.max(percent / 100, phaseRatio)
+      let eta = null
+      if (ratio > 0.02 && ratio < 1) {
+        const elapsed = Date.now() - phaseStart
+        eta = formatEta(Math.round(elapsed / ratio - elapsed))
+      }
+      if (!win.isDestroyed()) win.webContents.send('launcher:predownload:progress', {
+        phase,
+        item,
+        percent: Math.max(0, Math.min(100, Math.round(percent))),
+        eta,
+        ...opts,
+      })
+    }
+    function nextPhase(phase, item) {
+      phaseStart = Date.now()
+      phaseRatio = 0
+      emit(phase, item, 0, { log: `Đang chuẩn bị ${item}...` })
     }
 
     try {
-      sendProgress({ phase: 'predownload', log: `Loading version info for ${profile.gameVersion}...`, percent: 2 })
+      nextPhase('version', `Phiên bản ${profile.gameVersion}`)
       const versionJson = await resolveVersion(profile.gameVersion, launcherDir)
+      emit('version', `Phiên bản ${profile.gameVersion}`, 100, { log: `Đã sẵn sàng ${profile.gameVersion}` })
 
-      sendProgress({ phase: 'predownload', log: 'Checking Java runtime...', percent: 5 })
+      nextPhase('java', 'Java runtime')
       const javaPath = await ensureJava(profile.gameVersion, runtimesDir, (p) => {
-        sendProgress({
-          phase: 'predownload',
-          log: p.log || `Java: ${p.done}/${p.total}`,
-          percent: 5 + Math.round((p.percent || 0) * 0.2),
-          doneFiles: p.done,
-          totalFiles: p.total,
-        })
+        if (p.phase === 'java_download') {
+          const pc = p.total ? Math.round(p.done / p.total * 100) : 0
+          emit('java', 'Java runtime', pc, { log: `Java: ${p.done}/${p.total}`, done: p.done, total: p.total })
+        } else if (p.phase === 'java_ready') {
+          emit('java', 'Java runtime', 100, { log: 'Java đã sẵn sàng' })
+        } else {
+          emit('java', 'Java runtime', 0, { log: p.log || p.phase })
+        }
       }, versionJson)
 
-      sendProgress({ phase: 'predownload', log: 'Checking game assets...', percent: 30 })
+      nextPhase('assets', 'Game assets')
       const assets = await downloadAssets(versionJson, launcherDir, (p) => {
-        sendProgress({
-          phase: 'predownload',
-          log: p.log || `Assets: ${p.doneFiles}/${p.totalFiles}`,
-          percent: 30,
-          doneFiles: p.doneFiles,
-          totalFiles: p.totalFiles,
-        })
+        const pc = p.percent != null ? p.percent : (p.totalFiles ? Math.round(p.doneFiles / p.totalFiles * 100) : 0)
+        emit('assets', 'Game assets', pc, { log: `Assets: ${p.doneFiles}/${p.totalFiles}`, done: p.doneFiles, total: p.totalFiles })
       })
 
       if (profile.loader === 'forge' && profile.loaderVersion) {
-        sendProgress({ phase: 'predownload', log: `Setting up Forge ${profile.loaderVersion}...`, percent: 90 })
+        const forgeLabel = `Forge ${profile.gameVersion}-${profile.loaderVersion}`
+        nextPhase('forge', forgeLabel)
         await setupForge(profile.gameVersion, profile.loaderVersion, path.join(launcherDir, 'libraries'), assets.clientJar, javaPath, launcherDir, (p) => {
-          sendProgress({ phase: 'predownload', log: p.log, percent: 90, doneFiles: p.done, totalFiles: p.total })
+          const pc = p.total ? Math.round((p.done || 0) / p.total * 100) : 0
+          emit('forge', forgeLabel, pc, { log: p.log, done: p.done, total: p.total })
         })
+        emit('forge', forgeLabel, 100, { log: 'Forge đã sẵn sàng' })
       }
 
-      sendProgress({ phase: 'predownload', log: 'Profile resources ready — launch will be fast.', percent: 100 })
+      emit('done', 'Hoàn tất', 100, { log: 'Tất cả tài nguyên đã sẵn sàng — bấm Play là vào game!' })
       return { ok: true }
     } catch (err) {
-      sendProgress({ phase: 'predownload', log: `Pre-download warning: ${err.message}`, percent: 100 })
+      emit('done', 'Hoàn tất', 100, { log: `Cảnh báo: ${err.message}` })
+      return { ok: false, error: err.message }
+    }
+  })
+
+  // ── Đồng bộ dữ liệu server (datadinoisekaiserver) ─────────────────────────
+  ipcMain.handle('dataSync:check', async (e) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    return checkDataSync(profiles[0])
+  })
+
+  ipcMain.handle('dataSync:run', async (e) => {
+    const win = getTrustedWindow(e)
+    if (!win) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    const profile = profiles[0]
+    if (!profile) return { error: 'Profile not found' }
+    const settings = readSettings()
+    if (settings.dataSyncEnabled === false) return { ok: false, skipped: true, error: 'disabled' }
+    function send(data) {
+      if (!win.isDestroyed()) win.webContents.send('dinosync:progress', data)
+    }
+    try {
+      return await runDataSync(profile, send)
+    } catch (err) {
+      send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi đồng bộ: ${err.message}` })
       return { ok: false, error: err.message }
     }
   })

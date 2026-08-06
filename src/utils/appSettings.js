@@ -37,6 +37,7 @@ export const DEFAULT_SETTINGS = {
   autoCheckUpdate:      true,
   hideLauncherOnLaunch: true,
   showLogWindow:        true,
+  dataSyncEnabled:      true,
   discordRPC:           false,
   boostMode:            false,
   bigCoreMode:          false,

@@ -187,6 +187,15 @@ export default function LauncherTab({ settings, onChange }) {
           />
         </SettingRow>
         <SettingRow
+          label="Đồng bộ dữ liệu server"
+          description="Tự động tải mods/config/data từ server khi mở launcher và trước khi chơi"
+        >
+          <Toggle
+            checked={settings.dataSyncEnabled !== false}
+            onChange={v => onChange({ dataSyncEnabled: v })}
+          />
+        </SettingRow>
+        <SettingRow
           label={t('settings.launcher.discordRPC')}
           description={t('settings.launcher.discordRPCDesc')}
         >

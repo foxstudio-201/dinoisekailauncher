@@ -325,3 +325,15 @@
 }
 
 .page-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.preDl-modal { animation: preDl-up .35s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes preDl-up {
+  from { opacity: 0; transform: translateY(18px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.preDl-down { animation: preDl-down .4s ease both; }
+@keyframes preDl-down {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(18px) scale(.98); }
+}

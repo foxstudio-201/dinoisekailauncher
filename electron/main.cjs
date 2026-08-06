@@ -170,6 +170,7 @@ const DEFAULT_SETTINGS = {
   autoCheckUpdate:      true,
   hideLauncherOnLaunch: true,
   showLogWindow:        true,
+  dataSyncEnabled:      true,
   discordRPC:           false,
   boostMode:            false,
   bigCoreMode:          false,
@@ -241,7 +242,10 @@ function createMainWindow() {
 
   mainWindow = new BrowserWindow({
     width: 1280, height: 720,
-    minWidth: 1024, minHeight: 600,
+    minWidth: 1280, minHeight: 720,
+    maxWidth: 1280, maxHeight: 720,
+    resizable: false,
+    maximizable: false,
     frame: false, transparent: false,
     show: false,
     backgroundColor: '#080808',

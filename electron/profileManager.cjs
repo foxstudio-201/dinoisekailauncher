@@ -40,7 +40,7 @@ const INSTANCES_DIR = path.join(DATA_DIR, 'instances')
 
 // ── Dino Isekai chỉ chạy đúng 1 profile: Forge 1.20.1 ────────────────────────
 const FIXED_GAME_VERSION = '1.20.1'
-const FIXED_FORGE_VERSION = '47.2.0'
+const FIXED_FORGE_VERSION = '47.4.10'
 const FIXED_LOADER = 'forge'
 const FIXED_PROFILE_NAME = 'Dino Isekai'
 

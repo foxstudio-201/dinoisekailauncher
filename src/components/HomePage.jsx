@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAccounts } from '../hooks/useAccounts'
 import { useLang } from '../i18n/LangProvider'
-import { Gear, PlayCircle, Check, User, Sword, Campfire, Mountains } from '@phosphor-icons/react'
+import { Gear, PlayCircle, Check, User, Sword, Campfire, Mountains, ArrowClockwise } from '@phosphor-icons/react'
 import ProfileSettingsPanel from './home/ProfileSettingsPanel'
 import GamingModalWrapper from './ui/GamingModalWrapper'
 import LogPanel from './LogPanel'
@@ -37,6 +37,12 @@ function getLoaderTag(p) {
   return p.loaderVersion ? `${l} ${p.loaderVersion}` : l
 }
 
+function fmtBytes(b) {
+  if (b == null) return '0 MB'
+  if (b >= 1024 * 1024 * 1024) return (b / 1024 / 1024 / 1024).toFixed(2) + ' GB'
+  return (b / 1024 / 1024).toFixed(1) + ' MB'
+}
+
 export default function HomePage({ launchState, launchError, onLaunch, instances, onKillInstance, onLogPanelOpen }) {
   const { t } = useLang()
   const { accounts, selectedAccount, addAccount, selectAccount } = useAccounts()
@@ -47,6 +53,11 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [logManuallyClosed, setLogManuallyClosed] = useState(false)
   const [persistedLauncherLogs, setPersistedLauncherLogs] = useState([])
   const [predownload, setPredownload] = useState(null)
+  const [preDl, setPreDl] = useState(null)
+  const preDlStarted = useRef(false)
+  const [dSync, setDSync] = useState(null)
+  const dSyncChecked = useRef(false)
+  const [dataUpdate, setDataUpdate] = useState(false)
   const [usernameInput, setUsernameInput] = useState('')
   const [usernameError, setUsernameError] = useState('')
   const [usernameExpanded, setUsernameExpanded] = useState(false)
@@ -83,8 +94,60 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     if (!isElectron || !window.electronAPI.onPreDownloadProgress) return
     return window.electronAPI.onPreDownloadProgress(data => {
       setPredownload(prev => prev ? { ...prev, log: data.log, percent: data.percent } : null)
+      setPreDl(prev => {
+        const phases = { ...(prev?.phases || {}) }
+        if (data.phase !== 'done' && data.item) phases[data.phase] = { item: data.item, percent: data.percent ?? 0, eta: data.eta, log: data.log }
+        return { active: true, closing: false, phase: data.phase, item: data.item, percent: data.percent ?? 0, eta: data.eta, log: data.log, phases }
+      })
+      if (data.phase === 'done') {
+        setTimeout(() => {
+          setPreDl(prev => prev ? { ...prev, closing: true } : prev)
+          setTimeout(() => setPreDl(prev => prev ? { ...prev, active: false, closing: false } : prev), 450)
+        }, 2500)
+      }
     })
   }, [])
+
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI.preDownload) return
+    if (preDlStarted.current) return
+    const pid = profiles[0]?.id
+    if (!pid) return
+    preDlStarted.current = true
+    const t = setTimeout(() => {
+      setPreDl({ active: true, phase: 'waiting', item: 'Đang chuẩn bị', percent: 0, eta: null, log: 'Bắt đầu tải tài nguyên trong 3 giây...', phases: {}, closing: false })
+      setTimeout(() => {
+        window.electronAPI.preDownload({ profileId: pid }).catch(() => {})
+      }, 3000)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [profiles])
+
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI.onDataSyncProgress) return
+    return window.electronAPI.onDataSyncProgress(data => {
+      setDSync(prev => ({ ...(prev || {}), active: true, closing: false, ...data }))
+      if (data.phase === 'done') {
+        setTimeout(() => {
+          setDSync(prev => prev ? { ...prev, closing: true } : prev)
+          setTimeout(() => setDSync(prev => prev ? { ...prev, active: false, closing: false } : prev), 450)
+        }, 2500)
+      }
+    })
+  }, [])
+
+  // Kiểm tra cập nhật dữ liệu mỗi lần mở launcher → cập nhật trạng thái nút Play
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI.checkDataSync) return
+    if (dSyncChecked.current || profiles.length === 0) return
+    dSyncChecked.current = true
+    const t = setTimeout(() => {
+      window.electronAPI.checkDataSync().then(r => {
+        if (r?.ok) setDataUpdate(!!r.hasUpdate)
+      }).catch(() => {})
+    }, 6000)
+    return () => clearTimeout(t)
+  }, [profiles])
 
   useEffect(() => {
     if (!isElectron) return
@@ -194,7 +257,17 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       accId = result.id
     }
 
-    handleLaunch(undefined, undefined, undefined, name, serverStatus?.server?.ip, accId)
+    syncThenLaunch(undefined, undefined, undefined, name, serverStatus?.server?.ip, accId)
+  }
+
+  // Đồng bộ dữ liệu server (khi có bản cập nhật) rồi mới khởi động game
+  async function syncThenLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId) {
+    if (isElectron && window.electronAPI.runDataSync && dataUpdate) {
+      setDSync({ active: true, closing: false, phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Có bản cập nhật — đang tải về temp...' })
+      await window.electronAPI.runDataSync().catch(() => {})
+      setDataUpdate(false)
+    }
+    handleLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId)
   }
 
   function handlePlayClick() {
@@ -421,14 +494,23 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               {currentProgress?.percent != null ? `${currentProgress.percent}%` : '...'}
             </button>
           ) : (
-            <div className="glow-play" style={{ '--gc': colors.primary }}>
+            <div className="glow-play" style={{ '--gc': dataUpdate ? '#a78bfa' : colors.primary }}>
               <span className="glow-edge" />
               <button
                 onClick={handlePlayClick}
                 className="glow-inner transition-transform active:scale-95"
               >
-                <PlayCircle size={26} weight="fill" className="text-violet-400" />
-                <span>{t('gaming.play')}</span>
+                {dataUpdate ? (
+                  <>
+                    <ArrowClockwise size={26} weight="duotone" className="text-violet-400" />
+                    <span className="text-violet-200">Update</span>
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle size={26} weight="fill" className="text-violet-400" />
+                    <span>{t('gaming.play')}</span>
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -445,6 +527,104 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           )}
         </div>
       </div>
+
+      {preDl?.active && (
+        <div className={`absolute bottom-[116px] right-7 z-50 w-[380px] ${preDl.closing ? 'preDl-down' : 'preDl-modal'}`}>
+          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 shadow-2xl p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className={`animate-spin w-3.5 h-3.5 ${preDl.phase === 'done' ? 'text-green-400' : 'text-violet-400'}`} viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                <span className="text-xs font-bold text-white/80">
+                  {preDl.phase === 'done' ? 'Hoàn tất tải tài nguyên' : 'Đang tải tài nguyên'}
+                </span>
+              </div>
+              <button
+                onClick={() => setPreDl(prev => prev ? { ...prev, active: false } : prev)}
+                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/30 hover:text-white/60 transition-all"
+                title="Đóng"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Message */}
+            <p className="text-[11px] text-white/45 mt-2 leading-relaxed">{preDl.log}</p>
+
+            {/* Single progress bar — mỗi giai đoạn về 0 rồi chạy lên 100% */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className={`font-semibold ${preDl.phase === 'done' ? 'text-green-400' : 'text-violet-300'}`}>
+                  {preDl.item || '...'}
+                </span>
+                <span className="text-white/40 font-mono flex items-center gap-2">
+                  {preDl.phase !== 'done' && preDl.eta && <span className="text-white/30">còn {preDl.eta}</span>}
+                  {Math.round(preDl.percent || 0)}%
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
+                <div className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.max(0, Math.min(100, preDl.percent || 0))}%`, background: preDl.phase === 'done' ? '#34d399' : '#a78bfa' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {dSync?.active && (
+        <div className={`absolute bottom-[116px] right-[440px] z-50 w-[380px] ${dSync.closing ? 'preDl-down' : 'preDl-modal'}`}>
+          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 shadow-2xl p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className={`animate-spin w-3.5 h-3.5 ${dSync.phase === 'done' ? 'text-green-400' : 'text-violet-400'}`} viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                <span className="text-xs font-bold text-white/80">
+                  {dSync.phase === 'done' ? 'Hoàn tất đồng bộ dữ liệu' : 'Đồng bộ dữ liệu server'}
+                </span>
+              </div>
+              <button
+                onClick={() => setDSync(prev => prev ? { ...prev, active: false } : prev)}
+                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/30 hover:text-white/60 transition-all"
+                title="Đóng"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Message */}
+            <p className="text-[11px] text-white/45 mt-2 leading-relaxed">{dSync.log}</p>
+
+            {/* Current phase */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className={`font-semibold ${dSync.phase === 'done' ? 'text-green-400' : 'text-violet-300'}`}>
+                  {dSync.item || '...'}
+                </span>
+                <span className="text-white/40 font-mono">{Math.round(dSync.percent || 0)}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
+                <div className="h-full rounded-full transition-all duration-300"
+                  style={{ width: `${Math.max(0, Math.min(100, dSync.percent || 0))}%`, background: dSync.phase === 'done' ? '#34d399' : '#a78bfa' }} />
+              </div>
+              {dSync.downloaded != null && (
+                <p className="text-[10px] text-white/35 mt-1.5 font-mono">
+                  Đã tải: {fmtBytes(dSync.downloaded)} / {fmtBytes(dSync.total)} {dSync.done != null && dSync.total != null && dSync.phase === 'sync' ? `(${dSync.done}/${dSync.total} files)` : ''}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {profileSettingsOpen && currentProfile && (
         <div

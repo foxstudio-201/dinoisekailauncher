@@ -30,6 +30,11 @@ jobs:
       - name: Generate app secret
         run: node scripts/gen-app-secret.cjs
 
+      - name: Embed GitHub token for data sync
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: node scripts/gen-build-env.cjs
+
       - name: Fix BOM in package.json
         shell: pwsh
         run: |
@@ -132,6 +137,11 @@ jobs:
       - name: Generate app secret
         run: node scripts/gen-app-secret.cjs
 
+      - name: Embed GitHub token for data sync
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: node scripts/gen-build-env.cjs
+
       - name: Fix BOM in package.json
         run: |
           python3 -c "
@@ -191,6 +201,11 @@ jobs:
 
       - name: Generate app secret
         run: node scripts/gen-app-secret.cjs
+
+      - name: Embed GitHub token for data sync
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: node scripts/gen-build-env.cjs
 
       - name: Fix BOM in package.json
         run: |
