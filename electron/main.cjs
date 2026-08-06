@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -35,12 +35,9 @@ const fs   = require('fs')
 const { Readable } = require('stream')
 const rpc  = require('./discordRPC.cjs')
 const { getHwid, getHwidFormatted } = require('./hwid.cjs')
-const { startDiscordLink } = require('./discordAuth.cjs')
 const { registerProfileHandlers, registerProfileContentHandlers, registerJavaDistroHandlers } = require('./profileManager.cjs')
-const { registerServerHandlers } = require('./serverManager.cjs')
-const { registerServerBookmarkHandlers } = require('./launcher/serverBookmarks.cjs')
 const { registerLauncherHandlers } = require('./launcher.cjs')
-const { loginWithWindow, refreshMinecraftToken } = require('./msAuth.cjs')
+const { pingServer } = require('./launcher/serverPing.cjs')
 const { registerLanHandlers, setLanWindowRef } = require('./lanScanner.cjs')
 const { openLanWindow, registerLanWindowHandlers, injectSetLanWindowRef } = require('./lanWindow.cjs')
 const { registerVxLanHandlers } = require('./wireguard.cjs')
@@ -65,7 +62,7 @@ if (!gotLock) {
   })
 }
 
-app.setAppUserModelId('com.voxelxclient.launcher')
+app.setAppUserModelId('com.dinoisekai.launcher')
 
 function resolveIconPath() {
 
@@ -96,7 +93,8 @@ function resolveTrayIconPath() {
 
 const ICON_PATH     = resolveIconPath()
 const TRAY_ICON_PATH = resolveTrayIconPath()
-const ACCOUNTS_DIR  = path.join(app.getPath('appData'), '.VoxelXClient')
+const SERVER_ADDRESS = '160.250.134.168:28585'
+const ACCOUNTS_DIR  = path.join(app.getPath('appData'), '.DinoIsekai')
 const ACCOUNTS_FILE = path.join(ACCOUNTS_DIR, 'accounts.json')
 
 const ALLOWED_ORIGINS = isDev
@@ -122,123 +120,22 @@ function isTrustedOrigin(url) {
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,16}$/
 
-function legacyValidateAccount(account) {
-  if (!account || typeof account !== 'object') return 'Dữ liệu không hợp lệ'
-  if (!['offline', 'microsoft'].includes(account.type)) return 'Loại tài khoản không hợp lệ'
-  if (typeof account.username !== 'string') return 'Username không hợp lệ'
-  if (!USERNAME_RE.test(account.username)) return 'Username chỉ được chứa chữ, số và _ (3-16 ký tự)'
-  if (typeof account.uuid !== 'string' || !/^[0-9a-f-]{36}$/.test(account.uuid)) return 'UUID không hợp lệ'
-  return null
-}
-
-function legacySanitizeAccount(account) {
-  const base = {
-    id:        account.id,
-    uuid:      account.uuid,
-    type:      account.type,
-    username:  account.username,
-    createdAt: account.createdAt,
-  }
-  if (account.type === 'microsoft') {
-    base.msRefreshToken = account.msRefreshToken || null
-    base.mcToken        = account.mcToken        || null
-    base.mcTokenExpiry  = account.mcTokenExpiry  || 0
-  }
-  return base
-}
-
-function legacyValidateId(id) {
-  return typeof id === 'string' && /^[0-9a-f-]{36}$/.test(id)
-}
-
 function validateAccount(account) {
   if (!account || typeof account !== 'object') return 'Du lieu khong hop le'
-  if (!['offline', 'microsoft', 'discord'].includes(account.type)) return 'Loai tai khoan khong hop le'
+  if (account.type !== 'offline') return 'Loai tai khoan khong hop le'
   if (typeof account.username !== 'string') return 'Username khong hop le'
   if (!USERNAME_RE.test(account.username)) return 'Username chi duoc chua chu, so va _ (3-16 ky tu)'
   if (typeof account.uuid !== 'string' || !/^[0-9a-f-]{36}$/.test(account.uuid)) return 'UUID khong hop le'
-  if (account.type === 'discord') {
-    if (typeof account.discordId !== 'string' || !/^\d{10,25}$/.test(account.discordId)) return 'Discord ID khong hop le'
-    if (typeof account.discordUsername !== 'string' || !account.discordUsername.trim()) return 'Discord username khong hop le'
-  }
   return null
 }
 
 function sanitizeAccount(account) {
-  const base = {
+  return {
     id:        account.id,
     uuid:      account.uuid,
     type:      account.type,
     username:  account.username,
     createdAt: account.createdAt,
-  }
-  if (account.type === 'microsoft') {
-    base.msRefreshToken = account.msRefreshToken || null
-    base.mcToken        = account.mcToken        || null
-    base.mcTokenExpiry  = account.mcTokenExpiry  || 0
-  }
-  if (account.type === 'discord') {
-    base.discordId            = account.discordId || null
-    base.discordUsername      = account.discordUsername || null
-    base.discordGlobalName    = account.discordGlobalName || null
-    base.discordDiscriminator = account.discordDiscriminator || null
-    base.discordAvatarUrl     = account.discordAvatarUrl || null
-    base.linkedAt             = account.linkedAt || account.createdAt || new Date().toISOString()
-  }
-  return base
-}
-
-function normalizeDiscordProfile(profile) {
-  if (!profile || typeof profile !== 'object') return null
-
-  const discordId = String(
-    profile.discordId ??
-    profile.id ??
-    profile.userId ??
-    ''
-  ).trim()
-
-  const discordUsername = String(
-    profile.discordUsername ??
-    profile.username ??
-    profile.login ??
-    ''
-  ).trim()
-
-  const discordGlobalName = String(
-    profile.discordGlobalName ??
-    profile.globalName ??
-    profile.global_name ??
-    profile.displayName ??
-    ''
-  ).trim()
-
-  const discriminatorValue =
-    profile.discordDiscriminator ??
-    profile.discriminator ??
-    profile.tagSuffix ??
-    null
-
-  const discordDiscriminator = discriminatorValue == null
-    ? null
-    : String(discriminatorValue).trim() || null
-
-  const discordAvatarUrl = String(
-    profile.discordAvatarUrl ??
-    profile.avatarUrl ??
-    profile.avatar_url ??
-    profile.avatar ??
-    ''
-  ).trim() || null
-
-  if (!discordId || !discordUsername) return null
-
-  return {
-    discordId,
-    discordUsername,
-    discordGlobalName: discordGlobalName || null,
-    discordDiscriminator,
-    discordAvatarUrl,
   }
 }
 
@@ -323,7 +220,6 @@ function writeSettings(data) {
 }
 
 let mainWindow   = null
-let updateWindow = null
 let tray         = null
 
 function secureWebPrefs() {
@@ -349,7 +245,7 @@ function createMainWindow() {
     frame: false, transparent: false,
     show: false,
     backgroundColor: '#080808',
-    title: 'VoxelXLauncher',
+    title: 'Dino Isekai',
     icon,
     webPreferences: secureWebPrefs(),
   })
@@ -371,11 +267,21 @@ function createMainWindow() {
     return { action: 'deny' }
   })
 
-  if (!isDev) {
-    mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow.webContents.closeDevTools()
-    })
-  }
+  // Phím tắt mở/đóng DevTools ngay cả khi đã đóng gói (F12 / Ctrl+Shift+I)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return
+    const isShortcut =
+      input.key === 'F12' ||
+      (input.control && input.shift && (input.key === 'I' || input.key === 'i'))
+    if (isShortcut) {
+      event.preventDefault()
+      if (mainWindow.webContents.isDevToolsOpened()) {
+        mainWindow.webContents.closeDevTools()
+      } else {
+        mainWindow.webContents.openDevTools({ mode: 'undocked' })
+      }
+    }
+  })
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
@@ -388,44 +294,6 @@ function createMainWindow() {
     if (!app.isQuitting) { e.preventDefault(); mainWindow.hide() }
   })
   mainWindow.on('closed', () => { mainWindow = null })
-}
-
-function createUpdateWindow() {
-  if (updateWindow && !updateWindow.isDestroyed()) { updateWindow.focus(); return }
-
-  const icon = fs.existsSync(ICON_PATH) ? nativeImage.createFromPath(ICON_PATH) : undefined
-
-  updateWindow = new BrowserWindow({
-    width: 480, height: 620,
-    resizable: false, frame: false,
-    backgroundColor: '#0f0f0f',
-    title: 'VoxelXLauncher – Check for Updates',
-    icon,
-    modal:       false,
-    skipTaskbar: false,
-    webPreferences: secureWebPrefs(),
-  })
-
-  updateWindow.webContents.on('will-navigate', (e, url) => {
-    if (!isTrustedOrigin(url)) { e.preventDefault(); shell.openExternal(url) }
-  })
-  updateWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url); return { action: 'deny' }
-  })
-
-  if (!isDev) {
-    updateWindow.webContents.on('devtools-opened', () => {
-      updateWindow.webContents.closeDevTools()
-    })
-  }
-
-  if (isDev) {
-    updateWindow.loadURL('http://localhost:5173/?window=update')
-  } else {
-    updateWindow.loadFile(path.join(__dirname, '../dist/index.html'), { query: { window: 'update' } })
-  }
-
-  updateWindow.on('closed', () => { updateWindow = null })
 }
 
 function createTray() {
@@ -443,8 +311,8 @@ function createTray() {
     }
 
     tray = new Tray(trayIcon)
-    tray.setToolTip('Martian Launcher')
-    tray.setTitle('Martian Launcher')
+    tray.setToolTip('Dino Isekai')
+    tray.setTitle('Dino Isekai')
 
     const openMainWindow = () => {
       if (!mainWindow || mainWindow.isDestroyed()) {
@@ -462,17 +330,13 @@ function createTray() {
 
     const trayMenu = Menu.buildFromTemplate([
       {
-        label: 'Martian Launcher', enabled: false,
+        label: 'Dino Isekai', enabled: false,
         ...(menuIcon ? { icon: menuIcon } : {}),
       },
       { type: 'separator' },
       {
-        label: 'Mở Martian Launcher',
+        label: 'Mở Dino Isekai',
         click: () => openMainWindow(),
-      },
-      {
-        label: 'Kiểm tra cập nhật...',
-        click: () => { createUpdateWindow() },
       },
       {
         label: 'P2P LAN (F10)',
@@ -515,6 +379,21 @@ app.whenReady().then(() => {
     } catch { return null }
   })
 
+  ipcMain.handle('app:backgroundPath', () => {
+    const p = path.join(app.getPath('appData'), '.DinoIsekai', 'background-launcher.png')
+    return fs.existsSync(p) ? p : null
+  })
+
+  ipcMain.handle('server:status', async () => {
+    try {
+      const [host, portStr] = SERVER_ADDRESS.split(':')
+      const res = await pingServer(host, parseInt(portStr, 10) || 25565, 5000)
+      return { server: { ip: SERVER_ADDRESS, name: 'Dino Isekai Server' }, ...res }
+    } catch (err) {
+      return { error: err.message }
+    }
+  })
+
   protocol.handle('vxc-bg', async (request) => {
     const u = new URL(request.url)
     const filePath = decodeURIComponent(u.searchParams.get('path'))
@@ -537,7 +416,7 @@ app.whenReady().then(() => {
 
   try {
     const os = require('os')
-    const updateDir = path.join(os.tmpdir(), 'VoxelXLauncher-update')
+    const updateDir = path.join(os.tmpdir(), 'DinoIsekai-update')
     if (fs.existsSync(updateDir)) {
       const files = fs.readdirSync(updateDir)
       for (const f of files) {
@@ -551,10 +430,6 @@ app.whenReady().then(() => {
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const url = details.url || ''
     if (
-      url.includes('login.live.com') ||
-      url.includes('login.microsoftonline.com') ||
-      url.includes('microsoft.com') ||
-      url.includes('xbox.com') ||
       url.includes('youtube.com') ||
       url.includes('youtube-nocookie.com') ||
       url.includes('googlevideo.com') ||
@@ -642,415 +517,13 @@ ipcMain.on('window-maximize', (e) => {
 ipcMain.on('window-close', (e) => {
   const win = getTrustedWindow(e)
   if (!win) return
-  if (win === updateWindow) win.close()
-  else win.hide()
+  win.hide()
 })
 
 ipcMain.on('quit-app', () => {
   app.isQuitting = true
   app.quit()
 })
-
-const GITHUB_REPO = 'foxstudio-201/VoxelXClient'
-
-let _pendingPreloadPayload = null
-
-ipcMain.handle('updater:openUpdateWindow', (e, checkResult) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide()
-
-  createUpdateWindow()
-
-  const autoDownload = checkResult?.installerAsset != null
-  const payload = checkResult ? { ...checkResult, autoDownload } : checkResult
-  _pendingPreloadPayload = payload
-
-  return { ok: true }
-})
-
-ipcMain.handle('updater:getPreloadResult', (e) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-  return _pendingPreloadPayload
-})
-
-ipcMain.handle('updater:check', async (e) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-
-  const currentVersion = app.getVersion()
-
-  try {
-    const https = require('https')
-
-    const data = await new Promise((resolve, reject) => {
-      const req = https.get(
-        `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
-        {
-          headers: {
-            'User-Agent': 'VoxelXLauncher/' + currentVersion,
-            'Accept': 'application/vnd.github+json',
-          },
-          timeout: 8000,
-        },
-        (res) => {
-          let body = ''
-          res.on('data', c => { body += c })
-          res.on('end', () => {
-
-            if (res.statusCode === 404) {
-              resolve(null)
-              return
-            }
-            if (res.statusCode !== 200) {
-              reject(new Error(`GitHub API returned HTTP ${res.statusCode}`))
-              return
-            }
-            try { resolve(JSON.parse(body)) }
-            catch { reject(new Error('Invalid JSON from GitHub API')) }
-          })
-        }
-      )
-      req.on('error', reject)
-      req.on('timeout', () => { req.destroy(); reject(new Error('Request timed out')) })
-    })
-
-    if (!data) {
-      return {
-        hasUpdate:      false,
-        currentVersion,
-        latestVersion:  currentVersion,
-        message:        'Chưa có bản phát hành nào trên GitHub.',
-        releaseUrl:     `https://github.com/${GITHUB_REPO}/releases`,
-        noRelease:      true,
-      }
-    }
-
-    const latestVersion = (data.tag_name || '').replace(/^v/, '')
-    const hasUpdate = latestVersion && latestVersion !== currentVersion
-      && compareVersions(latestVersion, currentVersion) > 0
-
-    const assets = (data.assets || []).map(a => ({
-      name:        a.name,
-      downloadUrl: a.browser_download_url,
-      size:        a.size,
-    }))
-
-    let installerAsset = null
-    if (process.platform === 'win32') {
-      const exePath = process.execPath || ''
-      const isInstalled = /program files/i.test(exePath) || /appdata/i.test(exePath)
-      if (isInstalled) {
-        installerAsset = assets.find(a => /setup/i.test(a.name) && /\.exe$/i.test(a.name))
-      }
-      if (!installerAsset) {
-        installerAsset = assets.find(a => /\.exe$/i.test(a.name))
-      }
-    } else if (process.platform === 'darwin') {
-      installerAsset = assets.find(a => /\.dmg$/i.test(a.name))
-    } else {
-      installerAsset = assets.find(a => /\.AppImage$/i.test(a.name))
-        || assets.find(a => /\.deb$/i.test(a.name))
-        || assets.find(a => /\.rpm$/i.test(a.name))
-    }
-
-    return {
-      hasUpdate,
-      currentVersion,
-      latestVersion:  latestVersion || currentVersion,
-      releaseName:    data.name || latestVersion,
-      releaseNotes:   '',
-      releaseUrl:     data.html_url || `https://github.com/${GITHUB_REPO}/releases`,
-      publishedAt:    data.published_at || null,
-      installerAsset,
-      assets,
-      message: hasUpdate
-        ? `Phiên bản mới ${latestVersion} đã có sẵn!`
-        : 'Bạn đang dùng phiên bản mới nhất.',
-    }
-  } catch (err) {
-    return {
-      error:          true,
-      currentVersion,
-      message:        `Không thể kiểm tra cập nhật: ${err.message}`,
-    }
-  }
-})
-
-ipcMain.handle('updater:download', async (e, { downloadUrl, fileName }) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-  if (typeof downloadUrl !== 'string' || !downloadUrl.startsWith('https://')) {
-    return { error: 'Invalid download URL' }
-  }
-
-  const win = getTrustedWindow(e)
-  const https = require('https')
-  const os    = require('os')
-  const tmpDir  = path.join(os.tmpdir(), 'VoxelXLauncher-update')
-  const tmpFile = path.join(tmpDir, fileName || 'VoxelXLauncher-update.exe')
-
-  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
-
-  if (fs.existsSync(tmpFile)) {
-    const stat = fs.statSync(tmpFile)
-    if (stat.size > 1024 * 1024) {
-      if (!win.isDestroyed()) {
-        win.webContents.send('updater:downloadProgress', { downloaded: stat.size, total: stat.size, percent: 100, speed: 0 })
-      }
-      return { ok: true, filePath: tmpFile, cached: true }
-    }
-
-    try { fs.unlinkSync(tmpFile) } catch {}
-  }
-
-  try {
-    await new Promise((resolve, reject) => {
-      function doGet(url) {
-        https.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/' + app.getVersion() } }, (res) => {
-
-          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-            return doGet(res.headers.location)
-          }
-          if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`))
-
-          const total = parseInt(res.headers['content-length'] || '0', 10)
-          let downloaded = 0
-          const startTime = Date.now()
-          const out = fs.createWriteStream(tmpFile)
-
-          res.on('data', chunk => {
-            downloaded += chunk.length
-            const elapsed = (Date.now() - startTime) / 1000
-            const speed   = elapsed > 0 ? Math.round(downloaded / elapsed) : 0
-            const percent = total > 0 ? Math.round(downloaded / total * 100) : 0
-            if (!win.isDestroyed()) {
-              win.webContents.send('updater:downloadProgress', { downloaded, total, percent, speed })
-            }
-          })
-          res.pipe(out)
-          out.on('finish', resolve)
-          out.on('error', reject)
-          res.on('error', reject)
-        }).on('error', reject)
-      }
-      doGet(downloadUrl)
-    })
-
-    return { ok: true, filePath: tmpFile }
-  } catch (err) {
-
-    try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile) } catch {}
-    return { error: err.message }
-  }
-})
-
-ipcMain.handle('updater:install', async (e, { filePath }) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-  if (typeof filePath !== 'string') return { error: 'Invalid file path' }
-  if (!fs.existsSync(filePath)) return { error: 'Installer file not found' }
-
-  const os = require('os')
-  const tmpDir = path.join(os.tmpdir(), 'VoxelXLauncher-update')
-  if (!filePath.startsWith(tmpDir)) return { error: 'Invalid installer path' }
-
-  try {
-    const { spawn } = require('child_process')
-
-    await new Promise(r => setTimeout(r, 1500))
-
-    if (process.platform === 'win32') {
-      spawn(filePath, ['/SILENT'], {
-        detached: true,
-        stdio:    'ignore',
-      }).unref()
-    } else if (process.platform === 'darwin') {
-      spawn('open', [filePath], { detached: true, stdio: 'ignore' }).unref()
-    } else {
-      // On Linux, AppImageLauncher intercepts AppImage execution and tries to
-      // move the file to ~/Applications/. This fails when the AppImage is in /tmp
-      // because /tmp is often on a different filesystem (tmpfs → ext4/btrfs),
-      // causing a cross-device rename error. Fix: copy to the user's home dir first.
-      let runPath = filePath
-      try {
-        const homeDir   = require('os').homedir()
-        const destPath  = path.join(homeDir, path.basename(filePath))
-        fs.copyFileSync(filePath, destPath)
-        fs.chmodSync(destPath, 0o755)
-        runPath = destPath
-      } catch {
-        // fallback: run from /tmp directly
-        fs.chmodSync(filePath, 0o755)
-      }
-      // Set env to skip AppImageLauncher integration for this run
-      const env = { ...process.env, APPIMAGELAUNCHER_DISABLE: '1', NO_CLEANUP: '1' }
-      spawn(runPath, [], { detached: true, stdio: 'ignore', env }).unref()
-    }
-
-    setTimeout(() => {
-      try { fs.unlinkSync(filePath) } catch {}
-      app.isQuitting = true
-      app.quit()
-    }, 500)
-    return { ok: true }
-  } catch (err) {
-    return { error: err.message }
-  }
-})
-
-ipcMain.handle('updater:reinstall', async (e) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-
-  const win = getTrustedWindow(e)
-  const currentVersion = app.getVersion()
-  const https = require('https')
-  const os    = require('os')
-
-  try {
-    const release =
-      await fetchGitHubReleaseByTag(GITHUB_REPO, `v${currentVersion}`, currentVersion) ||
-      await fetchGitHubReleaseByTag(GITHUB_REPO, currentVersion, currentVersion)
-
-    if (!release) {
-      return { error: `Không tìm thấy release v${currentVersion} trên GitHub.` }
-    }
-
-    const assets = (release.assets || [])
-    let installerAsset = null
-    if (process.platform === 'win32') {
-      const exePath = process.execPath || ''
-      const isInstalled = /program files/i.test(exePath) || /appdata/i.test(exePath)
-      if (isInstalled) {
-        installerAsset = assets.find(a => /setup/i.test(a.name) && /\.exe$/i.test(a.name))
-      }
-      if (!installerAsset) {
-        installerAsset = assets.find(a => /\.exe$/i.test(a.name))
-      }
-    } else if (process.platform === 'darwin') {
-      installerAsset = assets.find(a => /\.dmg$/i.test(a.name))
-    } else {
-      installerAsset = assets.find(a => /\.AppImage$/i.test(a.name)) ||
-                       assets.find(a => /\.deb$/i.test(a.name))
-    }
-
-    if (!installerAsset) {
-      return { error: 'Không tìm thấy file installer cho hệ điều hành này.' }
-    }
-
-    const tmpDir  = path.join(os.tmpdir(), 'VoxelXLauncher-update')
-    const tmpFile = path.join(tmpDir, installerAsset.name)
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true })
-
-    try { if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile) } catch {}
-
-    await new Promise((resolve, reject) => {
-      function doGet(url) {
-        https.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/' + currentVersion } }, (res) => {
-          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-            return doGet(res.headers.location)
-          }
-          if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`))
-
-          const total = parseInt(res.headers['content-length'] || '0', 10)
-          let downloaded = 0
-          const startTime = Date.now()
-          const out = fs.createWriteStream(tmpFile)
-
-          res.on('data', chunk => {
-            downloaded += chunk.length
-            const elapsed = (Date.now() - startTime) / 1000
-            const speed   = elapsed > 0 ? Math.round(downloaded / elapsed) : 0
-            const percent = total > 0 ? Math.round(downloaded / total * 100) : 0
-            if (!win.isDestroyed()) {
-              win.webContents.send('updater:reinstallProgress', { downloaded, total, percent, speed })
-            }
-          })
-          res.pipe(out)
-          out.on('finish', resolve)
-          out.on('error', reject)
-          res.on('error', reject)
-        }).on('error', reject)
-      }
-      doGet(installerAsset.browser_download_url)
-    })
-
-    const { spawn } = require('child_process')
-    await new Promise(r => setTimeout(r, 800))
-
-    if (process.platform === 'win32') {
-      spawn(tmpFile, ['/SILENT'], { detached: true, stdio: 'ignore' }).unref()
-    } else if (process.platform === 'darwin') {
-      spawn('open', [tmpFile], { detached: true, stdio: 'ignore' }).unref()
-    } else {
-      let runPath = tmpFile
-      try {
-        const homeDir  = require('os').homedir()
-        const destPath = path.join(homeDir, path.basename(tmpFile))
-        fs.copyFileSync(tmpFile, destPath)
-        fs.chmodSync(destPath, 0o755)
-        runPath = destPath
-      } catch {
-        fs.chmodSync(tmpFile, 0o755)
-      }
-      const env = { ...process.env, APPIMAGELAUNCHER_DISABLE: '1', NO_CLEANUP: '1' }
-      spawn(runPath, [], { detached: true, stdio: 'ignore', env }).unref()
-    }
-
-    setTimeout(() => {
-      try { fs.unlinkSync(tmpFile) } catch {}
-      app.isQuitting = true
-      app.quit()
-    }, 500)
-
-    return { ok: true }
-  } catch (err) {
-    return { error: err.message }
-  }
-})
-
-function compareVersions(a, b) {
-  const pa = a.split('.').map(Number)
-  const pb = b.split('.').map(Number)
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const na = pa[i] ?? 0
-    const nb = pb[i] ?? 0
-    if (na > nb) return 1
-    if (na < nb) return -1
-  }
-  return 0
-}
-
-function fetchGitHubReleaseByTag(repo, tag, currentVersion) {
-  const https = require('https')
-  return new Promise((resolve, reject) => {
-    const req = https.get(
-      `https://api.github.com/repos/${repo}/releases/tags/${encodeURIComponent(tag)}`,
-      {
-        headers: {
-          'User-Agent': 'VoxelXLauncher/' + currentVersion,
-          'Accept': 'application/vnd.github+json',
-        },
-        timeout: 8000,
-      },
-      (res) => {
-        let body = ''
-        res.on('data', c => { body += c })
-        res.on('end', () => {
-          if (res.statusCode === 404) {
-            resolve(null)
-            return
-          }
-          if (res.statusCode !== 200) {
-            reject(new Error(`GitHub API returned HTTP ${res.statusCode}`))
-            return
-          }
-          try { resolve(JSON.parse(body)) }
-          catch { reject(new Error('Invalid JSON from GitHub API')) }
-        })
-      }
-    )
-    req.on('error', reject)
-    req.on('timeout', () => { req.destroy(); reject(new Error('Request timed out')) })
-  })
-}
 
 ipcMain.handle('app:version', (e) => {
   if (!getTrustedWindow(e)) return null
@@ -1074,22 +547,8 @@ ipcMain.handle('accounts:add', (e, account) => {
   if (err) return { error: err }
 
   const data = readAccounts()
-  const exists = data.accounts.find(a => {
-    if (account.type === 'discord' && a.type === 'discord') {
-      return a.discordId === account.discordId || a.username === account.username
-    }
-    return a.username === account.username && a.type === account.type
-  })
+  const exists = data.accounts.find(a => a.username === account.username && a.type === account.type)
   if (exists) return { error: 'Tài khoản đã tồn tại' }
-
-  if (account.type === 'discord' && account.discordId) {
-    const discordLinked = data.accounts.find(a => a.discordId === account.discordId)
-    if (discordLinked) {
-      return {
-        error: `Tài khoản Discord này đã được liên kết với tài khoản "${discordLinked.username}". Vui lòng dùng tài khoản Discord khác.`,
-      }
-    }
-  }
 
   const safe = sanitizeAccount(account)
   data.accounts.push(safe)
@@ -1125,113 +584,11 @@ ipcMain.handle('accounts:update', (e, { id, patch }) => {
   if (!validateId(id)) return { error: 'ID không hợp lệ' }
   if (!patch || typeof patch !== 'object') return { error: 'Dữ liệu không hợp lệ' }
 
-  const ALLOWED_PATCH_KEYS = [
-    'discordId', 'discordUsername', 'discordGlobalName',
-    'discordDiscriminator', 'discordAvatarUrl', 'linkedAt',
-  ]
-
   const data = readAccounts()
   const idx = data.accounts.findIndex(a => a.id === id)
   if (idx === -1) return { error: 'Tài khoản không tồn tại' }
 
-  const safePatch = {}
-  for (const key of ALLOWED_PATCH_KEYS) {
-    if (key in patch) safePatch[key] = patch[key]
-  }
-
-  if (safePatch.discordId) {
-    const alreadyLinked = data.accounts.find(
-      a => a.id !== id && a.discordId === safePatch.discordId
-    )
-    if (alreadyLinked) {
-      return {
-        error: `Tài khoản Discord này đã được liên kết với tài khoản "${alreadyLinked.username}". Vui lòng dùng tài khoản Discord khác.`,
-      }
-    }
-  }
-
-  data.accounts[idx] = { ...data.accounts[idx], ...safePatch }
-  writeAccounts(data)
   return { ok: true, data }
-})
-
-ipcMain.handle('ms:startLogin', async (e) => {
-  const win = getTrustedWindow(e)
-  if (!win) return { error: 'Unauthorized' }
-
-  try {
-    const result = await loginWithWindow(win)
-    const data = readAccounts()
-    const exists = data.accounts.find(a => a.uuid === result.uuid)
-    if (exists) {
-      const idx = data.accounts.indexOf(exists)
-      data.accounts[idx] = sanitizeAccount({
-        ...exists,
-        username:       result.username,
-        msRefreshToken: result.msRefreshToken,
-        mcToken:        result.mcToken,
-        mcTokenExpiry:  result.mcTokenExpiry,
-      })
-      writeAccounts(data)
-      return { ok: true, updated: true, account: data.accounts[idx], data }
-    }
-
-    const id  = require('crypto').randomUUID()
-    const now = new Date().toISOString()
-    const account = sanitizeAccount({
-      id,
-      uuid:           result.uuid,
-      type:           'microsoft',
-      username:       result.username,
-      createdAt:      now,
-      msRefreshToken: result.msRefreshToken,
-      mcToken:        result.mcToken,
-      mcTokenExpiry:  result.mcTokenExpiry,
-    })
-    data.accounts.push(account)
-    if (!data.selectedId) data.selectedId = id
-    writeAccounts(data)
-    return { ok: true, account, data }
-
-  } catch (err) {
-    return { error: err.message }
-  }
-})
-
-ipcMain.handle('ms:cancelLogin', (e) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-  return { ok: true }
-})
-
-ipcMain.handle('ms:refreshToken', async (e, id) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-  if (!validateId(id)) return { error: 'ID không hợp lệ' }
-
-  const data = readAccounts()
-  const account = data.accounts.find(a => a.id === id)
-  if (!account) return { error: 'Tài khoản không tồn tại' }
-  if (account.type !== 'microsoft') return { error: 'Không phải tài khoản Microsoft' }
-  if (!account.msRefreshToken) return { error: 'Không có refresh token' }
-  const fiveMin = 5 * 60 * 1000
-  if (account.mcTokenExpiry && account.mcTokenExpiry - Date.now() > fiveMin) {
-    return { ok: true, skipped: true, mcToken: account.mcToken }
-  }
-
-  try {
-    const result = await refreshMinecraftToken(account.msRefreshToken)
-    const idx = data.accounts.indexOf(account)
-    data.accounts[idx] = sanitizeAccount({
-      ...account,
-      username:       result.username,
-      msRefreshToken: result.msRefreshToken,
-      mcToken:        result.mcToken,
-      mcTokenExpiry:  result.mcTokenExpiry,
-    })
-    writeAccounts(data)
-    return { ok: true, mcToken: result.mcToken, account: data.accounts[idx] }
-  } catch (err) {
-    return { error: err.message }
-  }
 })
 
 ipcMain.handle('shell:openExternal', (e, url) => {
@@ -1247,8 +604,6 @@ ipcMain.handle('shell:openExternal', (e, url) => {
 registerProfileHandlers(getTrustedWindow)
 registerProfileContentHandlers(getTrustedWindow)
 registerJavaDistroHandlers(getTrustedWindow)
-registerServerHandlers(getTrustedWindow)
-registerServerBookmarkHandlers(getTrustedWindow)
 registerLauncherHandlers(getTrustedWindow)
 registerLanHandlers(getTrustedWindow, openLanWindow)
 registerLanWindowHandlers(getTrustedWindow)
@@ -1263,7 +618,7 @@ ipcMain.handle('fabric:getLoaderVersions', async (e, gameVersion) => {
     const https = require('https')
     const url = `https://meta.fabricmc.net/v2/versions/loader/${encodeURIComponent(gameVersion)}`
     const data = await new Promise((resolve, reject) => {
-      https.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+      https.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
         let body = ''
         res.on('data', chunk => { body += chunk })
         res.on('end', () => {
@@ -1285,7 +640,7 @@ ipcMain.handle('forge:getVersions', async (e, gameVersion) => {
     const https = require('https')
     const url = `https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json`
     const data = await new Promise((resolve, reject) => {
-      https.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+      https.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
         let body = ''
         res.on('data', c => { body += c })
         res.on('end', () => {
@@ -1314,7 +669,7 @@ ipcMain.handle('neoforge:getVersions', async (e, gameVersion) => {
   try {
     const https = require('https')
     const getXml = (url) => new Promise((resolve, reject) => {
-      https.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+      https.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
         if (res.statusCode === 404) return resolve('')
         let body = ''
         res.on('data', c => { body += c })
@@ -1492,7 +847,7 @@ ipcMain.handle('profiles:importModpack', async (e, { filePath, source, profileId
   if (!filePath || !fs.existsSync(filePath)) return { error: 'File không tồn tại' }
   if (!['curseforge', 'modrinth'].includes(source)) return { error: 'Source không hợp lệ' }
 
-  const DATA_DIR_IMPORT = path.join(require('electron').app.getPath('appData'), '.VoxelXClient')
+  const DATA_DIR_IMPORT = path.join(require('electron').app.getPath('appData'), '.DinoIsekai')
   const PROFILES_FILE_IMPORT = path.join(DATA_DIR_IMPORT, 'profiles.json')
   let profilesData
   try { profilesData = JSON.parse(fs.readFileSync(PROFILES_FILE_IMPORT, 'utf-8')) }
@@ -1628,7 +983,7 @@ ipcMain.handle('modpack:downloadAndImport', async (e, { downloadUrl, filename, s
         if (signal.aborted) return done(new Error('Cancelled'))
         if (redirectCount > MAX_REDIRECTS) return done(new Error('Too many redirects'))
         const client = url.startsWith('https') ? https : http
-        const req = client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+        const req = client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
           if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
             res.resume()
             return doGet(res.headers.location, redirectCount + 1)
@@ -1758,7 +1113,7 @@ ipcMain.handle('modpack:downloadAndImport', async (e, { downloadUrl, filename, s
 
   sendProgress({ phase: 'create', log: 'Tạo profile...', percent: 22 })
 
-  const DATA_DIR_DL = path.join(require('electron').app.getPath('appData'), '.VoxelXClient')
+  const DATA_DIR_DL = path.join(require('electron').app.getPath('appData'), '.DinoIsekai')
   const PROFILES_FILE_DL = path.join(DATA_DIR_DL, 'profiles.json')
 
   const profileId = require('crypto').randomUUID()
@@ -2007,17 +1362,6 @@ ipcMain.handle('system:boostMode', async (e, enable) => {
     return { ok: true, killed, failed }
   } else {
     return { ok: true, restored: true }
-  }
-})
-
-ipcMain.handle('discord:startLink', async (e) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-  try {
-    const profile = normalizeDiscordProfile(await startDiscordLink())
-    if (!profile) return { error: 'Du lieu tai khoan Discord khong hop le' }
-    return { ok: true, profile }
-  } catch (err) {
-    return { error: err.message }
   }
 })
 

@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -41,9 +41,9 @@ const isElectron = typeof window !== 'undefined' && window.electronAPI
 
 const LOADER_COLORS = {
   fabric:   'text-purple-400',
-  forge:    'text-orange-400',
+  forge:    'text-violet-400',
   neoforge: 'text-rose-400',
-  vanilla:  'text-orange-400',
+  vanilla:  'text-violet-400',
 }
 
 function ProfileSelect({ profiles, value, onChange }) {
@@ -67,7 +67,7 @@ function ProfileSelect({ profiles, value, onChange }) {
         className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs transition-all"
         style={{
           background: 'rgba(255,255,255,0.05)',
-          border: `1px solid ${open ? 'rgba(251,146,60,0.4)' : 'rgba(255,255,255,0.1)'}`,
+          border: `1px solid ${open ? 'rgba(167,139,250,0.4)' : 'rgba(255,255,255,0.1)'}`,
           color: selected ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)',
         }}
       >
@@ -103,7 +103,7 @@ function ProfileSelect({ profiles, value, onChange }) {
                 <button key={p.id} type="button"
                   onClick={() => { onChange(p); setOpen(false) }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all duration-100"
-                  style={{ background: isSelected ? 'rgba(251,146,60,0.1)' : 'transparent', color: isSelected ? '#fb923c' : 'rgba(255,255,255,0.65)' }}
+                  style={{ background: isSelected ? 'rgba(167,139,250,0.1)' : 'transparent', color: isSelected ? '#a78bfa' : 'rgba(255,255,255,0.65)' }}
                   onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                   onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
                 >
@@ -111,7 +111,7 @@ function ProfileSelect({ profiles, value, onChange }) {
                   <span className="text-[10px] text-white/25 flex-shrink-0">{p.gameVersion}</span>
                   <span className={`text-[9px] capitalize flex-shrink-0 ${LOADER_COLORS[p.loader] || 'text-white/40'}`}>{p.loader}</span>
                   {isSelected && (
-                    <svg className="w-3 h-3 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                     </svg>
                   )}
@@ -249,7 +249,7 @@ export default function InstallModal({ project, versions, projectType, source = 
                   </p>
                 </div>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border flex-shrink-0 ${
-                  selectedVersion.version_type === 'release' ? 'bg-orange-500/15 text-orange-400 border-orange-500/25' :
+                  selectedVersion.version_type === 'release' ? 'bg-violet-500/15 text-violet-400 border-violet-500/25' :
                   selectedVersion.version_type === 'beta'    ? 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25' :
                   'bg-red-500/15 text-red-400 border-red-500/25'
                 }`}>
@@ -277,7 +277,7 @@ export default function InstallModal({ project, versions, projectType, source = 
               <p className="text-xs text-white/50 mb-1.5">{progress.log}</p>
               {progress.total > 0 && (
                 <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-orange-400 rounded-full transition-all duration-300"
+                  <div className="h-full bg-violet-400 rounded-full transition-all duration-300"
                     style={{ width: `${progress.percent}%` }} />
                 </div>
               )}
@@ -293,11 +293,11 @@ export default function InstallModal({ project, versions, projectType, source = 
 
           {}
           {done && (
-            <div className="rounded-xl p-3 bg-orange-500/10 border border-orange-500/20 flex items-center gap-2">
-              <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-xl p-3 bg-violet-500/10 border border-violet-500/20 flex items-center gap-2">
+              <svg className="w-4 h-4 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
               </svg>
-              <p className="text-xs text-orange-400 font-semibold">Installed successfully!</p>
+              <p className="text-xs text-violet-400 font-semibold">Installed successfully!</p>
             </div>
           )}
 
@@ -311,7 +311,7 @@ export default function InstallModal({ project, versions, projectType, source = 
               <button onClick={handleInstall}
                 disabled={installing || !selectedVersion || !selectedProfile}
                 className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-40"
-                style={{ background:'linear-gradient(135deg,#f97316,#ea580c)' }}>
+                style={{ background:'linear-gradient(135deg,#8b5cf6,#7c3aed)' }}>
                 {installing ? 'Installing...' : 'Install'}
               </button>
             )}

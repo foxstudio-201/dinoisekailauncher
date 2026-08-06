@@ -21,17 +21,17 @@ if (!fs.existsSync(iconFile)) {
   process.exit(1)
 }
 
-console.log('🔧  Patching electron.exe with VoxelXLauncher icon...')
+console.log('🔧  Patching electron.exe with Dino Isekai icon...')
 
 rcedit(electronExe, {
   icon: iconFile,
   'version-string': {
-    ProductName:     'VoxelXLauncher',
-    FileDescription: 'VoxelXLauncher',
-    CompanyName:     'VoxelXLauncher',
-    LegalCopyright:  '© 2026 VoxelXLauncher',
-    InternalName:    'VoxelXLauncher',
-    OriginalFilename: 'VoxelXLauncher.exe',
+    ProductName:     'Dino Isekai',
+    FileDescription: 'Dino Isekai',
+    CompanyName:     'Dino Isekai',
+    LegalCopyright:  '© 2026 Dino Isekai',
+    InternalName:    'Dino Isekai',
+    OriginalFilename: 'Dino Isekai.exe',
   },
   'file-version':    '1.0.0.0',
   'product-version': '1.0.0.0',

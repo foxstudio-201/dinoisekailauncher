@@ -1,5 +1,5 @@
 ﻿/**
- * VoxelXLauncher — LAN Share Window
+ * Dino Isekai — LAN Share Window
  * Thay thế cửa sổ LAN bore cũ bằng VoxelX P2P LAN (WireGuard-based)
  * Mở bằng F10 khi đang trong game
  */
@@ -21,7 +21,7 @@ function CopyBtn({ text, className = '', label = 'Copy' }) {
   return (
     <button onClick={handle} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all
       ${copied
-        ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+        ? 'bg-violet-500/20 text-violet-400 border border-violet-500/30'
         : 'bg-white/8 text-white/50 hover:bg-white/14 hover:text-white border border-white/10'
       } ${className}`}>
       {copied
@@ -35,7 +35,7 @@ function CopyBtn({ text, className = '', label = 'Copy' }) {
 
 function StatusDot({ status }) {
   const cls = {
-    connected:   'bg-orange-400 shadow-orange-400/50',
+    connected:   'bg-violet-400 shadow-violet-400/50',
     connecting:  'bg-yellow-400 shadow-yellow-400/50 animate-pulse',
     idle:        'bg-white/20',
     error:       'bg-red-400 shadow-red-400/50',
@@ -46,7 +46,7 @@ function StatusDot({ status }) {
 
 // Avatar chữ cái
 function Avatar({ name, isHost }) {
-  const colors = ['bg-orange-500/30', 'bg-blue-500/30', 'bg-purple-500/30', 'bg-orange-500/30', 'bg-pink-500/30']
+  const colors = ['bg-violet-500/30', 'bg-blue-500/30', 'bg-purple-500/30', 'bg-violet-500/30', 'bg-pink-500/30']
   const idx = (name?.charCodeAt(0) || 0) % colors.length
   return (
     <div className={`w-8 h-8 rounded-xl ${colors[idx]} border border-white/10 flex items-center justify-center flex-shrink-0 relative`}>
@@ -133,7 +133,7 @@ function HostTab({ nickname, uuid, skinUrl }) {
           Minecraft thấy như mạng LAN nội bộ, tài khoản crack vẫn vào được.
         </p>
         <div className="flex items-center gap-2 pt-1">
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-orange-400/70 flex-shrink-0">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-violet-400/70 flex-shrink-0">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
           </svg>
           <p className="text-[11px] text-white/30">Không cần cài thêm gì — hoạt động ngay</p>
@@ -148,7 +148,7 @@ function HostTab({ nickname, uuid, skinUrl }) {
 
       <button
         onClick={handleCreate}
-        className="w-full py-3 rounded-2xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 hover:border-orange-500/50 text-orange-400 font-bold text-sm transition-all flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-2xl bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/50 text-violet-400 font-bold text-sm transition-all flex items-center justify-center gap-2"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
@@ -194,7 +194,7 @@ function HostTab({ nickname, uuid, skinUrl }) {
 
   if (status === 'creating') return (
     <div className="flex flex-col items-center gap-4 py-8">
-      <div className="w-10 h-10 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
+      <div className="w-10 h-10 border-2 border-violet-500/30 border-t-violet-400 rounded-full animate-spin" />
       <p className="text-sm text-white/50">Đang khởi động WireGuard...</p>
       {logs.length > 0 && (
         <p className="text-xs text-white/30 font-mono">{logs[logs.length - 1]}</p>
@@ -206,10 +206,10 @@ function HostTab({ nickname, uuid, skinUrl }) {
   return (
     <div className="space-y-3">
       {/* Room code */}
-      <div className="rounded-2xl border border-orange-500/25 bg-orange-500/8 p-4">
-        <p className="text-[10px] text-orange-400/70 uppercase tracking-widest font-bold mb-2">Room Code — chia sẻ cho bạn bè</p>
+      <div className="rounded-2xl border border-violet-500/25 bg-violet-500/8 p-4">
+        <p className="text-[10px] text-violet-400/70 uppercase tracking-widest font-bold mb-2">Room Code — chia sẻ cho bạn bè</p>
         <div className="flex items-center gap-2">
-          <span className="flex-1 text-3xl font-black font-mono text-orange-400 tracking-[0.2em]">{roomCode}</span>
+          <span className="flex-1 text-3xl font-black font-mono text-violet-400 tracking-[0.2em]">{roomCode}</span>
           <CopyBtn text={roomCode} label="Copy" />
         </div>
       </div>
@@ -376,14 +376,14 @@ function JoinTab({ nickname, uuid, skinUrl }) {
           onKeyDown={e => e.key === 'Enter' && handleJoin()}
           placeholder="Nhập 6 ký tự..."
           maxLength={6}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xl font-mono font-black tracking-[0.3em] text-center placeholder:text-white/20 placeholder:tracking-normal placeholder:text-sm placeholder:font-normal focus:outline-none focus:border-orange-500/50 focus:bg-white/8 transition-all"
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-xl font-mono font-black tracking-[0.3em] text-center placeholder:text-white/20 placeholder:tracking-normal placeholder:text-sm placeholder:font-normal focus:outline-none focus:border-violet-500/50 focus:bg-white/8 transition-all"
         />
       </div>
 
       <button
         onClick={handleJoin}
         disabled={code.length < 6}
-        className="w-full py-3 rounded-2xl bg-orange-500/15 hover:bg-orange-500/25 disabled:opacity-40 disabled:cursor-not-allowed border border-orange-500/30 hover:border-orange-500/50 text-orange-400 font-bold text-sm transition-all flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-2xl bg-violet-500/15 hover:bg-violet-500/25 disabled:opacity-40 disabled:cursor-not-allowed border border-violet-500/30 hover:border-violet-500/50 text-violet-400 font-bold text-sm transition-all flex items-center justify-center gap-2"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
           <path d="M10 17l5-5-5-5v10zm11-9v14a2 2 0 01-2 2H5a2 2 0 01-2-2V8l7-7h9a2 2 0 012 2z"/>
@@ -421,7 +421,7 @@ function JoinTab({ nickname, uuid, skinUrl }) {
 
   if (status === 'joining') return (
     <div className="flex flex-col items-center gap-4 py-8">
-      <div className="w-10 h-10 border-2 border-orange-500/30 border-t-orange-400 rounded-full animate-spin" />
+      <div className="w-10 h-10 border-2 border-violet-500/30 border-t-violet-400 rounded-full animate-spin" />
       <p className="text-sm text-white/50">Đang kết nối...</p>
       {logs.length > 0 && (
         <p className="text-xs text-white/30 font-mono">{logs[logs.length - 1]}</p>
@@ -433,10 +433,10 @@ function JoinTab({ nickname, uuid, skinUrl }) {
   return (
     <div className="space-y-3">
       {/* Trạng thái kết nối */}
-      <div className="rounded-2xl border border-orange-500/25 bg-orange-500/8 p-4">
+      <div className="rounded-2xl border border-violet-500/25 bg-violet-500/8 p-4">
         <div className="flex items-center gap-2 mb-3">
           <StatusDot status="connected" />
-          <span className="text-xs font-bold text-orange-400">Đã kết nối vào phòng</span>
+          <span className="text-xs font-bold text-violet-400">Đã kết nối vào phòng</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -525,7 +525,7 @@ export default function LanShareWindow() {
       if (acc.username) setNick(acc.username)
       if (acc.uuid)     setUuid(acc.uuid)
 
-      // Lấy skin URL đúng theo thứ tự ưu tiên (giống AccountPage)
+      // Lấy skin URL theo thứ tự ưu tiên
       try {
         // 1. webSkinUrl trên account object
         let finalSkin = acc.webSkinUrl || null
@@ -578,13 +578,13 @@ export default function LanShareWindow() {
       >
         <div className="flex items-center gap-2.5" style={{ WebkitAppRegion: 'no-drag' }}>
           {/* Icon */}
-          <div className="w-5 h-5 rounded-md bg-orange-500/20 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-orange-400">
+          <div className="w-5 h-5 rounded-md bg-violet-500/20 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-violet-400">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
             </svg>
           </div>
           <span className="text-xs font-bold text-white/60">VoxelX P2P LAN</span>
-          {active && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-orange-500/15 text-orange-400 border border-orange-500/20 font-bold">ACTIVE</span>}
+          {active && <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-violet-500/15 text-violet-400 border border-violet-500/20 font-bold">ACTIVE</span>}
         </div>
 
         <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' }}>

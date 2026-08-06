@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -124,7 +124,7 @@ async function downloadFile(url, destPath) {
 
   return new Promise((resolve, reject) => {
     const client  = url.startsWith('https') ? https : http
-    const req = client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+    const req = client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return downloadFile(res.headers.location, destPath).then(resolve).catch(reject)
       }

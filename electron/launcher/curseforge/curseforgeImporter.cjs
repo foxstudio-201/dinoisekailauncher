@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -122,7 +122,7 @@ async function iterZipEntries(buf, cb) {
 function httpsGetJson(url, headers = {}) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http
-    const req = client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0', ...headers }, timeout: 15000 }, (res) => {
+    const req = client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0', ...headers }, timeout: 15000 }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume()
         return httpsGetJson(res.headers.location, headers).then(resolve).catch(reject)
@@ -157,7 +157,7 @@ async function downloadFile(url, destPath, headers = {}) {
     function doGet(reqUrl, redirectCount) {
       if (redirectCount > MAX_REDIRECTS) return done(new Error('Too many redirects'))
       const client = reqUrl.startsWith('https') ? https : http
-      client.get(reqUrl, { headers: { 'User-Agent': 'VoxelXLauncher/1.0', ...headers } }, (res) => {
+      client.get(reqUrl, { headers: { 'User-Agent': 'DinoIsekai/1.0', ...headers } }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           res.resume()
           return doGet(res.headers.location, redirectCount + 1)

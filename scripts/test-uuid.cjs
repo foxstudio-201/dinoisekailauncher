@@ -66,7 +66,7 @@ function offlineUUID_node(username) {
   return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20,32)].join('-')
 }
 
-const names = ['Steve', 'Alex', 'Notch', 'VoxelXLauncher', 'Player123']
+const names = ['Steve', 'Alex', 'Notch', 'Dino Isekai', 'Player123']
 let allPass = true
 for (const name of names) {
   const a = offlineUUID_purejs(name)

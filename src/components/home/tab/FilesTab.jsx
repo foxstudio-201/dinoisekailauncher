@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { getFileExt } from '../../server/ServerCodeEditor'
+import { getFileExt } from '../../../utils/fileExt'
 import { isElectron, Icons, formatBytes, formatDate, LoadingState, EmptyState } from './shared'
 import { useLang } from '../../../i18n/LangProvider'
 

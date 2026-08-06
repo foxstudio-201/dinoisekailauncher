@@ -68,3 +68,6 @@ packaging/aur/linux-unpacked.tar.zst
 *.mp3
 linux-unpacked.tar.zst
 linux-unpacked.tar.xz
+
+# Unused background video
+*.mp4

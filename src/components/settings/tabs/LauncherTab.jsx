@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -42,7 +42,7 @@ function Toggle({ checked, onChange, id }) {
         relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full
         border-2 border-transparent transition-colors duration-200
         focus:outline-none
-        ${checked ? 'bg-orange-500' : 'bg-white/15'}
+        ${checked ? 'bg-violet-500' : 'bg-white/15'}
       `}
     >
       <span
@@ -97,14 +97,14 @@ export default function LauncherTab({ settings, onChange }) {
                 onClick={() => setLang(l.code)}
                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all ${
                   lang === l.code
-                    ? 'border-orange-500/40 bg-orange-500/10 text-white'
+                    ? 'border-violet-500/40 bg-violet-500/10 text-white'
                     : 'border-white/8 bg-white/3 text-white/50 hover:border-white/15 hover:text-white/70'
                 }`}
               >
                 <span className="text-lg">{l.flag}</span>
                 <span className="text-xs font-medium">{l.name}</span>
                 {lang === l.code && (
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-orange-400 ml-auto">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-violet-400 ml-auto">
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                   </svg>
                 )}
@@ -140,7 +140,7 @@ export default function LauncherTab({ settings, onChange }) {
         <div className="py-3">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-white/80">{t('settings.launcher.musicVolume')}</p>
-            <span className="text-xs font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-md">
+            <span className="text-xs font-mono text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-md">
               {settings.musicVolume ?? 35}%
             </span>
           </div>
@@ -164,7 +164,7 @@ export default function LauncherTab({ settings, onChange }) {
                 flex-1 h-1.5 rounded-full appearance-none cursor-pointer
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4
                 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full
-                [&::-webkit-slider-thumb]:bg-orange-400 [&::-webkit-slider-thumb]:cursor-pointer
+                [&::-webkit-slider-thumb]:bg-violet-400 [&::-webkit-slider-thumb]:cursor-pointer
                 ${settings.musicEnabled === false ? 'opacity-30 cursor-not-allowed' : 'bg-white/10'}
               `}
             />
@@ -184,15 +184,6 @@ export default function LauncherTab({ settings, onChange }) {
           <Toggle
             checked={settings.hideLauncherOnLaunch ?? true}
             onChange={v => onChange({ hideLauncherOnLaunch: v })}
-          />
-        </SettingRow>
-        <SettingRow
-          label={t('settings.launcher.showLogWindow')}
-          description={t('settings.launcher.showLogWindowDesc')}
-        >
-          <Toggle
-            checked={settings.showLogWindow ?? true}
-            onChange={v => onChange({ showLogWindow: v })}
           />
         </SettingRow>
         <SettingRow

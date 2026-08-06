@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * LAN Share Window — cửa sổ riêng hiện địa chỉ tunnel khi mở LAN world
@@ -60,7 +60,7 @@ function openLanWindow(info) {
     frame:           false,
     transparent:     false,
     backgroundColor: '#0f0f0f',
-    title:           'Martian Launcher – LAN World Share',
+    title:           'Dino Isekai – LAN World Share',
     icon,
     skipTaskbar:     false,
     alwaysOnTop:     false,  

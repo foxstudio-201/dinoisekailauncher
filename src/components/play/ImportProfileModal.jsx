@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -64,14 +64,14 @@ const SOURCES = {
   curseforge: {
     id: 'curseforge',
     label: 'CurseForge',
-    color: '#f97316',
+    color: '#8b5cf6',
     icon: curseforgeIcon,
     ext: '.zip',
   },
   modrinth: {
     id: 'modrinth',
     label: 'Modrinth',
-    color: '#f97316',
+    color: '#8b5cf6',
     icon: modrinthIcon,
     ext: '.zip / .mrpack',
   },
@@ -278,7 +278,7 @@ export default function ImportProfileModal({ onClose, onCreate }) {
           bottom: 20,
           left: MINIMIZED_LEFT,
           background: 'rgba(14,14,14,0.98)',
-          border: `1px solid ${isError ? '#ef444455' : isDone ? '#f9731655' : theme.color + '55'}`,
+          border: `1px solid ${isError ? '#ef444455' : isDone ? '#8b5cf655' : theme.color + '55'}`,
           minWidth: 260,
           maxWidth: 340,
         }}
@@ -305,7 +305,7 @@ export default function ImportProfileModal({ onClose, onCreate }) {
                 />
               </div>
               <span className="text-[10px] font-mono flex-shrink-0"
-                style={{ color: isError ? '#f87171' : isDone ? '#fb923c' : theme.color }}>
+                style={{ color: isError ? '#f87171' : isDone ? '#a78bfa' : theme.color }}>
                 {progress.percent ?? 0}%
               </span>
             </div>
@@ -325,7 +325,7 @@ export default function ImportProfileModal({ onClose, onCreate }) {
             </svg>
           )}
           {isDone && (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-orange-400">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-violet-400">
               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
             </svg>
           )}

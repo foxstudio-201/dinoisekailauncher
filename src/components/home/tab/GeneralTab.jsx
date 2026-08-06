@@ -1,175 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import JavaManagerModal from '../JavaManagerModal'
 import { isElectron, Icons } from './shared'
 import { useLang } from '../../../i18n/LangProvider'
-
-// ── Loader version picker ────────────────────────────────────────────────────
-function LoaderVersionPicker({ loader, gameVersion, value, onChange }) {
-  const [versions, setVersions]       = useState([])
-  const [promos, setPromos]           = useState({ recommended: null, latest: null })
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState(null)
-  const [expanded, setExpanded]       = useState(false)
-  const [filter, setFilter]           = useState('')
-
-  const fetchVersions = useCallback(async () => {
-    if (!gameVersion || !loader || loader === 'vanilla') return
-    setLoading(true)
-    setError(null)
-    setVersions([])
-    try {
-      if (loader === 'fabric') {
-        const result = await window.electronAPI.fabricGetLoaderVersions(gameVersion)
-        if (result?.error) throw new Error(result.error)
-        setVersions(result.data || [])
-      } else if (loader === 'forge') {
-        const result = await window.electronAPI.forgeGetVersions(gameVersion)
-        if (result?.error) throw new Error(result.error)
-        setVersions(result.data?.versions || [])
-        setPromos({ recommended: result.data?.recommended || null, latest: result.data?.latest || null })
-      } else if (loader === 'neoforge') {
-        const result = await window.electronAPI.neoforgeGetVersions(gameVersion)
-        if (result?.error) throw new Error(result.error)
-        setVersions(result.data?.versions || [])
-        setPromos({ recommended: null, latest: result.data?.latest || null })
-      }
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [loader, gameVersion])
-
-  useEffect(() => {
-    setVersions([])
-    setPromos({ recommended: null, latest: null })
-    setFilter('')
-    setExpanded(false)
-    fetchVersions()
-  }, [fetchVersions])
-
-  if (!loader || loader === 'vanilla') return null
-
-  // Hiển thị tên version hiện tại (fabric dùng object {version, stable})
-  const displayValue = value || ''
-
-  // Danh sách đã lọc
-  const listItems = loader === 'fabric'
-    ? versions.filter(v => !filter || v.version.includes(filter))
-    : versions.filter(v => !filter || v.includes(filter))
-
-  const loaderColor = {
-    fabric:   'text-purple-400',
-    forge:    'text-orange-400',
-    neoforge: 'text-rose-400',
-  }[loader] || 'text-white/70'
-
-  const loaderBorder = {
-    fabric:   'border-purple-500/30 ring-purple-500/20',
-    forge:    'border-orange-500/30 ring-orange-500/20',
-    neoforge: 'border-rose-500/30 ring-rose-500/20',
-  }[loader] || 'border-white/20'
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      {/* Nút mở/đóng dropdown */}
-      <button
-        type="button"
-        onClick={() => setExpanded(v => !v)}
-        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 border transition-all text-left
-          ${expanded ? `${loaderBorder} ring-1` : 'border-white/8 hover:border-white/15'}`}
-      >
-        <div className="flex flex-col min-w-0">
-          <span className="text-[10px] text-white/35 mb-0.5">Loader version</span>
-          <span className={`text-xs font-mono font-semibold truncate ${displayValue ? loaderColor : 'text-white/25'}`}>
-            {displayValue || 'Chưa chọn'}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-          {loading && (
-            <svg className="animate-spin w-3.5 h-3.5 text-white/30" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-          )}
-          <svg viewBox="0 0 24 24" fill="currentColor"
-            className={`w-3.5 h-3.5 text-white/30 transition-transform ${expanded ? 'rotate-180' : ''}`}>
-            <path d="M7 10l5 5 5-5z"/>
-          </svg>
-        </div>
-      </button>
-
-      {/* Dropdown */}
-      {expanded && (
-        <div className="rounded-xl border border-white/8 overflow-hidden" style={{ background: 'rgba(14,14,14,0.98)' }}>
-          {/* Search */}
-          <div className="px-3 py-2 border-b border-white/5">
-            <input
-              type="text"
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-              placeholder="Tìm version..."
-              className="w-full bg-white/5 rounded-lg px-2.5 py-1.5 text-xs text-white/70 placeholder-white/20 outline-none border border-white/8 focus:border-white/20 transition-all"
-              autoFocus
-            />
-          </div>
-
-          {/* List */}
-          <div className="max-h-52 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
-            {loading ? (
-              <div className="flex items-center justify-center py-8 gap-2">
-                <svg className={`animate-spin w-4 h-4 ${loaderColor}`} viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-                <span className="text-xs text-white/30">Đang tải...</span>
-              </div>
-            ) : error ? (
-              <div className="flex flex-col items-center py-6 gap-2">
-                <p className="text-xs text-red-400/70 text-center px-3">{error}</p>
-                <button onClick={fetchVersions}
-                  className="px-3 py-1 rounded-lg bg-white/8 text-xs text-white/50 hover:text-white/80 transition-all">
-                  Thử lại
-                </button>
-              </div>
-            ) : listItems.length === 0 ? (
-              <div className="py-6 text-center text-xs text-white/20">Không có phiên bản nào</div>
-            ) : (
-              listItems.map(item => {
-                const v = loader === 'fabric' ? item.version : item
-                const isSelected = value === v
-                const isRec = v === promos.recommended
-                const isLatest = v === promos.latest
-                const isFabricStable = loader === 'fabric' && item.stable
-                return (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => { onChange(v); setExpanded(false); setFilter('') }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-mono transition-all
-                      ${isSelected ? `bg-white/8 ${loaderColor}` : 'text-white/50 hover:bg-white/5 hover:text-white/80'}`}
-                  >
-                    <span>{v}</span>
-                    <div className="flex items-center gap-1.5">
-                      {isFabricStable && <span className="text-[9px] px-1 py-0.5 rounded bg-orange-500/15 text-orange-400">Stable</span>}
-                      {isRec && <span className="text-[9px] px-1 py-0.5 rounded bg-orange-500/15 text-orange-400">Recommended</span>}
-                      {isLatest && !isRec && <span className="text-[9px] px-1 py-0.5 rounded bg-orange-500/15 text-orange-400">Latest</span>}
-                      {isSelected && (
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 flex-shrink-0">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                      )}
-                    </div>
-                  </button>
-                )
-              })
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -181,7 +13,6 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
   const [winHeight, setWinHeight] = useState(profile?.windowHeight || 480)
   const [jvmArgs, setJvmArgs] = useState(profile?.jvmArgs || '')
   const [javaRuntime, setJavaRuntime] = useState(profile?.javaRuntime || '')
-  const [loaderVersion, setLoaderVersion] = useState(profile?.loaderVersion || '')
   const [autoPerformanceMods, setAutoPerformanceMods] = useState(profile?.autoPerformanceMods === true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -196,7 +27,6 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
     setWinHeight(profile?.windowHeight || 480)
     setJvmArgs(profile?.jvmArgs || '')
     setJavaRuntime(profile?.javaRuntime || '')
-    setLoaderVersion(profile?.loaderVersion || '')
     setAutoPerformanceMods(profile?.autoPerformanceMods === true)
   }, [profile?.id])
 
@@ -219,7 +49,6 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         jvmArgs: jvmArgs.trim(),
         javaRuntime: javaRuntime.trim(),
         autoPerformanceMods,
-        loaderVersion: loaderVersion.trim(),
       }
       await window.electronAPI.profileUpdate(profile.id, patch)
       setSaved(true)
@@ -251,49 +80,31 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         />
       </div>
 
-      {/* Loader Version — chỉ hiện với profile có loader */}
-      {profile?.loader && profile.loader !== 'vanilla' && (
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-white/50">Loader</label>
-            <span className="text-[10px] text-white/25 font-mono">{profile.gameVersion}</span>
-          </div>
-          {/* Info bar hiển thị loader type */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/3 border border-white/6">
-            <span className={{
-              fabric:   'text-purple-400',
-              forge:    'text-orange-400',
-              neoforge: 'text-rose-400',
-            }[profile.loader] || 'text-white/50'}>
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-              </svg>
-            </span>
-            <span className="text-xs text-white/40">
-              <span className={{
-                fabric:   'text-purple-400',
-                forge:    'text-orange-400',
-                neoforge: 'text-rose-400',
-              }[profile.loader] || 'text-white/60'}>
-                {profile.loader.charAt(0).toUpperCase() + profile.loader.slice(1)}
-              </span>
-              {' '}· Chọn version bên dưới để thay đổi
-            </span>
-          </div>
-          <LoaderVersionPicker
-            loader={profile.loader}
-            gameVersion={profile.gameVersion}
-            value={loaderVersion}
-            onChange={setLoaderVersion}
-          />
+      {/* Loader/Version cố định */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-white/50">Loader</label>
+          <span className="text-[10px] text-white/25 font-mono">{profile?.gameVersion}</span>
         </div>
-      )}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/3 border border-white/6">
+          <span className="text-violet-400">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+            </svg>
+          </span>
+          <span className="text-xs text-white/40">
+            <span className="text-violet-400">Forge</span>
+            {' · '}{profile?.loaderVersion || '47.2.0'}
+            {' — '}Cố định (Dino Isekai 1.20.1)
+          </span>
+        </div>
+      </div>
 
       {/* RAM */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-white/50">{t('profileSettings.general.ramLabel')}</label>
-          <span className="text-xs font-bold text-orange-400">{ram} GB</span>
+          <span className="text-xs font-bold text-violet-400">{ram} GB</span>
         </div>
         <div className="relative flex items-center gap-0 h-6">
           {ramMarks.map((m, i) => {
@@ -309,9 +120,9 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
               >
                 <div className={`w-full h-1.5 transition-all ${
                   isLast ? 'rounded-r-full' : i === 0 ? 'rounded-l-full' : ''
-                } ${isActive ? 'bg-orange-500' : 'bg-white/10 group-hover:bg-white/20'}`} />
+                } ${isActive ? 'bg-violet-500' : 'bg-white/10 group-hover:bg-white/20'}`} />
                 {isCurrent && (
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-orange-400 shadow-lg shadow-orange-500/40 ring-2 ring-orange-400/30 z-10" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-violet-400 shadow-lg shadow-violet-500/40 ring-2 ring-violet-400/30 z-10" />
                 )}
               </button>
             )
@@ -323,7 +134,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
               key={m}
               onClick={() => setRam(m)}
               className={`flex-1 text-center text-[9px] py-0.5 rounded transition-all ${
-                m === ram ? 'text-orange-400 font-bold' : 'text-white/20 hover:text-white/50'
+                m === ram ? 'text-violet-400 font-bold' : 'text-white/20 hover:text-white/50'
               }`}
             >
               {m}G
@@ -357,7 +168,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
             <button
               key={label}
               onClick={() => { setWinWidth(w); setWinHeight(h) }}
-              className={`text-[10px] px-2 py-1 rounded-lg border transition-all ${winWidth === w && winHeight === h ? 'border-orange-500/40 bg-orange-500/10 text-orange-400' : 'border-white/8 bg-white/3 text-white/30 hover:text-white/60 hover:border-white/15'}`}
+              className={`text-[10px] px-2 py-1 rounded-lg border transition-all ${winWidth === w && winHeight === h ? 'border-violet-500/40 bg-violet-500/10 text-violet-400' : 'border-white/8 bg-white/3 text-white/30 hover:text-white/60 hover:border-white/15'}`}
             >
               {label}
             </button>
@@ -407,11 +218,11 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
               <button
                 key={i}
                 onClick={() => setJavaRuntime(j.path)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all ${javaRuntime === j.path ? 'bg-orange-500/10 border border-orange-500/20 text-orange-400' : 'bg-white/3 border border-white/5 text-white/50 hover:bg-white/6 hover:text-white/70'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all ${javaRuntime === j.path ? 'bg-violet-500/10 border border-violet-500/20 text-violet-400' : 'bg-white/3 border border-white/5 text-white/50 hover:bg-white/6 hover:text-white/70'}`}
               >
                 <span className="text-[10px] font-mono truncate flex-1">{j.path}</span>
                 {j.version && <span className="text-[9px] text-white/25 flex-shrink-0">Java {j.version}</span>}
-                {javaRuntime === j.path && <span className="flex-shrink-0 text-orange-400">{Icons.check}</span>}
+                {javaRuntime === j.path && <span className="flex-shrink-0 text-violet-400">{Icons.check}</span>}
               </button>
             ))}
           </div>
@@ -427,7 +238,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
           </div>
           <button
             onClick={() => setAutoPerformanceMods(v => !v)}
-            className={`relative flex-shrink-0 w-9 h-5 rounded-full transition-all mt-0.5 ${autoPerformanceMods ? 'bg-orange-500' : 'bg-white/10'}`}
+            className={`relative flex-shrink-0 w-9 h-5 rounded-full transition-all mt-0.5 ${autoPerformanceMods ? 'bg-violet-500' : 'bg-white/10'}`}
             title={autoPerformanceMods ? t('profileSettings.general.autoPerformanceModsOn') : t('profileSettings.general.autoPerformanceModsOff')}
           >
             <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${autoPerformanceMods ? 'left-[18px]' : 'left-0.5'}`} />
@@ -439,7 +250,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
       <button
         onClick={handleSave}
         disabled={saving}
-        className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${saved ? 'bg-orange-500/20 border border-orange-500/30 text-orange-400' : 'bg-white/8 border border-white/10 text-white/70 hover:bg-white/12 hover:text-white/90'} disabled:opacity-50`}
+        className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${saved ? 'bg-violet-500/20 border border-violet-500/30 text-violet-400' : 'bg-white/8 border border-white/10 text-white/70 hover:bg-white/12 hover:text-white/90'} disabled:opacity-50`}
       >
         {saving ? Icons.spin : saved ? Icons.check : null}
         {saving ? t('profileSettings.general.saving') : saved ? t('profileSettings.general.saved') : t('profileSettings.general.save')}

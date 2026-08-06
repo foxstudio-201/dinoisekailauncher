@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -41,8 +41,8 @@ const TAG_COLORS = {
   Tech:        'bg-blue-500/20 text-blue-300',
   Magic:       'bg-purple-500/20 text-purple-300',
   Adventure:   'bg-yellow-500/20 text-yellow-300',
-  Exploration: 'bg-orange-500/20 text-orange-300',
-  Questing:    'bg-orange-500/20 text-orange-300',
+  Exploration: 'bg-violet-500/20 text-violet-300',
+  Questing:    'bg-violet-500/20 text-violet-300',
   Skyblock:    'bg-cyan-500/20 text-cyan-300',
 }
 
@@ -90,7 +90,7 @@ function GridCard({ project, onClick }) {
 
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div>
-            <p className="text-white text-sm font-semibold leading-snug line-clamp-1 mb-1 group-hover:text-orange-400 transition-colors">
+            <p className="text-white text-sm font-semibold leading-snug line-clamp-1 mb-1 group-hover:text-violet-400 transition-colors">
               {project.title}
             </p>
             <p className="text-white/55 text-xs leading-relaxed line-clamp-2">
@@ -108,7 +108,7 @@ function GridCard({ project, onClick }) {
             </div>
             <div className="flex items-center gap-2 text-[10px] flex-shrink-0">
               {project.downloads > 0 && (
-                <span className="flex items-center gap-1 text-orange-400/70">
+                <span className="flex items-center gap-1 text-violet-400/70">
                   <DownloadSimple size={12} weight="duotone" />
                   {formatNumber(project.downloads)}
                 </span>
@@ -154,7 +154,7 @@ function ListCard({ project, onClick }) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-semibold truncate group-hover:text-orange-400 transition-colors mb-0.5">
+        <p className="text-white text-sm font-semibold truncate group-hover:text-violet-400 transition-colors mb-0.5">
           {project.title}
         </p>
         <p className="text-white/45 text-xs truncate mb-1.5">
@@ -172,7 +172,7 @@ function ListCard({ project, onClick }) {
       {(project.downloads > 0 || project.follows > 0) && (
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0 w-16">
           {project.downloads > 0 && (
-            <span className="flex items-center gap-1 text-xs text-orange-400/80">
+            <span className="flex items-center gap-1 text-xs text-violet-400/80">
               <DownloadSimple size={14} weight="duotone" />
               {formatNumber(project.downloads)}
             </span>

@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -48,7 +48,7 @@ function downloadFile(url, destPath) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     const tmpPath = destPath + '.tmp'
 
-    const req = client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+    const req = client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return downloadFile(res.headers.location, destPath).then(resolve).catch(reject)
       }
@@ -222,7 +222,7 @@ async function setupNeoForge(mcVersion, neoVersion, librariesDir, clientJar, jav
       fs.writeFileSync(launcherProfilePath, JSON.stringify({
         authenticationDatabase: {},
         clientToken: '',
-        launcherVersion: { name: 'VoxelXLauncher', format: 21, profilesFormat: 2 },
+        launcherVersion: { name: 'Dino Isekai', format: 21, profilesFormat: 2 },
         profiles: { [mcVersion]: { lastVersionId: mcVersion, name: mcVersion, type: 'latest-release' } },
         selectedProfile: mcVersion,
         selectedUser: '',

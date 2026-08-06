@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Shared utilities, icons, and small UI components for ProfileSettingsPanel tabs.
  */
 
@@ -62,7 +62,7 @@ export const Icons = {
 export function LoadingState({ text = 'Đang tải...' }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <SpinnerGap size={24} weight="duotone" className="animate-spin text-orange-400/40" />
+      <SpinnerGap size={24} weight="duotone" className="animate-spin text-violet-400/40" />
       <p className="text-xs text-white/30">{text}</p>
     </div>
   )
@@ -136,7 +136,7 @@ export function DropZoneWrapper({ children, onDrop, accept, color = 'green' }) {
   const dragCounter = useRef(0)
 
   const colorMap = {
-    green:  { border: 'border-orange-500/50',  bg: 'bg-orange-500/5',  text: 'text-orange-400',  ring: 'ring-orange-500/20'  },
+    green:  { border: 'border-violet-500/50',  bg: 'bg-violet-500/5',  text: 'text-violet-400',  ring: 'ring-violet-500/20'  },
     yellow: { border: 'border-yellow-500/50', bg: 'bg-yellow-500/5', text: 'text-yellow-400', ring: 'ring-yellow-500/20' },
     purple: { border: 'border-purple-500/50', bg: 'bg-purple-500/5', text: 'text-purple-400', ring: 'ring-purple-500/20' },
   }

@@ -13,7 +13,7 @@ function downloadFile(url, destPath) {
     const dir     = path.dirname(destPath)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     const tmpPath = destPath + '.' + process.pid + '.tmp'
-    const req = client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+    const req = client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return downloadFile(res.headers.location, destPath).then(resolve).catch(reject)
       }

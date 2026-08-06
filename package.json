@@ -1,8 +1,8 @@
 {
-  "name": "voxelxlauncher",
+  "name": "dino-isekai",
   "private": true,
-  "version": "1.5.15",
-  "description": "Martian Launcher - Minecraft Launcher by FoxStudios",
+  "version": "0.1.0",
+  "description": "Dino Isekai - Minecraft Launcher by FoxStudios",
   "author": {
     "name": "FoxStudio",
     "email": "contact@foxstudio.dev"
@@ -55,8 +55,8 @@
     "wait-on": "^9.0.5"
   },
   "build": {
-    "appId": "com.voxelxclient.launcher",
-    "productName": "VoxelXLauncher",
+    "appId": "com.dinoisekai.launcher",
+    "productName": "Dino Isekai",
     "copyright": "Copyright © 2024 FoxStudio",
     "asar": true,
     "directories": {
@@ -106,6 +106,7 @@
       "forceCodeSigning": false
     },
     "linux": {
+      "executableName": "dino-isekai",
       "target": [
         {
           "target": "AppImage",
@@ -161,7 +162,7 @@
       "installerHeaderIcon": "public/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Martian Launcher"
+      "shortcutName": "Dino Isekai"
     },
     "publish": null
   }

@@ -74,7 +74,7 @@ export default function AnalyticsPanel({ profileId, t }) {
                   <div className="w-full rounded-t-sm transition-all"
                     style={{
                       height: `${Math.max(pct, 1)}%`,
-                      background: isToday ? '#fb923c' : '#fb923c55',
+                      background: isToday ? '#a78bfa' : '#a78bfa55',
                     }} />
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-black/80 text-[9px] text-white px-1.5 py-0.5 rounded whitespace-nowrap z-10">
                     {d.date}: {fmt(d.seconds)}

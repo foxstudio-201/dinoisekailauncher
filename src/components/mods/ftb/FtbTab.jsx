@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -87,7 +87,7 @@ export default function FtbTab() {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Search FTB modpacks..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-orange-500/50 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-colors"
             />
           </div>
           <ViewToggle view={view} onChange={setView} />
@@ -99,7 +99,7 @@ export default function FtbTab() {
               <div
                 className="h-full rounded-full"
                 style={{
-                  background: 'linear-gradient(90deg, transparent 0%, #f97316 40%, #ea580c 60%, transparent 100%)',
+                  background: 'linear-gradient(90deg, transparent 0%, #8b5cf6 40%, #7c3aed 60%, transparent 100%)',
                   backgroundSize: '200% 100%',
                   animation: 'ftb-shimmer-bar 1.4s linear infinite',
                   width: '100%',

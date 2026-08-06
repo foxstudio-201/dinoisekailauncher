@@ -1,4 +1,4 @@
-Git Commands & Build Guide - VoxelXLauncher
+Git Commands & Build Guide - Dino Isekai
 ==========================================
 
 === PUSH CODE LÊN GITHUB ===
@@ -41,8 +41,8 @@ Yêu cầu: Chạy với quyền Administrator
    build-win.bat  (click phải → Run as administrator)
 
 Output: dist-electron\
-  - VoxelXLauncher Setup x.x.x.exe   (installer)
-  - VoxelXLauncher x.x.x.exe         (portable)
+  - Dino Isekai Setup x.x.x.exe   (installer)
+  - Dino Isekai x.x.x.exe         (portable)
 
 
 === CODE SIGNING ===
@@ -51,7 +51,7 @@ Tạo self-signed certificate (chạy PowerShell với quyền Admin):
    .\scripts\create-self-signed-cert.ps1
 
 Certificate được lưu tại: certs\code-signing.pfx
-Password mặc định: VoxelXLauncher2024
+Password mặc định: Dino Isekai2024
 
 Để dùng cert trên GitHub Actions:
    1. Encode cert sang base64:
@@ -60,7 +60,7 @@ Password mặc định: VoxelXLauncher2024
    2. Vào GitHub repo → Settings → Secrets and variables → Actions
    3. Thêm 2 secrets:
       - CSC_BASE64    = (paste base64 từ bước 1)
-      - CSC_KEY_PASSWORD = VoxelXLauncher2024
+      - CSC_KEY_PASSWORD = Dino Isekai2024
 
 
 === CẬP NHẬT VERSION ===

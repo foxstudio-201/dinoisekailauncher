@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -42,12 +42,12 @@ function SplashLogoInline({ size = 64, label }) {
     <div className="flex flex-col items-center gap-3">
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-orange-500/15 rounded-full blur-2xl" style={{ width: size * 0.8, height: size * 0.8, animation: 'ftb-logo-glow 3s ease-in-out infinite' }} />
+          <div className="bg-violet-500/15 rounded-full blur-2xl" style={{ width: size * 0.8, height: size * 0.8, animation: 'ftb-logo-glow 3s ease-in-out infinite' }} />
         </div>
-        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#f97316', boxShadow: '0 0 10px #f9731699', animation: 'ftb-logo-tl 3s ease-in-out 0s infinite' }} />
-        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#ea580c', boxShadow: '0 0 10px #ea580c99', animation: 'ftb-logo-tr 3s ease-in-out 0.06s infinite' }} />
+        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#8b5cf6', boxShadow: '0 0 10px #8b5cf699', animation: 'ftb-logo-tl 3s ease-in-out 0s infinite' }} />
+        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#7c3aed', boxShadow: '0 0 10px #7c3aed99', animation: 'ftb-logo-tr 3s ease-in-out 0.06s infinite' }} />
         <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#c2410c', boxShadow: '0 0 10px #c2410c99', animation: 'ftb-logo-bl 3s ease-in-out 0.12s infinite' }} />
-        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#f97316', boxShadow: '0 0 10px #f9731699', animation: 'ftb-logo-br 3s ease-in-out 0.18s infinite' }} />
+        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#8b5cf6', boxShadow: '0 0 10px #8b5cf699', animation: 'ftb-logo-br 3s ease-in-out 0.18s infinite' }} />
       </div>
       {label && <p className="text-[11px] text-white/30 font-medium">{label}</p>}
       <style>{`
@@ -74,7 +74,7 @@ function formatDate(iso) {
 }
 
 const VERSION_TYPE_STYLE = {
-  release: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+  release: 'bg-violet-500/15 text-violet-400 border-violet-500/25',
   beta:    'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
   alpha:   'bg-red-500/15 text-red-400 border-red-500/25',
 }
@@ -83,8 +83,8 @@ const TAG_COLORS = {
   Tech:        'bg-blue-500/15 text-blue-300 border-blue-500/25',
   Magic:       'bg-purple-500/15 text-purple-300 border-purple-500/25',
   Adventure:   'bg-yellow-500/15 text-yellow-300 border-yellow-500/25',
-  Exploration: 'bg-orange-500/15 text-orange-300 border-orange-500/25',
-  Questing:    'bg-orange-500/15 text-orange-300 border-orange-500/25',
+  Exploration: 'bg-violet-500/15 text-violet-300 border-violet-500/25',
+  Questing:    'bg-violet-500/15 text-violet-300 border-violet-500/25',
   Skyblock:    'bg-cyan-500/15 text-cyan-300 border-cyan-500/25',
 }
 
@@ -160,7 +160,7 @@ export default function FtbDetail({ projectId, onBack }) {
 
         {}
         <div className="flex items-center gap-4 mb-3 text-sm">
-          <span className="flex items-center gap-1.5 text-orange-400/80">
+          <span className="flex items-center gap-1.5 text-violet-400/80">
             <DownloadSimple size={15} weight="duotone" />
             <span className="font-semibold">{formatNum(project.downloads)}</span>
             <span className="text-white/30 text-xs font-normal">installs</span>
@@ -185,7 +185,7 @@ export default function FtbDetail({ projectId, onBack }) {
               </span>
             ))}
             {(project.game_versions || []).slice(0, 3).map(v => (
-              <span key={v} className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/8 text-orange-400/60 border border-orange-500/15">{v}</span>
+              <span key={v} className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/8 text-violet-400/60 border border-violet-500/15">{v}</span>
             ))}
           </div>
         )}
@@ -195,7 +195,7 @@ export default function FtbDetail({ projectId, onBack }) {
           {DETAIL_TABS.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all -mb-px ${activeTab === tab.id
-                ? 'border-orange-500 text-orange-400'
+                ? 'border-violet-500 text-violet-400'
                 : 'border-transparent text-white/30 hover:text-white/60'
               }`}>
               {tab.label}
@@ -248,7 +248,7 @@ export default function FtbDetail({ projectId, onBack }) {
               <div className="px-3 py-2.5 rounded-xl flex flex-col gap-0.5"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <span className="text-white/30 uppercase tracking-widest text-[9px]">Installs</span>
-                <span className="text-orange-400 font-semibold">{formatNum(project.downloads)}</span>
+                <span className="text-violet-400 font-semibold">{formatNum(project.downloads)}</span>
               </div>
               <div className="px-3 py-2.5 rounded-xl flex flex-col gap-0.5"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -284,7 +284,7 @@ export default function FtbDetail({ projectId, onBack }) {
                       {v.version_type}
                     </span>
                     {(v.loaders || []).map(l => (
-                      <span key={l} className="text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize bg-orange-500/15 text-orange-300 border border-orange-500/25">
+                      <span key={l} className="text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize bg-violet-500/15 text-violet-300 border border-violet-500/25">
                         {l}
                       </span>
                     ))}
@@ -296,7 +296,7 @@ export default function FtbDetail({ projectId, onBack }) {
                     {v._specs?.recommended && (
                       <>
                         <span>·</span>
-                        <span className="text-orange-400/60">{Math.round(v._specs.recommended / 1024)}GB RAM rec.</span>
+                        <span className="text-violet-400/60">{Math.round(v._specs.recommended / 1024)}GB RAM rec.</span>
                       </>
                     )}
                   </div>
@@ -307,7 +307,7 @@ export default function FtbDetail({ projectId, onBack }) {
                     openModpackInstall({ project, version: v, source: 'ftb' })
                   }}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-white transition-all hover:-translate-y-0.5"
-                  style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)', boxShadow: '0 2px 12px rgba(249,115,22,0.2)' }}
+                  style={{ background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)', boxShadow: '0 2px 12px rgba(249,115,22,0.2)' }}
                 >
                   <DownloadSimple size={13} weight="duotone" />
                   Install

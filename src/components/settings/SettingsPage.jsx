@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -143,11 +143,11 @@ export default function SettingsPage({ onClose: onCloseProp }) {
                     flex items-center gap-2 px-4 py-2.5 text-xs font-semibold
                     border-b-2 transition-all duration-150 -mb-px
                     ${activeTab === tab.id
-                      ? 'border-orange-500 text-orange-400'
+                      ? 'border-violet-500 text-violet-400'
                       : 'border-transparent text-white/35 hover:text-white/60 hover:border-white/15'
                     }
                   `}>
-                  <span className={activeTab === tab.id ? 'text-orange-400' : 'text-white/25'}>
+                  <span className={activeTab === tab.id ? 'text-violet-400' : 'text-white/25'}>
                     {tab.icon}
                   </span>
                   {tab.label}

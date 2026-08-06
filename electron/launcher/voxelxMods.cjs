@@ -17,7 +17,7 @@ function httpsGetJson(url) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http
     const req = client.get(url, {
-      headers: { 'User-Agent': 'VoxelXLauncher/1.0' },
+      headers: { 'User-Agent': 'DinoIsekai/1.0' },
       timeout: 10000,
     }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
@@ -42,7 +42,7 @@ function downloadFile(url, destPath) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     const tmpPath = destPath + '.tmp'
 
-    client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+    client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return downloadFile(res.headers.location, destPath).then(resolve).catch(reject)
       }

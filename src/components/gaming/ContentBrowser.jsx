@@ -340,7 +340,7 @@ export function ContentBrowser({ profile, contentType, platform, onBack }) {
             </svg>
             <input type="text" value={query} onChange={e => setQuery(e.target.value)}
               placeholder={`Search ${contentType}s...`}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-orange-500/50 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-colors"
             />
           </div>
         </div>
@@ -353,7 +353,7 @@ export function ContentBrowser({ profile, contentType, platform, onBack }) {
         <div className="flex-1 overflow-y-auto min-h-0 space-y-1" style={{ scrollbarColor: 'rgba(255,255,255,0.10) transparent' }}>
           {loading && results.length === 0 ? (
             <div className="flex items-center justify-center py-10">
-              <div className="w-8 h-8 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
             </div>
           ) : results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
@@ -387,7 +387,7 @@ export function ContentBrowser({ profile, contentType, platform, onBack }) {
                     <button onClick={e => { e.stopPropagation(); handleDownloadLatest(item) }}
                       disabled={downloading === item.project_id}
                       className="flex-shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all hover:scale-105 disabled:opacity-60 disabled:hover:scale-100"
-                      style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)' }}
+                      style={{ background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' }}
                       title="Download latest version">
                       {downloading === item.project_id ? (
                         <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4"/><path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4"/></svg>

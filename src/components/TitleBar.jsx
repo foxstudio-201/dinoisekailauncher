@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -53,7 +53,7 @@ function InstanceModal({ instances, onKill, onClose }) {
         {}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
             <h3 className="text-sm font-bold text-white">Running Instances</h3>
             <span className="text-xs text-white/30 bg-white/8 px-1.5 py-0.5 rounded-md font-mono">
               {runningInstances.length}
@@ -83,7 +83,7 @@ function InstanceModal({ instances, onKill, onClose }) {
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/4 border border-white/5">
                   {}
                   <div className="flex-shrink-0">
-                    {isRunning && <span className="w-2.5 h-2.5 rounded-full bg-orange-400 animate-pulse block" />}
+                    {isRunning && <span className="w-2.5 h-2.5 rounded-full bg-violet-400 animate-pulse block" />}
                     {isLoading && (
                       <svg className="animate-spin w-2.5 h-2.5 text-yellow-400" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -101,7 +101,7 @@ function InstanceModal({ instances, onKill, onClose }) {
                       <span className="text-[10px] text-white/35">@{inst.accountName}</span>
                       <span className="text-[10px] text-white/20">·</span>
                       <span className={`text-[10px] font-semibold ${
-                        isRunning ? 'text-orange-400' :
+                        isRunning ? 'text-violet-400' :
                         isLoading ? 'text-yellow-400' :
                         isStopped ? 'text-white/30' : 'text-red-400'
                       }`}>
@@ -172,9 +172,9 @@ export default function TitleBar({ instances = [], onKillInstance, onCloseReques
       <div className="drag-region flex items-center justify-between h-9 px-4 absolute top-0 left-0 right-0 z-50">
         {}
         <div className="flex items-center gap-2 no-drag">
-          <img src={martianIcon} alt="Martian" className="w-5 h-5" />
+          <img src={martianIcon} alt="Dino Isekai" className="w-5 h-5" />
           <span className="text-ms font-black text-white tracking-tight">
-            <span className="text-orange-400">Martian</span> Launcher
+            <span className="text-violet-400">Dino Isekai</span>
           </span>
         </div>
 
@@ -183,11 +183,11 @@ export default function TitleBar({ instances = [], onKillInstance, onCloseReques
           {runningCount > 0 ? (
             <button
               onClick={() => setShowModal(v => !v)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/15 border border-orange-500/25 text-orange-400 text-xs font-semibold hover:bg-orange-500/22 transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-500/15 border border-violet-500/25 text-violet-400 text-xs font-semibold hover:bg-violet-500/22 transition-all active:scale-95"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
               {runningCount} instance{runningCount > 1 ? 's' : ''} running
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-orange-400/60">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-violet-400/60">
                 <path d="M7 10l5 5 5-5z"/>
               </svg>
             </button>
@@ -204,84 +204,10 @@ export default function TitleBar({ instances = [], onKillInstance, onCloseReques
 
         {}
         <div className="no-drag flex items-center gap-1">
-          {/* Coin display */}
-          {myUuid && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-yellow-500/10 border border-yellow-500/15 mr-1">
-              <img src={coinIcon} alt="coin" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
-              <span className="text-xs font-bold text-yellow-400">{coins.toLocaleString()}</span>
-            </div>
-          )}
-
-          {/* Notification bell */}
-          <div className="relative" ref={notifRef}>
-            <button
-              onClick={() => setNotifOpen(v => !v)}
-              className={`w-8 h-7 flex items-center justify-center rounded transition-colors relative ${notifOpen ? 'bg-white/10 text-white/90' : 'hover:bg-white/10 text-white/50 hover:text-white/90'}`}
-              title="Thông báo"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-              </svg>
-              {/* Badge dot */}
-              {pending.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 border border-black/50" />
-              )}
-            </button>
-
-            {/* Dropdown notifications */}
-            {notifOpen && (
-              <div className="absolute right-0 top-full mt-1 w-72 bg-[#141414] border border-white/10 rounded-xl shadow-2xl z-[999] overflow-hidden">
-                <div className="px-3 py-2.5 border-b border-white/5 flex items-center justify-between">
-                  <p className="text-xs font-bold text-white/60">Thông báo</p>
-                  {pending.length > 0 && (
-                    <span className="text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold">{pending.length}</span>
-                  )}
-                </div>
-                <div className="max-h-72 overflow-y-auto" style={{ scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
-                  {pending.length === 0 ? (
-                    <div className="px-4 py-6 text-center">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white/10 mx-auto mb-2">
-                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-                      </svg>
-                      <p className="text-[11px] text-white/25">Không có thông báo mới</p>
-                    </div>
-                  ) : (
-                    pending.map(req => (
-                      <div key={req.fromUuid} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-white/5 last:border-b-0 hover:bg-white/3 transition-all">
-                        <PlayerHead uuid={req.fromUuid} username={req.username} size={28} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white/70 truncate">{req.username}</p>
-                          <p className="text-[10px] text-white/30">Muốn kết bạn với bạn</p>
-                        </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          <button onClick={() => handleAccept(req.fromUuid)}
-                            className="w-6 h-6 flex items-center justify-center rounded-lg bg-orange-500/15 text-orange-400 hover:bg-orange-500/30 transition-all" title="Chấp nhận">
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                          </button>
-                          <button onClick={() => handleReject(req.fromUuid)}
-                            className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/5 text-white/30 hover:bg-red-500/15 hover:text-red-400 transition-all" title="Từ chối">
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
           <button onClick={handleMinimize}
             className="w-8 h-7 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-white/50 hover:text-white/90"
             title="Minimize">
             <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor"><rect width="10" height="1"/></svg>
-          </button>
-          <button onClick={handleMaximize}
-            className="w-8 h-7 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-white/50 hover:text-white/90"
-            title="Maximize">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1">
-              <rect x="0.5" y="0.5" width="9" height="9"/>
-            </svg>
           </button>
           <button onClick={handleClose}
             className="w-8 h-7 flex items-center justify-center rounded hover:bg-red-500/80 transition-colors text-white/50 hover:text-white"

@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Crash Analyzer Modal
+ * Dino Isekai — Crash Analyzer Modal
  * Tự động phân tích log crash, hiện root cause, tìm mod bị thiếu và cài đặt.
  */
 
@@ -338,17 +338,17 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
   // Java version issue — không tải được từ Modrinth, chỉ hiện thông báo
   if (missingMod.isJava) {
     return (
-      <div className="rounded-xl border border-orange-500/25 bg-orange-500/6 p-3.5">
+      <div className="rounded-xl border border-violet-500/25 bg-violet-500/6 p-3.5">
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-orange-500/15 border border-orange-500/20 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-orange-400">
+          <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-violet-500/15 border border-violet-500/20 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-violet-400">
               <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
             </svg>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-orange-300">Java Runtime cần nâng cấp</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/20">java</span>
+              <span className="text-sm font-bold text-violet-300">Java Runtime cần nâng cấp</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/20">java</span>
             </div>
             <p className="text-xs text-yellow-400/70 mt-0.5">
               Yêu cầu: <span className="font-mono">{missingMod.requiredVersion}</span>
@@ -362,7 +362,7 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
               Vào <span className="text-white/70">Profile Settings → General → Java Runtime</span> để chọn Java phiên bản cao hơn, hoặc xóa mod yêu cầu Java version quá cao.
             </p>
           </div>
-          <span className="flex-shrink-0 text-xs text-orange-400/50 font-semibold">Thủ công</span>
+          <span className="flex-shrink-0 text-xs text-violet-400/50 font-semibold">Thủ công</span>
         </div>
       </div>
     )
@@ -423,7 +423,7 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
 
   return (
     <div className={`rounded-xl border p-3.5 transition-all ${
-      state === 'done'    ? 'border-orange-500/30 bg-orange-500/8' :
+      state === 'done'    ? 'border-violet-500/30 bg-violet-500/8' :
       state === 'error' || state === 'notfound' ? 'border-red-500/20 bg-red-500/5' :
       'border-white/8 bg-white/3'
     }`}>
@@ -469,7 +469,7 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
               {/* Compatibility badges */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 {classified.compatible.length > 0 && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/20">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-400 border border-violet-500/20">
                     ✓ {classified.compatible.length} tương thích
                   </span>
                 )}
@@ -496,7 +496,7 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
                   selectedIsIncompat
                     ? 'border-red-500/30 text-red-400/80'
                     : selectedIsCompat
-                    ? 'border-orange-500/25 text-white/80'
+                    ? 'border-violet-500/25 text-white/80'
                     : 'border-yellow-500/25 text-yellow-400/80'
                 }`}
               >
@@ -562,7 +562,7 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
           {state === 'downloading' && (
             <div className="mt-2">
               <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full bg-orange-400 rounded-full transition-all duration-300"
+                <div className="h-full bg-violet-400 rounded-full transition-all duration-300"
                   style={{ width: `${progress?.percent ?? 0}%` }} />
               </div>
               <p className="text-[10px] text-white/30 mt-1">{progress?.log || t('crash.downloading')}</p>
@@ -588,14 +588,14 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 border ${
                 selectedIsIncompat
                   ? 'bg-yellow-500/15 border-yellow-500/25 text-yellow-400 hover:bg-yellow-500/25'
-                  : 'bg-orange-500/15 border-orange-500/25 text-orange-400 hover:bg-orange-500/25'
+                  : 'bg-violet-500/15 border-violet-500/25 text-violet-400 hover:bg-violet-500/25'
               }`}>
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               {t('crash.download')}
             </button>
           )}
           {state === 'downloading' && (
-            <div className="text-xs text-orange-400/60 flex items-center gap-1">
+            <div className="text-xs text-violet-400/60 flex items-center gap-1">
               <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -604,7 +604,7 @@ function ModFixItem({ missingMod, gameVersion, loader, instancePath, accountId, 
             </div>
           )}
           {state === 'done' && (
-            <div className="flex items-center gap-1 text-xs text-orange-400 font-semibold">
+            <div className="flex items-center gap-1 text-xs text-violet-400 font-semibold">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
               {t('crash.installed')}
             </div>
@@ -631,7 +631,7 @@ function LogViewer({ logs }) {
     if (/FATAL|FormattedException/i.test(line)) return 'text-red-400'
     if (/\bERROR\b/i.test(line)) return 'text-red-400/80'
     if (/\bWARN\b/i.test(line)) return 'text-yellow-400/70'
-    if (/Incompatible|missing|OutOfMemoryError/i.test(line)) return 'text-orange-400/80'
+    if (/Incompatible|missing|OutOfMemoryError/i.test(line)) return 'text-violet-400/80'
     if (/Caused by:|Exception in thread/i.test(line)) return 'text-red-300/90'
     return 'text-white/35'
   }
@@ -652,7 +652,7 @@ function LogViewer({ logs }) {
           onClick={handleCopy}
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all border ${
             copied
-              ? 'bg-orange-500/15 border-orange-500/25 text-orange-400'
+              ? 'bg-violet-500/15 border-violet-500/25 text-violet-400'
               : 'bg-white/5 border-white/8 text-white/40 hover:text-white/70 hover:bg-white/8'
           }`}
         >
@@ -728,12 +728,12 @@ function CrashSummary({ crashType, fabricInfo, rootCause, exitCode, loader }) {
   )
 
   if (isOOM) return (
-    <div className="rounded-xl border border-orange-500/25 bg-orange-500/6 px-4 py-3.5">
+    <div className="rounded-xl border border-violet-500/25 bg-violet-500/6 px-4 py-3.5">
       <div className="flex items-center gap-2 mb-1.5">
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-orange-400 flex-shrink-0">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-violet-400 flex-shrink-0">
           <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
         </svg>
-        <p className="text-sm font-bold text-orange-400">Hết bộ nhớ RAM (OutOfMemoryError)</p>
+        <p className="text-sm font-bold text-violet-400">Hết bộ nhớ RAM (OutOfMemoryError)</p>
       </div>
       <p className="text-xs text-white/55 leading-relaxed">
         Game bị tắt vì không đủ RAM. Hãy tăng RAM trong Profile Settings → General → RAM slider.
@@ -742,12 +742,12 @@ function CrashSummary({ crashType, fabricInfo, rootCause, exitCode, loader }) {
   )
 
   if (isForgeDep) return (
-    <div className="rounded-xl border border-orange-500/25 bg-orange-500/6 px-4 py-3.5">
+    <div className="rounded-xl border border-violet-500/25 bg-violet-500/6 px-4 py-3.5">
       <div className="flex items-center gap-2 mb-1.5">
-        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-orange-400 flex-shrink-0">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-violet-400 flex-shrink-0">
           <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
         </svg>
-        <p className="text-sm font-bold text-orange-400">Mod thiếu dependency ({loader})</p>
+        <p className="text-sm font-bold text-violet-400">Mod thiếu dependency ({loader})</p>
       </div>
       <p className="text-xs text-white/55 leading-relaxed">
         Có mod yêu cầu mod khác chưa được cài đặt. Kiểm tra danh sách mod trong thư mục profile.
@@ -847,7 +847,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
               {loader && loader !== 'vanilla' && (
                 <><span className="text-white/20">·</span>
                 <span className={{
-                  fabric: 'text-purple-400', forge: 'text-orange-400', neoforge: 'text-rose-400'
+                  fabric: 'text-purple-400', forge: 'text-violet-400', neoforge: 'text-rose-400'
                 }[loader] || 'text-white/50'}>
                   {loader.charAt(0).toUpperCase() + loader.slice(1)}
                 </span></>
@@ -875,7 +875,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2.5 text-xs font-semibold border-b-2 transition-all -mb-px ${
                 activeTab === tab.id
-                  ? 'border-orange-500 text-orange-400'
+                  ? 'border-violet-500 text-violet-400'
                   : 'border-transparent text-white/30 hover:text-white/60'
               }`}
             >
@@ -907,7 +907,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
               {missingMods.length > 0 && (
                 <div>
                   <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-orange-400">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-violet-400">
                       <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                     </svg>
                     {t('crash.modsToInstall', { count: missingMods.length })}
@@ -941,7 +941,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
                     </h3>
                     <button
                       onClick={() => setActiveTab('log')}
-                      className="text-[10px] text-orange-400/70 hover:text-orange-400 transition-colors"
+                      className="text-[10px] text-violet-400/70 hover:text-violet-400 transition-colors"
                     >
                       Xem toàn bộ →
                     </button>
@@ -955,7 +955,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
                         /FATAL|FormattedException/i.test(line) ? 'text-red-400' :
                         /\bERROR\b/i.test(line)   ? 'text-red-400/75' :
                         /\bWARN\b/i.test(line)    ? 'text-yellow-400/70' :
-                        /Incompatible|missing|OutOfMemoryError/i.test(line) ? 'text-orange-400/70' :
+                        /Incompatible|missing|OutOfMemoryError/i.test(line) ? 'text-violet-400/70' :
                         /Caused by:|Exception in thread/i.test(line) ? 'text-red-300/80' :
                         'text-white/35'
                       }`}>
@@ -976,7 +976,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
         {/* Footer */}
         <div className="flex-shrink-0 flex items-center justify-between px-6 py-3.5 border-t border-white/5 bg-black/20">
           {allFixed ? (
-            <p className="text-xs text-orange-400 flex items-center gap-1.5">
+            <p className="text-xs text-violet-400 flex items-center gap-1.5">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
               {t('crash.allFixed')}
             </p>
@@ -987,7 +987,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
                 : t('crash.installHint')}
             </p>
           ) : crashType === 'out_of_memory' ? (
-            <p className="text-xs text-orange-400/60">Tăng RAM trong Profile Settings → General</p>
+            <p className="text-xs text-violet-400/60">Tăng RAM trong Profile Settings → General</p>
           ) : (
             <p className="text-xs text-white/25">{t('crash.viewLog')}</p>
           )}

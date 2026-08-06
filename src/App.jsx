@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -34,13 +34,11 @@ import TitleBar from './components/TitleBar'
 import CloseModal from './components/CloseModal'
 import NavBar from './components/NavBar'
 import HomePage from './components/HomePage'
+import MinecraftPage from './components/MinecraftPage'
 import Toast from './components/Toast'
-import NoAccountHint from './components/NoAccountHint'
-import UpdateWindow from './components/UpdateWindow'
-import SplashScreen from './components/SplashScreen'
 import InitialSetup from './components/InitialSetup'
-import AppBackground from './components/AppBackground'
 import { ToastContext, useToastState, useToast } from './hooks/useToast'
+import CursorTrail from './components/CursorTrail'
 import { AccountsProvider, useAccounts } from './hooks/useAccounts'
 import { loadAppSettings, applyAppSettings, isInitialSetupRequired } from './utils/appSettings'
 import { LangProvider, useLang } from './i18n/LangProvider'
@@ -48,14 +46,11 @@ import { ModpackInstallProvider } from './components/mods/shared/ModpackInstallC
 
 import LanShareWindow from './components/LanShareWindow'
 import { useBgMusic } from './hooks/useBgMusic'
+import vanillaBg from './assets/vanilla-mc.png'
 
-const AccountPage = lazy(() => import('./components/account/AccountPage'))
 const SettingsPage = lazy(() => import('./components/settings/SettingsPage'))
-const ModsPage = lazy(() => import('./components/mods/ModsPage'))
-const ServerPage = lazy(() => import('./components/server/ServerPage'))
 const CrashAnalyzerModal = lazy(() => import('./components/crash/CrashAnalyzerModal'))
 const AddAccountModal = lazy(() => import('./components/account/AddAccountModal'))
-const SkinCustomizeModal = lazy(() => import('./components/account/SkinCustomizeModal'))
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
 
@@ -74,22 +69,36 @@ function PlaceholderPage({ title }) {
 function PageLoading() {
   return (
     <div className="flex-1 flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
     </div>
   )
 }
+
+const PAGE_ORDER = ['home', 'minecraft']
 
 function AppInner() {
   const { t } = useLang()
   const toast = useToast()
   const [activePage, setActivePage] = useState('home')
+  const [outgoingPage, setOutgoingPage] = useState(null)
+  const [direction, setDirection] = useState('forward')
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const handleNavigate = useCallback((page) => {
-    setActivePage(page)
+
+  // Preload ảnh nền trang Minecraft để chuyển trang không bị nháy đen
+  useEffect(() => {
+    const img = new Image()
+    img.src = vanillaBg
   }, [])
-  const { selectedAccount, accounts, loading, selectAccount, addAccount, updateAccount, removeAccount } = useAccounts()
+
+  const handleNavigate = useCallback((page) => {
+    if (page === activePage) return
+    setDirection(PAGE_ORDER.indexOf(page) > PAGE_ORDER.indexOf(activePage) ? 'forward' : 'backward')
+    setOutgoingPage(activePage)
+    setActivePage(page)
+    setTimeout(() => setOutgoingPage(null), 480)
+  }, [activePage])
+  const { addAccount } = useAccounts()
   const [showAddAccount, setShowAddAccount] = useState(false)
-  const [showSkinModal, setShowSkinModal] = useState(false)
   const [logPanelOpen, setLogPanelOpen] = useState(false)
   const [showCloseModal, setShowCloseModal] = useState(false)
 
@@ -103,7 +112,6 @@ function AppInner() {
   const [activeKey, setActiveKey]     = useState(null)
   const [crashData, setCrashData]     = useState(null)
 
-  const [serverJavaProgress, setServerJavaProgress] = useState({})
   const cleanupRef = useRef([])
 
   const updateInstance = useCallback((key, patch) => {
@@ -351,15 +359,23 @@ function AppInner() {
     setShowCloseModal(true)
   }, [])
 
-  const showHint = !loading && accounts.length === 0 && activePage === 'home'
   const instanceList = Array.from(instances.values())
 
   function renderPage() {
+    const isForward = direction === 'forward'
+
+    let homeCls = 'page-hidden'
+    if (activePage === 'home') homeCls = isForward ? 'page-enter-f' : 'page-enter-b'
+    else if (outgoingPage === 'home') homeCls = isForward ? 'page-exit-f' : 'page-exit-b'
+
+    let mcCls = 'page-hidden'
+    if (activePage === 'minecraft') mcCls = isForward ? 'page-enter-f' : 'page-enter-b'
+    else if (outgoingPage === 'minecraft') mcCls = isForward ? 'page-exit-f' : 'page-exit-b'
+
     return (
-      <>
-        {activePage === 'home' && (
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        <div key="home-page" className={`absolute inset-0 ${homeCls}`}>
           <HomePage
-            key="home"
             onNavigate={handleNavigate}
             launchState={launchState}
             progress={progress}
@@ -372,47 +388,28 @@ function AppInner() {
             onOpenSettings={() => setSettingsOpen(true)}
             onLogPanelOpen={setLogPanelOpen}
           />
-        )}
-        {activePage === 'mods' && (
-          <Suspense fallback={<PageLoading />}>
-            <ModsPage />
-          </Suspense>
-        )}
-        {activePage === 'worlds' && (
-          <Suspense fallback={<PageLoading />}>
-            <ServerPage serverJavaProgress={serverJavaProgress} onServerJavaProgress={setServerJavaProgress} />
-          </Suspense>
-        )}
-        <div
-          style={{ display: activePage === 'account' ? 'flex' : 'none' }}
-          className="flex-1 min-h-0 overflow-hidden"
-        >
-          <Suspense fallback={<PageLoading />}>
-            <AccountPage />
-          </Suspense>
         </div>
-      </>
+        <div key="mc-page" className={`absolute inset-0 ${mcCls}`}>
+          <MinecraftPage />
+        </div>
+      </div>
     )
   }
 
   return (
     <div className="w-screen h-screen flex flex-col overflow-hidden relative z-10" style={{ background: 'transparent' }}>
       <TitleBar instances={instanceList} onKillInstance={handleKillInstance} onCloseRequest={handleCloseRequest} />
-      <div className="flex flex-1 overflow-hidden mt-9 relative">
+      <div className="flex flex-1 overflow-hidden relative">
         <main className="flex-1 flex flex-col overflow-hidden min-h-0 relative">
           <NavBar
             activePage={activePage}
             onNavigate={handleNavigate}
             onOpenSettings={() => setSettingsOpen(true)}
             onAddAccount={() => setShowAddAccount(true)}
-            onSkinCustomize={() => setShowSkinModal(true)}
             hidden={logPanelOpen}
           />
           {renderPage()}
         </main>
-        {showHint && (
-          <NoAccountHint onGoToAccount={() => handleNavigate('account')} />
-        )}
       </div>
       {crashData && (
         <Suspense fallback={null}>
@@ -436,70 +433,29 @@ function AppInner() {
             onAdd={async (account) => {
               await addAccount(account)
             }}
-            onLinkDiscord={async (accountId, discordProfile) => {
-              await updateAccount(accountId, {
-                discordId:            discordProfile.discordId,
-                discordUsername:      discordProfile.discordUsername,
-                discordGlobalName:    discordProfile.discordGlobalName,
-                discordDiscriminator: discordProfile.discordDiscriminator,
-                discordAvatarUrl:     discordProfile.discordAvatarUrl,
-                linkedAt:             new Date().toISOString(),
-              })
-            }}
-            existingAccounts={accounts}
-          />
-        </Suspense>
-      )}
-
-      {showSkinModal && selectedAccount && (
-        <Suspense fallback={null}>
-          <SkinCustomizeModal
-            account={selectedAccount}
-            onClose={() => setShowSkinModal(false)}
-            onApply={async ({ type, url, skinType }) => {
-              const prefs = {
-                uuid:      selectedAccount.uuid,
-                skinUrl:   type === 'skin'   ? url : undefined,
-                capeUrl:   type === 'cape'   ? url : undefined,
-                elytraUrl: type === 'elytra' ? url : undefined,
-                skinType:  skinType,
-              }
-              try {
-                if (typeof window !== 'undefined' && window.electronAPI) {
-                  await window.electronAPI.saveSkinPrefs(prefs)
-                } else {
-                  localStorage.setItem(`vxc_skin_prefs_${selectedAccount.uuid}`, JSON.stringify(prefs))
-                }
-              } catch {}
-              setShowSkinModal(false)
-            }}
           />
         </Suspense>
       )}
       {showCloseModal && (
         <CloseModal onClose={() => setShowCloseModal(false)} />
       )}
+      <CursorTrail />
     </div>
   )
 }
 
 export default function App() {
   const toastState = useToastState()
-  const [splashDone, setSplashDone] = useState(false)
-  const [bgId, setBgId] = useState('dark')
-  const [customBgPath, setCustomBgPath] = useState('')
   const [initialSettings, setInitialSettings] = useState(null)
   const [initialSetupOpen, setInitialSetupOpen] = useState(false)
   const [initialSetupChecked, setInitialSetupChecked] = useState(false)
 
-  useBgMusic(splashDone && initialSetupChecked && !initialSetupOpen)
+  useBgMusic(initialSetupChecked && !initialSetupOpen)
 
   useEffect(() => {
     loadAppSettings().then(s => {
       setInitialSettings(s)
       applyAppSettings(s)
-      if (s?.background) setBgId(s.background)
-      if (s?.customBgPath) setCustomBgPath(s.customBgPath)
       window.dispatchEvent(new CustomEvent('vxc-music-init', {
         detail: {
           enabled: s?.musicEnabled !== false,
@@ -507,37 +463,16 @@ export default function App() {
         }
       }))
     }).catch(() => {})
-
-    const bgHandler = (e) => {
-      const { bgId: nextBgId, customBgPath: nextPath } = e.detail ?? {}
-      if (!nextBgId) return
-      setBgId(nextBgId)
-      setCustomBgPath(nextBgId === 'custom' ? (nextPath ?? '') : '')
-    }
-    window.addEventListener('vxc-bg-change', bgHandler)
-    return () => {
-      window.removeEventListener('vxc-bg-change', bgHandler)
-    }
   }, [])
 
   useEffect(() => {
-    if (!splashDone) return
     isInitialSetupRequired().then(required => {
       setInitialSetupOpen(required)
       setInitialSetupChecked(true)
     }).catch(() => setInitialSetupChecked(true))
-  }, [splashDone])
+  }, [])
 
   const params = new URLSearchParams(window.location.search)
-  const isUpdateWindow = params.get('window') === 'update'
-  if (isUpdateWindow) {
-    return (
-      <LangProvider>
-        <UpdateWindow />
-      </LangProvider>
-    )
-  }
-
   const isLanWindow = params.get('window') === 'lan'
   if (isLanWindow) {
     return <LanShareWindow />
@@ -548,12 +483,8 @@ export default function App() {
       <AccountsProvider>
         <ModpackInstallProvider>
           <ToastContext.Provider value={toastState}>
-            <AppBackground bgId={bgId} customBgPath={customBgPath} />
-            {!splashDone && (
-              <SplashScreen onDone={() => setSplashDone(true)} />
-            )}
             <AppInner />
-            {splashDone && initialSetupChecked && initialSetupOpen && (
+            {initialSetupChecked && initialSetupOpen && (
               <InitialSetup
                 initialSettings={initialSettings || {}}
                 onComplete={(settings) => {

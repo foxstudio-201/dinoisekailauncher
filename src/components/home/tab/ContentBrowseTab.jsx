@@ -509,7 +509,7 @@ export default function ContentBrowseTab({ profile, accountId, type }) {
       ) : (
       <div className="flex flex-col h-full">
           {installing.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-orange-500/10 border-b border-orange-500/20 text-xs text-orange-400">
+            <div className="flex items-center gap-2 px-3 py-2 bg-violet-500/10 border-b border-violet-500/20 text-xs text-violet-400">
               {Icons.spin}
               <span>{t(`profileSettings.${type === 'shader' ? 'shaders' : type === 'resourcepack' ? 'resourcepacks' : 'mods'}.installing`, { count: installing.length })}</span>
             </div>
@@ -527,7 +527,7 @@ export default function ContentBrowseTab({ profile, accountId, type }) {
                 {filtered.map(item => (
                   <div key={item.key}
                     onClick={() => openDetail(item)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all group cursor-pointer ${selected?.key === item.key ? 'bg-orange-500/10 border-orange-500/30' : item.enabled ? 'bg-white/3 border-white/5 hover:bg-white/5 hover:border-white/8' : 'bg-white/1 border-white/3 opacity-50 hover:opacity-70'}`}>
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all group cursor-pointer ${selected?.key === item.key ? 'bg-violet-500/10 border-violet-500/30' : item.enabled ? 'bg-white/3 border-white/5 hover:bg-white/5 hover:border-white/8' : 'bg-white/1 border-white/3 opacity-50 hover:opacity-70'}`}>
                     <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-white/5 border border-white/8 flex items-center justify-center">
                       {item.iconUrl ? <img src={item.iconUrl} alt="" className="w-full h-full object-cover" /> : <span className="text-white/20 scale-90">{cfg.icon}</span>}
                     </div>
@@ -541,13 +541,13 @@ export default function ContentBrowseTab({ profile, accountId, type }) {
                         {item.files.length > 1 && (
                           <>
                             <span className="text-[10px] text-white/20">·</span>
-                            <span className="text-[10px] text-orange-400/70 font-semibold">{item.files.length} phiên bản</span>
+                            <span className="text-[10px] text-violet-400/70 font-semibold">{item.files.length} phiên bản</span>
                           </>
                         )}
                         {!item.enabled && (
                           <>
                             <span className="text-[10px] text-white/20">·</span>
-                            <span className="text-[10px] text-orange-400/60">{t('profileSettings.mods.disabled')}</span>
+                            <span className="text-[10px] text-violet-400/60">{t('profileSettings.mods.disabled')}</span>
                           </>
                         )}
                       </div>
@@ -588,7 +588,7 @@ export default function ContentBrowseTab({ profile, accountId, type }) {
                             <button
                               onClick={() => handleToggle(item)}
                               disabled={toggling === item.key}
-                              className={`relative w-9 h-5 rounded-full transition-all flex-shrink-0 ${item.enabled ? 'bg-orange-500' : 'bg-white/10'} disabled:opacity-50`}
+                              className={`relative w-9 h-5 rounded-full transition-all flex-shrink-0 ${item.enabled ? 'bg-violet-500' : 'bg-white/10'} disabled:opacity-50`}
                               title={item.enabled ? t('profileSettings.mods.disableMod') : t('profileSettings.mods.enableMod')}
                             >
                               <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${item.enabled ? 'left-[18px]' : 'left-0.5'}`} />

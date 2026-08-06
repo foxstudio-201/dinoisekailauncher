@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo   VoxelXLauncher - Windows Build Script
+echo   Dino Isekai - Windows Build Script
 echo ============================================
 echo.
 

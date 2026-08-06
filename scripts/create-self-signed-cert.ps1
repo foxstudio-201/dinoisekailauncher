@@ -2,10 +2,10 @@
 # Chạy bằng PowerShell với quyền Administrator
 
 param(
-    [string]$CertName = "VoxelXClient",
+    [string]$CertName = "Dino Isekai",
     [string]$Publisher = "FoxStudio",
     [string]$OutputPath = "$PSScriptRoot\..\certs",
-    [string]$Password = "VoxelXClient2024"
+    [string]$Password = "Dino Isekai2024"
 )
 
 # Tạo thư mục certs nếu chưa có

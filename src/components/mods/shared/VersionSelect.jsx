@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -54,7 +54,7 @@ export default function VersionSelect({ versions, value, onChange, loading, plac
   }, [open, selected])
 
   function getTypeColor(type) {
-    if (type === 'release') return 'bg-orange-500/15 text-orange-400'
+    if (type === 'release') return 'bg-violet-500/15 text-violet-400'
     if (type === 'beta')    return 'bg-yellow-500/15 text-yellow-400'
     return 'bg-white/8 text-white/40'
   }
@@ -68,7 +68,7 @@ export default function VersionSelect({ versions, value, onChange, loading, plac
         className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs transition-all"
         style={{
           background: 'rgba(255,255,255,0.05)',
-          border: `1px solid ${open ? 'rgba(251,146,60,0.4)' : 'rgba(255,255,255,0.1)'}`,
+          border: `1px solid ${open ? 'rgba(167,139,250,0.4)' : 'rgba(255,255,255,0.1)'}`,
           color: selected ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)',
         }}
       >
@@ -125,8 +125,8 @@ export default function VersionSelect({ versions, value, onChange, loading, plac
                   onClick={() => { onChange(v); setOpen(false) }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all duration-100"
                   style={{
-                    background: isSelected ? 'rgba(251,146,60,0.1)' : 'transparent',
-                    color: isSelected ? '#fb923c' : 'rgba(255,255,255,0.65)',
+                    background: isSelected ? 'rgba(167,139,250,0.1)' : 'transparent',
+                    color: isSelected ? '#a78bfa' : 'rgba(255,255,255,0.65)',
                   }}
                   onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                   onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
@@ -148,7 +148,7 @@ export default function VersionSelect({ versions, value, onChange, loading, plac
 
                   {}
                   {isSelected && (
-                    <svg className="w-3 h-3 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                     </svg>
                   )}

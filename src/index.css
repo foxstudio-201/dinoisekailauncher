@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -44,7 +44,7 @@
   border-radius: 99px !important;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #fb923c !important;
+  background: #a78bfa !important;
 }
 ::-webkit-scrollbar-corner {
   background: transparent !important;
@@ -170,15 +170,15 @@
 .md-p  { font-size: 0.8125rem; color: rgba(255,255,255,0.6); line-height: 1.65; margin: 0.35rem 0; }
 .md-strong { color: rgba(255,255,255,0.85); font-weight: 600; }
 .md-em     { color: rgba(255,255,255,0.7); font-style: italic; }
-.md-link   { color: #fb923c; text-decoration: underline; text-underline-offset: 2px; }
+.md-link   { color: #a78bfa; text-decoration: underline; text-underline-offset: 2px; }
 .md-link:hover { color: #fdba74; }
 .md-ul     { list-style: disc; padding-left: 1.25rem; margin: 0.4rem 0; }
 .md-li     { font-size: 0.8125rem; color: rgba(255,255,255,0.6); line-height: 1.6; margin: 0.15rem 0; }
-.md-blockquote { border-left: 3px solid rgba(251,146,60,0.4); padding-left: 0.75rem; color: rgba(255,255,255,0.45); font-style: italic; margin: 0.5rem 0; }
+.md-blockquote { border-left: 3px solid rgba(167,139,250,0.4); padding-left: 0.75rem; color: rgba(255,255,255,0.45); font-style: italic; margin: 0.5rem 0; }
 .md-hr     { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 0.75rem 0; }
 .md-pre    { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem 1rem; margin: 0.5rem 0; overflow-x: auto; }
 .md-code   { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #fdba74; white-space: pre; }
-.md-inline-code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #fdba74; background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.2); border-radius: 4px; padding: 0.1rem 0.35rem; }
+.md-inline-code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #fdba74; background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.2); border-radius: 4px; padding: 0.1rem 0.35rem; }
 .md-img    { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
 
 
@@ -190,18 +190,18 @@
 .md-content p { margin: 0.4rem 0; color: rgba(255,255,255,0.6); }
 .md-content strong, .md-content b { color: rgba(255,255,255,0.85); font-weight: 600; }
 .md-content em, .md-content i { color: rgba(255,255,255,0.65); font-style: italic; }
-.md-content a { color: #fb923c; text-decoration: underline; text-underline-offset: 2px; }
+.md-content a { color: #a78bfa; text-decoration: underline; text-underline-offset: 2px; }
 .md-content a:hover { color: #fdba74; }
 .md-content ul, .md-content ol { padding-left: 1.25rem; margin: 0.4rem 0; }
 .md-content ul { list-style: disc; }
 .md-content ol { list-style: decimal; }
 .md-content li { margin: 0.15rem 0; color: rgba(255,255,255,0.6); }
-.md-content blockquote { border-left: 3px solid rgba(251,146,60,0.4); padding-left: 0.75rem; color: rgba(255,255,255,0.45); font-style: italic; margin: 0.5rem 0; }
+.md-content blockquote { border-left: 3px solid rgba(167,139,250,0.4); padding-left: 0.75rem; color: rgba(255,255,255,0.45); font-style: italic; margin: 0.5rem 0; }
 .md-content hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 0.75rem 0; }
 .md-content pre { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem 1rem; margin: 0.5rem 0; overflow-x: auto; }
 .md-content code { font-family: 'Consolas','Monaco',monospace; font-size: 0.75rem; color: #fdba74; }
 .md-content pre code { background: none; border: none; padding: 0; white-space: pre; }
-.md-content :not(pre) > code { background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.2); border-radius: 4px; padding: 0.1rem 0.35rem; }
+.md-content :not(pre) > code { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.2); border-radius: 4px; padding: 0.1rem 0.35rem; }
 .md-content img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; display: block; }
 .md-content table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.75rem; }
 .md-content th { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); font-weight: 600; padding: 0.4rem 0.6rem; border: 1px solid rgba(255,255,255,0.08); text-align: left; }
@@ -291,3 +291,37 @@
   75%  { transform: translateY(-90px) translateX(8px); opacity: 0.3; }
   100% { transform: translateY(-120px) translateX(0); opacity: 0; }
 }
+
+.page-enter { animation: page-in .45s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes page-in {
+  from { opacity: 0; transform: translateX(90px) scale(.94); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.page-exit { animation: page-out .4s ease both; }
+@keyframes page-out {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(-110px) scale(1.09); }
+}
+
+.page-enter-f { animation: page-in-f .45s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes page-in-f {
+  from { opacity: 0; transform: translateX(90px) scale(.94); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.page-enter-b { animation: page-in-b .45s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes page-in-b {
+  from { opacity: 0; transform: translateX(-90px) scale(.94); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.page-exit-f { animation: page-out-f .4s ease both; }
+@keyframes page-out-f {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(-110px) scale(1.09); }
+}
+.page-exit-b { animation: page-out-b .4s ease both; }
+@keyframes page-out-b {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(110px) scale(1.09); }
+}
+
+.page-hidden { opacity: 0; visibility: hidden; pointer-events: none; }

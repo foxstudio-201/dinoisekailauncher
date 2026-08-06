@@ -1,5 +1,5 @@
 ﻿/**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -62,20 +62,8 @@ export function AccountsProvider({ children }) {
   }, [])
 
   const addAccount = useCallback(async (account) => {
-
-    if (account._msAlreadySaved) {
-      const data = isElectron
-        ? await window.electronAPI.getAccounts()
-        : localFallback.get()
-      setAccounts(data.accounts || [])
-      setSelectedId(data.selectedId ?? null)
-      return { ok: true, data }
-    }
-
     // Tính UUID local trước (offline UUID chuẩn Minecraft)
-    const localUuid = ['offline', 'discord'].includes(account.type)
-      ? offlineUUID(account.username)
-      : crypto.randomUUID()
+    const localUuid = offlineUUID(account.username)
 
     const newAccount = {
       id: localUuid,
@@ -99,23 +87,6 @@ export function AccountsProvider({ children }) {
     if (result.error) return result
     setAccounts(result.data.accounts || [])
     setSelectedId(result.data.selectedId ?? null)
-    return result
-  }, [])
-
-  const updateAccount = useCallback(async (id, patch) => {
-    let result
-    if (isElectron) {
-      result = await window.electronAPI.updateAccount(id, patch)
-    } else {
-      const data = localFallback.get()
-      const idx = data.accounts.findIndex(a => a.id === id)
-      if (idx === -1) return { error: 'Tài khoản không tồn tại' }
-      data.accounts[idx] = { ...data.accounts[idx], ...patch }
-      localFallback.set(data)
-      result = { ok: true, data }
-    }
-    if (result.error) return result
-    setAccounts(result.data.accounts || [])
     return result
   }, [])
 
@@ -152,7 +123,7 @@ export function AccountsProvider({ children }) {
   return (
     <AccountsContext.Provider value={{
       accounts, selectedId, selectedAccount, loading,
-      addAccount, updateAccount, removeAccount, selectAccount,
+      addAccount, removeAccount, selectAccount,
     }}>
       {children}
     </AccountsContext.Provider>

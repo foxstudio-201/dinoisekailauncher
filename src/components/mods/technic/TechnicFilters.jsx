@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -43,17 +43,17 @@ const SORT_OPTIONS = [
 
 const LOADER_OPTIONS = [
   { value: 'fabric',   label: 'Fabric',   color: 'text-purple-400' },
-  { value: 'forge',    label: 'Forge',    color: 'text-orange-400' },
+  { value: 'forge',    label: 'Forge',    color: 'text-violet-400' },
   { value: 'neoforge', label: 'NeoForge', color: 'text-rose-400' },
   { value: 'quilt',    label: 'Quilt',    color: 'text-blue-400' },
-  { value: 'vanilla',  label: 'Vanilla',  color: 'text-orange-400' },
+  { value: 'vanilla',  label: 'Vanilla',  color: 'text-violet-400' },
 ]
 
 function CheckItem({ label, checked, onChange, color }) {
   return (
     <label className="flex items-center gap-2 cursor-pointer group py-1 px-1 rounded-lg transition-colors hover:bg-white/4" onClick={onChange}>
       <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 transition-all ${
-        checked ? 'bg-orange-500' : 'bg-white/8 border border-white/15 group-hover:border-white/30'
+        checked ? 'bg-violet-500' : 'bg-white/8 border border-white/15 group-hover:border-white/30'
       }`}>
         {checked && <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
       </div>
@@ -108,7 +108,7 @@ function VersionGroupDropdown({ value, onChange, groups }) {
         onClick={handleToggle}
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
           value !== 'all'
-            ? 'bg-orange-500/15 border border-orange-500/30 text-orange-400'
+            ? 'bg-violet-500/15 border border-violet-500/30 text-violet-400'
             : 'bg-white/5 border border-white/10 text-white/50 hover:text-white/70 hover:bg-white/8'
         }`}
       >
@@ -147,15 +147,15 @@ function VersionGroupDropdown({ value, onChange, groups }) {
               onClick={() => { onChange('all'); setOpen(false) }}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-all"
               style={{
-                background: value === 'all' ? 'rgba(251,146,60,0.1)' : 'transparent',
-                color: value === 'all' ? '#fb923c' : 'rgba(255,255,255,0.65)',
+                background: value === 'all' ? 'rgba(167,139,250,0.1)' : 'transparent',
+                color: value === 'all' ? '#a78bfa' : 'rgba(255,255,255,0.65)',
               }}
               onMouseEnter={e => { if (value !== 'all') e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
               onMouseLeave={e => { if (value !== 'all') e.currentTarget.style.background = 'transparent' }}
             >
               <span className="w-2 h-2 rounded-full bg-white/30 flex-shrink-0" />
               <span className="text-white/60">All versions</span>
-              {value === 'all' && <svg className="w-3 h-3 ml-auto text-orange-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
+              {value === 'all' && <svg className="w-3 h-3 ml-auto text-violet-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
             </button>
 
             {}
@@ -169,18 +169,18 @@ function VersionGroupDropdown({ value, onChange, groups }) {
                 onClick={() => { onChange(group.key); setOpen(false) }}
                 className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-all"
                 style={{
-                  background: value === group.key ? 'rgba(251,146,60,0.1)' : 'transparent',
-                  color: value === group.key ? '#fb923c' : 'rgba(255,255,255,0.65)',
+                  background: value === group.key ? 'rgba(167,139,250,0.1)' : 'transparent',
+                  color: value === group.key ? '#a78bfa' : 'rgba(255,255,255,0.65)',
                 }}
                 onMouseEnter={e => { if (value !== group.key) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                 onMouseLeave={e => { if (value !== group.key) e.currentTarget.style.background = 'transparent' }}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-orange-400/60 flex-shrink-0" />
+                  <span className="w-2 h-2 rounded-full bg-violet-400/60 flex-shrink-0" />
                   <span className="font-semibold">{group.key}.x</span>
                 </div>
                 <span className="text-[10px] text-white/30 flex-shrink-0">{group.count}</span>
-                {value === group.key && <svg className="w-3 h-3 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
+                {value === group.key && <svg className="w-3 h-3 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
               </button>
             ))}
           </div>
@@ -283,7 +283,7 @@ export default function TechnicFilters({ filters, onChange }) {
               <button key={opt.value} onClick={() => onChange({ sortBy: opt.value })}
                 className={`text-left text-sm px-2 py-1 rounded-lg transition-all ${
                   filters.sortBy === opt.value
-                    ? 'bg-orange-500/15 text-orange-400 font-semibold'
+                    ? 'bg-violet-500/15 text-violet-400 font-semibold'
                     : 'text-white/45 hover:text-white/75 hover:bg-white/5'
                 }`}>
                 {opt.label}
@@ -332,7 +332,7 @@ export default function TechnicFilters({ filters, onChange }) {
               </svg>
               <input type="text" value={versionSearch} onChange={e => setVersionSearch(e.target.value)}
                 placeholder="Search versions..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-orange-500/40" />
+                className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-violet-500/40" />
             </div>
 
             {}

@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -54,7 +54,7 @@ export default function ModrinthSubTabs({ active, onChange }) {
           onClick={() => onChange(id)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 ${
             active === id
-              ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25'
+              ? 'bg-violet-500/15 text-violet-400 border border-violet-500/25'
               : 'text-white/35 hover:text-white/60 hover:bg-white/5 border border-transparent'
           }`}
         >

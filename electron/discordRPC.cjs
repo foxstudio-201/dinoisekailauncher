@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -39,10 +39,10 @@ let retryTimer = null
 let intentionalDisconnect = false
 
 const DEFAULT_ACTIVITY = {
-  details:      'Martian Launcher',
+  details:      'Dino Isekai',
   state:        'Đang ở menu chính',
   largeImageKey:  'voxelx_logo',
-  largeImageText: 'Martian Launcher',
+  largeImageText: 'Dino Isekai',
   instance: false,
 }
 
@@ -111,11 +111,11 @@ function disconnect() {
 
 const PRESETS = {
   menu: () => setActivity({
-    details: 'VoxelXLauncher',
+    details: 'Dino Isekai',
     state:   'Đang ở menu chính',
   }),
   browsing: (page) => setActivity({
-    details: 'VoxelXLauncher',
+    details: 'Dino Isekai',
     state:   `Đang xem: ${page}`,
   }),
   launching: (version) => setActivity({
@@ -126,7 +126,7 @@ const PRESETS = {
     details: `Đang chơi Minecraft ${version}`,
     state:   profileName ? `${profileName} · ${username}` : (username || 'Đang chơi'),
     largeImageKey: 'voxelx_logo',
-    largeImageText: profileName || 'Martian Launcher',
+    largeImageText: profileName || 'Dino Isekai',
   }),
 }
 

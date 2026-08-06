@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -84,7 +84,7 @@ export default function PlayerHead({ uuid, username, size = 32, customSkinUrl = 
         alignItems: 'center', justifyContent: 'center',
         fontSize: size * 0.42, fontWeight: 700,
         userSelect: 'none',
-        background: 'linear-gradient(135deg, #fb923c, #ea580c)',
+        background: 'linear-gradient(135deg, #a78bfa, #7c3aed)',
         color: '#fff',
       }}
       className={className}

@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -34,9 +34,15 @@ const path  = require('path')
 const fs    = require('fs')
 const { app } = require('electron')
 
-const DATA_DIR      = path.join(app.getPath('appData'), '.VoxelXClient')
+const DATA_DIR      = path.join(app.getPath('appData'), '.DinoIsekai')
 const PROFILES_FILE = path.join(DATA_DIR, 'profiles.json')
 const INSTANCES_DIR = path.join(DATA_DIR, 'instances')
+
+// ── Dino Isekai chỉ chạy đúng 1 profile: Forge 1.20.1 ────────────────────────
+const FIXED_GAME_VERSION = '1.20.1'
+const FIXED_FORGE_VERSION = '47.2.0'
+const FIXED_LOADER = 'forge'
+const FIXED_PROFILE_NAME = 'Dino Isekai'
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -110,9 +116,55 @@ function validateId(id) {
 
 function validateProfile(profile) {
   if (!profile || typeof profile !== 'object') return 'Dữ liệu không hợp lệ'
-  if (!['vanilla', 'fabric', 'forge', 'neoforge'].includes(profile.loader)) return 'Loader không hợp lệ'
+  if (profile.loader && profile.loader !== FIXED_LOADER) return 'Chỉ hỗ trợ loader Forge'
   if (typeof profile.gameVersion !== 'string') return 'Phiên bản game không hợp lệ'
   return null
+}
+
+// Tạo profile mặc định duy nhất của Dino Isekai
+function createDefaultProfile() {
+  const existing = readProfiles().profiles.map(p => p.instancePath).filter(Boolean)
+  const instancePath = uniqueInstanceDir(FIXED_PROFILE_NAME, existing)
+  ensureDir(instancePath)
+  return {
+    id:           generateUUID(),
+    name:         FIXED_PROFILE_NAME,
+    loader:       FIXED_LOADER,
+    gameVersion:  FIXED_GAME_VERSION,
+    loaderVersion: FIXED_FORGE_VERSION,
+    jvmArgs:      '',
+    instancePath,
+    isCustomPath: false,
+    createdAt:    new Date().toISOString(),
+    lastPlayed:   null,
+    sizeBytes:    0,
+    importSource:  null,
+    importIconUrl: null,
+    importBgUrl:   null,
+  }
+}
+
+// Ép dữ liệu profiles về đúng 1 profile Forge 1.20.1 duy nhất
+function normalizeSingleForgeProfile(data) {
+  if (!data || typeof data !== 'object') data = { profiles: [], selectedProfileId: null }
+  if (!Array.isArray(data.profiles)) data.profiles = []
+  const pick = data.profiles.find(p => p && p.id === data.selectedProfileId) || data.profiles[0]
+  let changed = false
+  if (!pick) {
+    const p = createDefaultProfile()
+    data.profiles = [p]
+    data.selectedProfileId = p.id
+    return { changed: true, data }
+  }
+  data.profiles = [pick]
+  data.selectedProfileId = pick.id
+  if (pick.loader !== FIXED_LOADER)      { pick.loader = FIXED_LOADER; changed = true }
+  if (pick.gameVersion !== FIXED_GAME_VERSION) { pick.gameVersion = FIXED_GAME_VERSION; changed = true }
+  if (!pick.loaderVersion || pick.loaderVersion !== FIXED_FORGE_VERSION) {
+    pick.loaderVersion = FIXED_FORGE_VERSION
+    changed = true
+  }
+  return { changed, data }
 }
 
 // ── Dir size cache ────────────────────────────────────────────────────────────
@@ -212,12 +264,13 @@ function getGameDir(profile, accountId) {
 function registerProfileHandlers(getTrustedWindow) {
   ipcMain.handle('profiles:get', (e) => {
     if (!getTrustedWindow(e)) return { profiles: [], selectedProfileId: null }
-    const data = readProfiles()
-    data.profiles = data.profiles.map(p => ({
+    const norm = normalizeSingleForgeProfile(readProfiles())
+    if (norm.changed) writeProfiles(norm.data)
+    norm.data.profiles = norm.data.profiles.map(p => ({
       ...p,
       sizeBytes: getDirSizeLazy(p.instancePath),
     }))
-    return data
+    return norm.data
   })
 
   ipcMain.handle('profiles:create', (e, profileData) => {
@@ -226,17 +279,15 @@ function registerProfileHandlers(getTrustedWindow) {
     if (err) return { error: err }
     const id = generateUUID()
     const now = new Date().toISOString()
-    const loaderLabel = profileData.loader.charAt(0).toUpperCase() + profileData.loader.slice(1)
     const name = (profileData.name && profileData.name.trim())
       ? profileData.name.trim()
-      : `${loaderLabel} ${profileData.gameVersion}`
+      : FIXED_PROFILE_NAME
     let instancePath = profileData.instancePath
     let isCustomPath = false
     if (instancePath && instancePath.trim()) {
       isCustomPath = true
       instancePath = instancePath.trim()
     } else {
-      // Mới: folder theo tên profile (hỗ trợ cả profile cũ dạng UUID vì vẫn đọc instancePath từ profiles.json)
       const existing = readProfiles().profiles.map(p => p.instancePath).filter(Boolean)
       instancePath = uniqueInstanceDir(name, existing)
       isCustomPath = false
@@ -249,9 +300,9 @@ function registerProfileHandlers(getTrustedWindow) {
     const profile = {
       id,
       name,
-      loader:        profileData.loader,
-      gameVersion:   profileData.gameVersion,
-      loaderVersion: profileData.loaderVersion || '',
+      loader:        FIXED_LOADER,
+      gameVersion:   FIXED_GAME_VERSION,
+      loaderVersion: FIXED_FORGE_VERSION,
       jvmArgs:       '',
       instancePath,
       isCustomPath,
@@ -353,7 +404,7 @@ function registerProfileContentHandlers(getTrustedWindow) {
   function httpsGet(url) {
     return new Promise((resolve, reject) => {
       https.get(url, {
-        headers: { 'User-Agent': 'VoxelXLauncher/1.0' },
+        headers: { 'User-Agent': 'DinoIsekai/1.0' },
         timeout: 8000,
       }, (res) => {
         let body = ''
@@ -531,7 +582,7 @@ function registerProfileContentHandlers(getTrustedWindow) {
   function httpsGetStatus(url) {
     return new Promise((resolve) => {
       https.get(url, {
-        headers: { 'User-Agent': 'VoxelXLauncher/1.0' },
+        headers: { 'User-Agent': 'DinoIsekai/1.0' },
         timeout: 8000,
       }, (res) => {
         let body = ''
@@ -1231,5 +1282,10 @@ function registerJavaDistroHandlers(getTrustedWindow) {
 module.exports = { 
   registerProfileHandlers, 
   registerProfileContentHandlers, 
-  registerJavaDistroHandlers 
+  registerJavaDistroHandlers,
+  normalizeSingleForgeProfile,
+  FIXED_GAME_VERSION,
+  FIXED_FORGE_VERSION,
+  FIXED_LOADER,
+  FIXED_PROFILE_NAME
 }

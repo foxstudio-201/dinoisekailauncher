@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -43,7 +43,7 @@ function fetchCf(endpoint) {
     function doGet(u) {
       const client = u.startsWith('https') ? https : http
       const req = client.get(u, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'VoxelXLauncher/1.0' },
+        headers: { 'Accept': 'application/json', 'User-Agent': 'DinoIsekai/1.0' },
         timeout: 15000,
       }, (res) => {
         // Follow redirects
@@ -310,7 +310,7 @@ async function installVersion(opts, onProgress) {
   await new Promise((resolve, reject) => {
     function doGet(url) {
       const client = url.startsWith('https') ? https : http
-      const req = client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' }, timeout: 60000 }, (res) => {
+      const req = client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' }, timeout: 60000 }, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           res.resume()
           return doGet(res.headers.location)
@@ -375,7 +375,7 @@ async function installVersion(opts, onProgress) {
             await new Promise((resolve, reject) => {
               function doGetDep(url) {
                 const client = url.startsWith('https') ? https : http
-                client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' }, timeout: 60000 }, (res) => {
+                client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' }, timeout: 60000 }, (res) => {
                   if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                     res.resume()
                     return doGetDep(res.headers.location)

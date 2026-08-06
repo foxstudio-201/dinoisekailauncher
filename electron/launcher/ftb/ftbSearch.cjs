@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -35,7 +35,7 @@ const https = require('https')
 const http  = require('http')
 
 const BASE = 'https://api.modpacks.ch/public'
-const UA   = 'VoxelXLauncher/1.0'
+const UA   = 'DinoIsekai/1.0'
 
 const packCache = new Map()
 

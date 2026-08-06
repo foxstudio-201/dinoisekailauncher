@@ -1,11 +1,11 @@
 # Maintainer: FoxStudio <contact@foxstudio.dev>
 # Local build from dist-electron/linux-unpacked/
-pkgname=voxelxlauncher-local
-_appname="VoxelXLauncher"
-_binname=voxelxlauncher
-pkgver=1.5.17
-pkgrel=1
-pkgdesc="Martian Launcher - Minecraft Launcher by FoxStudio (local build)"
+pkgname=dino-isekai-local
+_appname="Dino Isekai"
+_binname=dino-isekai
+pkgver=0.1.0
+pkgrel=39
+pkgdesc="Dino Isekai - Minecraft Launcher by FoxStudio (local build)"
 arch=('x86_64')
 url="https://github.com/foxstudio-201/VoxelXClient"
 license=('MIT')
@@ -15,11 +15,12 @@ provides=("${_binname}")
 conflicts=("${_binname}")
 options=('!strip' '!debug')
 
-source=("linux-unpacked.tar.xz")
-sha256sums=('216ce73467c4f49eae90921511aef871da0f2ed78e569568169a9a45d32565f4')
+source=("linux-unpacked.tar.xz" "dino-isekai.png")
+sha256sums=('SKIP' 'SKIP')
 
 prepare() {
   cd "${srcdir}"
+  rm -rf linux-unpacked
   tar -xf linux-unpacked.tar.xz
 }
 
@@ -49,6 +50,6 @@ StartupWMClass=${_appname}
 EOF
 
   install -d "${pkgdir}/usr/share/icons/hicolor/512x512/apps"
-  install -m 644 "${srcdir}/../../public/icon.png" \
-    "${pkgdir}/usr/share/icons/hicolor/512x512/apps/${_binname}.png" 2>/dev/null || true
+  install -m 644 "${srcdir}/dino-isekai.png" \
+    "${pkgdir}/usr/share/icons/hicolor/512x512/apps/${_binname}.png"
 }

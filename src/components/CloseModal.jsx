@@ -56,7 +56,7 @@ export default function CloseModal({ onClose }) {
           <label className="flex items-center gap-2 cursor-pointer">
             <div
               className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${
-                remember ? 'bg-orange-500 border-orange-500' : 'border-white/20'
+                remember ? 'bg-violet-500 border-violet-500' : 'border-white/20'
               }`}
               onClick={() => setRemember(!remember)}
             >

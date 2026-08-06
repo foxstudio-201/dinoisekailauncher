@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -58,10 +58,10 @@ const ICONS = {
 
 const STYLES = {
   success: {
-    icon:    'text-orange-400',
-    iconBg:  'bg-orange-500/15',
-    border:  'border-orange-500/25',
-    bar:     'bg-orange-500',
+    icon:    'text-violet-400',
+    iconBg:  'bg-violet-500/15',
+    border:  'border-violet-500/25',
+    bar:     'bg-violet-500',
   },
   error: {
     icon:    'text-red-400',

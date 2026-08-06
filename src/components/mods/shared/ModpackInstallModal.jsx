@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -40,13 +40,13 @@ const isElectron = typeof window !== 'undefined' && window.electronAPI
 const MINIMIZED_LEFT = 80
 
 const SOURCE_META = {
-  modrinth:   { label: 'Modrinth',   color: '#f97316', icon: modrinthIcon },
-  curseforge: { label: 'CurseForge', color: '#f97316', icon: curseforgeIcon },
+  modrinth:   { label: 'Modrinth',   color: '#8b5cf6', icon: modrinthIcon },
+  curseforge: { label: 'CurseForge', color: '#8b5cf6', icon: curseforgeIcon },
   technic:    { label: 'Technic',    color: '#3b82f6', icon: technicIcon },
 }
 
 const VERSION_TYPE_STYLE = {
-  release: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+  release: 'bg-violet-500/15 text-violet-400 border-violet-500/25',
   beta:    'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
   alpha:   'bg-red-500/15 text-red-400 border-red-500/25',
 }
@@ -154,7 +154,7 @@ export default function ModpackInstallModal({ project, version, source, onClose 
           bottom: 20,
           left: MINIMIZED_LEFT,
           background: 'rgba(14,14,14,0.98)',
-          border: `1px solid ${isError ? '#ef444455' : isDone ? '#f9731655' : src.color + '55'}`,
+          border: `1px solid ${isError ? '#ef444455' : isDone ? '#8b5cf655' : src.color + '55'}`,
           minWidth: 260,
           maxWidth: 340,
         }}
@@ -181,7 +181,7 @@ export default function ModpackInstallModal({ project, version, source, onClose 
                 />
               </div>
               <span className="text-[10px] font-mono flex-shrink-0"
-                style={{ color: isError ? '#f87171' : isDone ? '#fb923c' : src.color }}>
+                style={{ color: isError ? '#f87171' : isDone ? '#a78bfa' : src.color }}>
                 {pct}%
               </span>
             </div>
@@ -201,7 +201,7 @@ export default function ModpackInstallModal({ project, version, source, onClose 
             </svg>
           )}
           {isDone && (
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-orange-400">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-violet-400">
               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
             </svg>
           )}
@@ -303,7 +303,7 @@ export default function ModpackInstallModal({ project, version, source, onClose 
           {!isRunning && !isDone && !isError && (
             <div className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-xs text-white/40"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <DownloadSimple size={14} weight="duotone" className="flex-shrink-0 mt-0.5 text-orange-400/60" />
+              <DownloadSimple size={14} weight="duotone" className="flex-shrink-0 mt-0.5 text-violet-400/60" />
               <p>Modpack sẽ được tải xuống và tự động tạo profile mới. Bạn có thể chơi ngay sau khi hoàn tất.</p>
             </div>
           )}
@@ -314,7 +314,7 @@ export default function ModpackInstallModal({ project, version, source, onClose 
               <div className="flex items-center justify-between gap-2 min-h-[20px]">
                 <span className="text-xs text-white/50 truncate flex-1 min-w-0">{progress?.log}</span>
                 <span className="text-xs font-mono font-bold flex-shrink-0 w-10 text-right tabular-nums"
-                  style={{ color: isError ? '#f87171' : isDone ? '#fb923c' : src.color }}>
+                  style={{ color: isError ? '#f87171' : isDone ? '#a78bfa' : src.color }}>
                   {pct}%
                 </span>
               </div>

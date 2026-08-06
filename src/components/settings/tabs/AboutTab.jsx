@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -32,19 +32,18 @@
 import { useState, useEffect } from 'react'
 import { useLang } from '../../../i18n/LangProvider'
 import martianLogo from '../../../assets/martian-logo.png'
-import { Section, SettingRow, Toggle, UpdateChecker } from '../SettingsUI'
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
 
 function VXCLogo({ size = 56 }) {
-  return <img src={martianLogo} alt="Martian" className="rounded-xl" style={{ width: size, height: size }} />
+  return <img src={martianLogo} alt="Dino Isekai" className="rounded-xl" style={{ width: size, height: size }} />
 }
 
 function InfoRow({ label, value, mono = false }) {
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
       <span className="text-xs text-white/40">{label}</span>
-      <span className={`text-xs ${mono ? 'font-mono text-orange-400' : 'text-white/70'}`}>{value}</span>
+      <span className={`text-xs ${mono ? 'font-mono text-violet-400' : 'text-white/70'}`}>{value}</span>
     </div>
   )
 }
@@ -70,7 +69,7 @@ function LinkButton({ href, icon, label }) {
   )
 }
 
-export default function AboutTab({ settings, onChange }) {
+export default function AboutTab() {
   const { t } = useLang()
   const [version, setVersion] = useState('')
   const [hwid, setHwid]       = useState('')
@@ -96,23 +95,23 @@ export default function AboutTab({ settings, onChange }) {
           className="absolute inset-0 opacity-10 pointer-events-none"
           style={{
             backgroundImage: `
-              linear-gradient(rgba(251,146,60,0.4) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(251,146,60,0.4) 1px, transparent 1px)
+              linear-gradient(rgba(167,139,250,0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(167,139,250,0.4) 1px, transparent 1px)
             `,
             backgroundSize: '20px 20px',
           }}
         />
-        <div className="absolute bottom-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex items-center gap-5">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400/20 to-orange-600/20 border border-orange-500/20 flex items-center justify-center flex-shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-400/20 to-violet-600/20 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
             <VXCLogo size={32} />
           </div>
 
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Martian Launcher</h1>
+            <h1 className="text-xl font-bold text-white tracking-tight">Dino Isekai</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs font-mono text-orange-400 bg-orange-500/15 px-2 py-0.5 rounded-md border border-orange-500/20">
+              <span className="text-xs font-mono text-violet-400 bg-violet-500/15 px-2 py-0.5 rounded-md border border-violet-500/20">
                 v{version || '...'}
               </span>
               <span className="text-xs text-white/30">by FoxStudio</span>
@@ -133,23 +132,6 @@ export default function AboutTab({ settings, onChange }) {
         </div>
       </div>
 
-      {}
-      <Section title={t('settings.launcher.update')}>
-        <SettingRow
-          label={t('settings.launcher.autoCheckUpdate')}
-          description={t('settings.launcher.autoCheckUpdateDesc')}
-        >
-          <Toggle
-            checked={settings?.autoCheckUpdate ?? true}
-            onChange={v => onChange?.({ autoCheckUpdate: v })}
-          />
-        </SettingRow>
-        <div className="py-1">
-          <UpdateChecker />
-        </div>
-      </Section>
-
-      {}
       <div className="mb-6">
         <p className="text-xs uppercase tracking-widest text-white/40 mb-2 px-1">{t('settings.about.links')}</p>
         <div className="flex flex-col gap-2">

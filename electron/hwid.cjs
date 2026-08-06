@@ -12,7 +12,7 @@ try {
   APP_ID     = s.appId
 } catch {
   APP_SECRET = crypto.randomBytes(32).toString('hex')
-  APP_ID     = 'com.VoxelXClient.launcher'
+  APP_ID     = 'com.dinoisekai.launcher'
 }
 
 function run(cmd) {
@@ -122,7 +122,7 @@ function getMachineEntropy() {
 
 function getFallbackId() {
   const dataDir  = app.getPath('appData')
-  const vxcDir   = path.join(dataDir, '.VoxelXClient')
+  const vxcDir   = path.join(dataDir, '.DinoIsekai')
   const hwidFile = path.join(vxcDir, 'hwid.dat')
 
   const entropy = getMachineEntropy()

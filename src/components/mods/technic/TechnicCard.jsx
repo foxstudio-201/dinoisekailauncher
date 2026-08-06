@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -42,10 +42,10 @@ function formatNumber(n) {
 
 const CATEGORY_COLORS = {
   fabric:   'bg-purple-500/20 text-purple-300',
-  forge:    'bg-orange-500/20 text-orange-300',
+  forge:    'bg-violet-500/20 text-violet-300',
   neoforge: 'bg-rose-500/20 text-rose-300',
   quilt:    'bg-blue-500/20 text-blue-300',
-  vanilla:  'bg-orange-500/20 text-orange-300',
+  vanilla:  'bg-violet-500/20 text-violet-300',
 }
 
 function GridCard({ project, onClick }) {
@@ -62,7 +62,7 @@ function GridCard({ project, onClick }) {
         minHeight: 110,
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(251,146,60,0.35)'
+        e.currentTarget.style.borderColor = 'rgba(167,139,250,0.35)'
         e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.5)'
       }}
       onMouseLeave={e => {
@@ -118,7 +118,7 @@ function GridCard({ project, onClick }) {
         {}
         <div className="flex-1 min-w-0 flex flex-col justify-between">
           <div>
-            <p className="text-white text-sm font-semibold leading-snug line-clamp-1 mb-1 group-hover:text-orange-400 transition-colors">
+            <p className="text-white text-sm font-semibold leading-snug line-clamp-1 mb-1 group-hover:text-violet-400 transition-colors">
               {project.title}
             </p>
             <p className="text-white/55 text-xs leading-relaxed line-clamp-2">
@@ -139,7 +139,7 @@ function GridCard({ project, onClick }) {
             {(project.downloads > 0 || project.follows > 0) && (
               <div className="flex items-center gap-2 text-[10px] flex-shrink-0">
                 {project.downloads > 0 && (
-                  <span className="flex items-center gap-1 text-orange-400/70">
+                  <span className="flex items-center gap-1 text-violet-400/70">
                     <DownloadSimple size={12} weight="duotone" />
                     {formatNumber(project.downloads)}
                   </span>
@@ -170,8 +170,8 @@ function ListCard({ project, onClick }) {
       className="group w-full text-left flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-150"
       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = 'rgba(251,146,60,0.25)'
-        e.currentTarget.style.background = 'rgba(251,146,60,0.04)'
+        e.currentTarget.style.borderColor = 'rgba(167,139,250,0.25)'
+        e.currentTarget.style.background = 'rgba(167,139,250,0.04)'
       }}
       onMouseLeave={e => {
         e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'
@@ -188,7 +188,7 @@ function ListCard({ project, onClick }) {
 
       {}
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-semibold truncate group-hover:text-orange-400 transition-colors mb-0.5">
+        <p className="text-white text-sm font-semibold truncate group-hover:text-violet-400 transition-colors mb-0.5">
           {project.title}
         </p>
         <p className="text-white/45 text-xs truncate mb-1.5">
@@ -207,7 +207,7 @@ function ListCard({ project, onClick }) {
       {(project.downloads > 0 || project.follows > 0) && (
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0 w-16">
           {project.downloads > 0 && (
-            <span className="flex items-center gap-1 text-xs text-orange-400/80">
+            <span className="flex items-center gap-1 text-xs text-violet-400/80">
               <DownloadSimple size={14} weight="duotone" className="flex-shrink-0" />
               {formatNumber(project.downloads)}
             </span>

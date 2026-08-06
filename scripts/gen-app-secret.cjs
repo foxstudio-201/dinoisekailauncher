@@ -10,7 +10,7 @@ if (fs.existsSync(OUT_FILE)) {
 }
 
 const secret = crypto.randomBytes(48).toString('base64url')
-const appId  = 'com.voxelxclient.launcher'
+const appId  = 'com.dinoisekai.launcher'
 
 const mid    = Math.floor(secret.length / 2)
 const part1  = secret.slice(0, mid)

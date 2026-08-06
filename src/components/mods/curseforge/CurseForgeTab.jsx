@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -93,7 +93,7 @@ export default function CurseForgeTab() {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder={`Search ${filters.projectType}s...`}
-              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-orange-500/50 transition-colors"
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-violet-500/50 transition-colors"
             />
           </div>
           <ViewToggle view={view} onChange={setView} />
@@ -107,7 +107,7 @@ export default function CurseForgeTab() {
               <div
                 className="h-full rounded-full"
                 style={{
-                  background: 'linear-gradient(90deg, transparent 0%, #fb923c 40%, #f97316 60%, transparent 100%)',
+                  background: 'linear-gradient(90deg, transparent 0%, #a78bfa 40%, #8b5cf6 60%, transparent 100%)',
                   backgroundSize: '200% 100%',
                   animation: 'shimmer-bar 1.4s linear infinite',
                   width: '100%',

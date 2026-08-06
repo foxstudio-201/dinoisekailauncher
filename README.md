@@ -3,37 +3,33 @@
 <br/>
 
 <!-- Logo -->
-<img src="https://raw.githubusercontent.com/foxstudio-201/VoxelXClient/main/public/icon.png" width="96" height="96" alt="Martian Launcher Logo" />
+<img src="https://raw.githubusercontent.com/foxstudio-201/dinoisekailauncher/main/public/icon.png" width="96" height="96" alt="Dino Isekai Logo" />
 
-<h1>Martian Launcher</h1>
+<h1>Dino Isekai</h1>
 
 <p>
-  <strong>The Ultimate Minecraft Launcher — Martian Launcher</strong>
+  <strong>Dino Isekai — Minecraft Launcher</strong>
   <br/>
-  Manage profiles, install mods, and launch any Minecraft version — all in one place.
+  Forge 1.20.1 · Tự động vào server Dino Isekai · Hiệu ứng sao bay tím huyền bí
 </p>
 
 <p>
-  <a href="https://github.com/foxstudio-201/VoxelXClient/releases"><img src="https://img.shields.io/github/package-json/v/foxstudio-201/VoxelXClient?style=for-the-badge&label=version&labelColor=0a0a0a&color=fb923c" alt="Version" /></a>
-  <a href="https://github.com/foxstudio-201/VoxelXClient/releases"><img src="https://img.shields.io/github/downloads/foxstudio-201/VoxelXClient/total?style=for-the-badge&label=downloads&labelColor=0a0a0a&color=f97316" alt="Downloads" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-f97316?style=for-the-badge&labelColor=0a0a0a" alt="License" /></a>
+  <a href="https://github.com/foxstudio-201/dinoisekailauncher/releases"><img src="https://img.shields.io/github/package-json/v/foxstudio-201/dinoisekailauncher?style=for-the-badge&label=version&labelColor=0a0a0a&color=a78bfa" alt="Version" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-a78bfa?style=for-the-badge&labelColor=0a0a0a" alt="License" /></a>
 </p>
 
 <p>
   <img src="https://img.shields.io/badge/Windows-0078D4?style=flat-square&labelColor=0a0a0a&logo=windows11&logoColor=0078D4" alt="Windows" />
   <img src="https://img.shields.io/badge/Linux-FCC624?style=flat-square&labelColor=0a0a0a&logo=linux&logoColor=FCC624" alt="Linux" />
   <img src="https://img.shields.io/badge/Arch_(AUR)-1793D1?style=flat-square&labelColor=0a0a0a&logo=archlinux&logoColor=1793D1" alt="Arch AUR" />
-  <img src="https://img.shields.io/badge/macOS-white?style=flat-square&labelColor=0a0a0a&logo=apple&logoColor=white" alt="macOS" />
-  <img src="https://img.shields.io/badge/Electron_42-47848F?style=flat-square&labelColor=0a0a0a&logo=electron" alt="Electron" />
+  <img src="https://img.shields.io/badge/Electron-47848F?style=flat-square&labelColor=0a0a0a&logo=electron" alt="Electron" />
   <img src="https://img.shields.io/badge/React_19-61DAFB?style=flat-square&labelColor=0a0a0a&logo=react" alt="React" />
 </p>
 
 <p>
-  <a href="#download"><b>Download</b></a> &nbsp;·&nbsp;
-  <a href="#features">Features</a> &nbsp;·&nbsp;
+  <a href="#features"><b>Features</b></a> &nbsp;·&nbsp;
   <a href="#getting-started">Build from Source</a> &nbsp;·&nbsp;
-  <a href="https://voxelxclient.vercel.app">Website</a> &nbsp;·&nbsp;
-  <a href="https://join.foxstudio.site">Discord</a>
+  <a href="#aur">AUR Local</a>
 </p>
 
 <br/>
@@ -46,125 +42,20 @@
 
 | | Feature | Description |
 |:--:|---|---|
-| <img src="https://api.iconify.design/ph:folders-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Multi-Profile** | Unlimited profiles — each with its own loader, version, mods and settings |
-| <img src="https://api.iconify.design/ph:shield-check-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Microsoft Login** | Secure OAuth2 authentication, tokens auto-refreshed |
-| <img src="https://api.iconify.design/ph:package-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Mod Support** | Import modpacks from CurseForge & Modrinth via drag-and-drop |
-| <img src="https://api.iconify.design/ph:coffee-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Java Auto-Install** | Detects and downloads the correct Java runtime per Minecraft version |
-| <img src="https://api.iconify.design/ph:terminal-window-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Real-Time Logs** | Color-coded game logs (INFO / WARN / ERROR / DEBUG) with copy support |
-| <img src="https://api.iconify.design/ph:game-controller-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Discord RPC** | Rich Presence shows your current profile and playtime automatically |
-| <img src="https://api.iconify.design/ph:chart-bar-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Play Stats** | Tracks hours played, world count, and mod count per profile |
-| <img src="https://api.iconify.design/ph:bell-duotone.svg?color=%23fb923c&width=24" width="24" /> | **Notifications** | Toast notifications with sound for launch events |
+| <img src="https://api.iconify.design/ph:rocket-duotone.svg?color=%23a78bfa&width=24" width="24" /> | **Forge 1.20.1 cố định** | Một profile duy nhất, tự cấu hình và khởi chạy ngay |
+| <img src="https://api.iconify.design/ph:server-duotone.svg?color=%23a78bfa&width=24" width="24" /> | **Tự vào server** | Nút Play mở thẳng Dino Isekai Server, hiển thị ping/online/người chơi trực tiếp |
+| <img src="https://api.iconify.design/ph:star-duotone.svg?color=%23a78bfa&width=24" width="24" /> | **Sao bay theo chuột** | Hiệu ứng sao tím huyền bí có bloom, bật/tắt trong cài đặt giao diện |
+| <img src="https://api.iconify.design/ph:terminal-window-duotone.svg?color=%23a78bfa&width=24" width="24" /> | **Log trong trang** | Console hiển thị dạng modal bên cạnh thông tin profile |
+| <img src="https://api.iconify.design/ph:game-controller-duotone.svg?color=%23a78bfa&width=24" width="24" /> | **Trang Minecraft** | Page sắp ra mắt với nền Vanilla riêng |
+| <img src="https://api.iconify.design/ph:palette-duotone.svg?color=%23a78bfa&width=24" width="24" /> | **Giao diện tím huyền ảo** | Nền launcher riêng, sidebar dọc, chuyển trang mượt |
 
-### Loader Support
-
-<table>
-  <tr>
-    <td align="center"><img src="https://api.iconify.design/ph:cube-duotone.svg?color=%23fb923c&width=30" width="30" /><br/><b>Vanilla</b><br/><sub>Official</sub></td>
-    <td align="center"><img src="https://api.iconify.design/ph:needle-duotone.svg?color=%23fb923c&width=30" width="30" /><br/><b>Fabric</b><br/><sub>Supported</sub></td>
-    <td align="center"><img src="https://api.iconify.design/ph:hammer-duotone.svg?color=%23fb923c&width=30" width="30" /><br/><b>Forge</b><br/><sub>Supported</sub></td>
-    <td align="center"><img src="https://api.iconify.design/ph:gear-duotone.svg?color=%23fb923c&width=30" width="30" /><br/><b>NeoForge</b><br/><sub>Supported</sub></td>
-    <td align="center"><img src="https://api.iconify.design/ph:fire-duotone.svg?color=%23fb923c&width=30" width="30" /><br/><b>CurseForge</b><br/><sub>Import</sub></td>
-    <td align="center"><img src="https://api.iconify.design/ph:leaf-duotone.svg?color=%23fb923c&width=30" width="30" /><br/><b>Modrinth</b><br/><sub>Import</sub></td>
-  </tr>
-</table>
-
----
-
-## Download
-
-> Java is bundled and managed automatically — **no manual setup** needed on any platform.
-
-Grab the latest build from the **[Releases](https://github.com/foxstudio-201/VoxelXClient/releases/latest)** page.
-
-<table>
-  <tr>
-    <th align="left">Platform</th>
-    <th align="left">Recommended file</th>
-    <th align="left">Notes</th>
-  </tr>
-  <tr>
-    <td><img src="https://api.iconify.design/ph:windows-logo-duotone.svg?color=%234aa3df&width=18" width="18" align="absmiddle" /> <b>Windows</b></td>
-    <td><code>MartianLauncher Setup x.y.z.exe</code></td>
-    <td>Installer · portable <code>.exe</code> also available</td>
-  </tr>
-  <tr>
-    <td><img src="https://api.iconify.design/ph:linux-logo-duotone.svg?color=%23e0a23b&width=18" width="18" align="absmiddle" /> <b>Linux</b></td>
-    <td><code>MartianLauncher-x.y.z.AppImage</code></td>
-    <td>Run anywhere · <code>.deb</code> also provided</td>
-  </tr>
-  <tr>
-    <td><img src="https://api.iconify.design/simple-icons:archlinux.svg?color=%231793D1&width=18" width="18" align="absmiddle" /> <b>Arch Linux</b></td>
-    <td><code>yay -S voxelxlauncher-bin</code></td>
-    <td>Installed straight from the AUR</td>
-  </tr>
-  <tr>
-    <td><img src="https://api.iconify.design/ph:apple-logo-duotone.svg?color=%23b0b0b0&width=18" width="18" align="absmiddle" /> <b>macOS</b> (Apple Silicon)</td>
-    <td><code>MartianLauncher-x.y.z-arm64.dmg</code></td>
-    <td>M1 / M2 / M3</td>
-  </tr>
-  <tr>
-    <td><img src="https://api.iconify.design/ph:apple-logo-duotone.svg?color=%23b0b0b0&width=18" width="18" align="absmiddle" /> <b>macOS</b> (Intel)</td>
-    <td><code>MartianLauncher-x.y.z-x64.dmg</code></td>
-    <td>Intel-based Macs</td>
-  </tr>
-</table>
-
-<details>
-<summary><b>Arch Linux — install via AUR</b></summary>
-
-<br/>
-
-```bash
-yay -S voxelxlauncher-bin
-# or
-paru -S voxelxlauncher-bin
-```
-
-The package downloads the official AppImage and installs it system-wide.
-See [`packaging/aur/`](packaging/aur/) for the PKGBUILD and publishing details.
-
-</details>
-
-<details>
-<summary><b>Linux — run the AppImage</b></summary>
-
-<br/>
-
-```bash
-chmod +x MartianLauncher-*.AppImage
-./MartianLauncher-*.AppImage
-```
-
-</details>
-
-<details>
-<summary><b>macOS — first launch (unsigned app)</b></summary>
-
-<br/>
-
-The app is **not code-signed**, so Gatekeeper will warn on first launch:
-
-1. Right-click **Martian Launcher.app** → **Open**
-2. Confirm **Open** in the dialog
-
-You only need to do this once.
-
-</details>
-
-<details>
-<summary><b>Windows — SmartScreen warning</b></summary>
-
-<br/>
-
-On first run Windows SmartScreen may warn. Click **More info** → **Run anyway**.
-
-</details>
+> Game chạy ở chế độ **offline** (tên người chơi nhập trực tiếp, tự lưu tài khoản).
 
 ---
 
 ## Getting Started
 
-Build Martian Launcher from source for development or to package your own build.
+Build Dino Isekai từ mã nguồn.
 
 ### Prerequisites
 
@@ -174,36 +65,37 @@ Build Martian Launcher from source for development or to package your own build.
 ### Install & Run
 
 ```bash
-# Clone the repo
-git clone https://github.com/foxstudio-201/VoxelXClient.git
-cd VoxelXClient
+git clone git@github.com:foxstudio-201/dinoisekailauncher.git
+cd dinoisekailauncher
 
-# Install dependencies
 npm install
 
-# Start in development mode (Vite + Electron)
+# Chạy ở chế độ phát triển
 npm run electron:dev
 ```
 
-### Package a Build
+### Package
 
 ```bash
-npm run electron:build        # build for your current OS → dist-electron/
+npm run build          # Vite build
+npx electron-builder --linux dir   # đóng gói Electron cho Linux → dist-electron/
 ```
 
-Cross-platform builds are produced automatically in CI — see
-[`.github/workflows/build-release.yml`](.github/workflows/build-release.yml).
-Push a `v*` tag (e.g. `git tag v1.4.20 && git push --tags`) to trigger a full
-Windows · Linux · macOS · AUR release.
+---
 
-### Handy Scripts
+## AUR (Arch Linux)
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Vite dev server only (browser preview) |
-| `npm run build` | Vite production build |
-| `npm run lint` | ESLint check |
-| `npm run patch:icon` | Regenerate the app icon |
+Gói local tại [`packaging/aur/`](packaging/aur/):
+
+```bash
+cd packaging/aur
+makepkg -i
+```
+
+Sau mỗi lần đổi code phải **tăng `pkgrel`** trong `PKGBUILD` và `.SRCINFO`, rồi:
+`tar -hcJf linux-unpacked.tar.xz -C ../../dist-electron linux-unpacked && makepkg -f`.
+
+> Ảnh nền launcher đặt tại `src/assets/background-launcher.png` (mặc định 1280×720).
 
 ---
 
@@ -211,23 +103,11 @@ Windows · Linux · macOS · AUR release.
 
 | Layer | Technology |
 |---|---|
-| **UI Framework** | React 19 + Vite 8 |
+| **UI Framework** | React 19 + Vite |
 | **Styling** | Tailwind CSS 4 |
-| **Desktop Shell** | Electron 42 |
-| **3D Rendering** | Three.js + React Three Fiber |
-| **Auth** | Microsoft OAuth2 (MSAL) |
+| **Desktop Shell** | Electron |
 | **IPC** | Electron contextBridge / ipcMain |
-| **Packaging** | electron-builder → NSIS · AppImage · deb · dmg · AUR |
-
----
-
-## Contributing
-
-1. Fork the repo
-2. Create a branch — `git checkout -b feat/your-feature`
-3. Commit your changes — `git commit -m "feat: add something"`
-4. Push — `git push origin feat/your-feature`
-5. Open a Pull Request
+| **Packaging** | electron-builder · AUR (makepkg) |
 
 ---
 
@@ -241,8 +121,6 @@ Released under the [MIT License](LICENSE).
 
 Made with care by **FoxStudio**
 
-<a href="https://voxelxclient.vercel.app">Website</a> &nbsp;·&nbsp;
-<a href="https://join.foxstudio.site">Discord</a> &nbsp;·&nbsp;
-<a href="https://github.com/foxstudio-201/VoxelXClient">Star on GitHub</a>
+<a href="https://github.com/foxstudio-201/dinoisekailauncher">Star on GitHub</a>
 
 </div>

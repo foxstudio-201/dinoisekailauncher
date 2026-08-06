@@ -90,7 +90,7 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: VoxelXLauncher-Windows-${{ steps.version.outputs.VERSION }}
+          name: Dino Isekai-Windows-${{ steps.version.outputs.VERSION }}
           path: |
             dist-electron/*.exe
             dist-electron/*.zip
@@ -164,7 +164,7 @@ jobs:
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: VoxelXLauncher-Linux-${{ steps.version.outputs.VERSION }}
+          name: Dino Isekai-Linux-${{ steps.version.outputs.VERSION }}
           path: |
             dist-electron/*.AppImage
             dist-electron/*.deb
@@ -224,7 +224,7 @@ jobs:
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: VoxelXLauncher-macOS-${{ steps.version.outputs.VERSION }}
+          name: Dino Isekai-macOS-${{ steps.version.outputs.VERSION }}
           path: |
             dist-electron/*.dmg
             dist-electron/*.zip
@@ -251,19 +251,19 @@ jobs:
       - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
-          name: VoxelXLauncher-Windows-${{ steps.version.outputs.VERSION }}
+          name: Dino Isekai-Windows-${{ steps.version.outputs.VERSION }}
           path: release-files/windows
 
       - name: Download Linux artifacts
         uses: actions/download-artifact@v4
         with:
-          name: VoxelXLauncher-Linux-${{ steps.version.outputs.VERSION }}
+          name: Dino Isekai-Linux-${{ steps.version.outputs.VERSION }}
           path: release-files/linux
 
       - name: Download macOS artifacts
         uses: actions/download-artifact@v4
         with:
-          name: VoxelXLauncher-macOS-${{ steps.version.outputs.VERSION }}
+          name: Dino Isekai-macOS-${{ steps.version.outputs.VERSION }}
           path: release-files/macos
 
       - name: List release files
@@ -272,14 +272,14 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: VoxelXLauncher
+          name: Dino Isekai
           body: |
-            ## VoxelXLauncher v${{ steps.version.outputs.VERSION }}
+            ## Dino Isekai v${{ steps.version.outputs.VERSION }}
 
             <div align="center">
             <br/>
-            <img src="https://raw.githubusercontent.com/foxstudio-201/VoxelXClient/main/public/icon.png" width="80" height="80" alt="VoxelXLauncher Logo" />
-            <h1>VoxelXLauncher</h1>
+            <img src="https://raw.githubusercontent.com/foxstudio-201/VoxelXClient/main/public/icon.png" width="80" height="80" alt="Dino Isekai Logo" />
+            <h1>Dino Isekai</h1>
             <p><strong>The Ultimate Minecraft Launcher</strong><br/>Manage profiles, install mods, and launch any Minecraft version — all in one place.</p>
             <p>
             <img src="https://img.shields.io/badge/version-${{ steps.version.outputs.VERSION }}-4ade80?style=flat-square&labelColor=0a0a0a" alt="Version" />
@@ -301,17 +301,17 @@ jobs:
 
             | Nền tảng | File | Ghi chú |
             |----------|------|---------|
-            | <img src="https://api.iconify.design/ph:windows-logo-duotone.svg?color=%234aa3df&width=18" width="18" align="absmiddle" /> Windows | `VoxelXLauncher Setup ${{ steps.version.outputs.VERSION }}.exe` | Installer (khuyến nghị) |
-            | <img src="https://api.iconify.design/ph:windows-logo-duotone.svg?color=%234aa3df&width=18" width="18" align="absmiddle" /> Windows | `VoxelXLauncher ${{ steps.version.outputs.VERSION }}.exe` | Portable, không cần cài |
-            | <img src="https://api.iconify.design/ph:linux-logo-duotone.svg?color=%23e0a23b&width=18" width="18" align="absmiddle" /> Linux | `VoxelXLauncher-${{ steps.version.outputs.VERSION }}.AppImage` | Chạy trực tiếp |
-            | <img src="https://api.iconify.design/ph:linux-logo-duotone.svg?color=%23e0a23b&width=18" width="18" align="absmiddle" /> Linux | `voxelxlauncher_${{ steps.version.outputs.VERSION }}_amd64.deb` | Debian / Ubuntu |
-            | <img src="https://api.iconify.design/simple-icons:archlinux.svg?color=%231793D1&width=18" width="18" align="absmiddle" /> Arch | `yay -S voxelxlauncher-bin` | Arch Linux / AUR |
-            | <img src="https://api.iconify.design/ph:apple-logo-duotone.svg?color=%23b0b0b0&width=18" width="18" align="absmiddle" /> macOS | `VoxelXLauncher-${{ steps.version.outputs.VERSION }}-arm64.dmg` | Apple Silicon (M1/M2/M3) |
-            | <img src="https://api.iconify.design/ph:apple-logo-duotone.svg?color=%23b0b0b0&width=18" width="18" align="absmiddle" /> macOS | `VoxelXLauncher-${{ steps.version.outputs.VERSION }}-x64.dmg` | Intel Mac |
+            | <img src="https://api.iconify.design/ph:windows-logo-duotone.svg?color=%234aa3df&width=18" width="18" align="absmiddle" /> Windows | `Dino Isekai Setup ${{ steps.version.outputs.VERSION }}.exe` | Installer (khuyến nghị) |
+            | <img src="https://api.iconify.design/ph:windows-logo-duotone.svg?color=%234aa3df&width=18" width="18" align="absmiddle" /> Windows | `Dino Isekai ${{ steps.version.outputs.VERSION }}.exe` | Portable, không cần cài |
+            | <img src="https://api.iconify.design/ph:linux-logo-duotone.svg?color=%23e0a23b&width=18" width="18" align="absmiddle" /> Linux | `Dino Isekai-${{ steps.version.outputs.VERSION }}.AppImage` | Chạy trực tiếp |
+            | <img src="https://api.iconify.design/ph:linux-logo-duotone.svg?color=%23e0a23b&width=18" width="18" align="absmiddle" /> Linux | `dino-isekai_${{ steps.version.outputs.VERSION }}_amd64.deb` | Debian / Ubuntu |
+            | <img src="https://api.iconify.design/simple-icons:archlinux.svg?color=%231793D1&width=18" width="18" align="absmiddle" /> Arch | `yay -S dino-isekai-bin` | Arch Linux / AUR |
+            | <img src="https://api.iconify.design/ph:apple-logo-duotone.svg?color=%23b0b0b0&width=18" width="18" align="absmiddle" /> macOS | `Dino Isekai-${{ steps.version.outputs.VERSION }}-arm64.dmg` | Apple Silicon (M1/M2/M3) |
+            | <img src="https://api.iconify.design/ph:apple-logo-duotone.svg?color=%23b0b0b0&width=18" width="18" align="absmiddle" /> macOS | `Dino Isekai-${{ steps.version.outputs.VERSION }}-x64.dmg` | Intel Mac |
 
             > **Yêu cầu:** Windows 10/11 (64-bit), Linux x64, hoặc macOS 11+
             > <img src="https://api.iconify.design/ph:windows-logo-duotone.svg?color=%234aa3df&width=18" width="18" align="absmiddle" /> Windows: SmartScreen có thể cảnh báo lần đầu — nhấn **More info** → **Run anyway**
-            > <img src="https://api.iconify.design/ph:linux-logo-duotone.svg?color=%23e0a23b&width=18" width="18" align="absmiddle" /> Linux AppImage: `chmod +x VoxelXLauncher*.AppImage && ./VoxelXLauncher*.AppImage`
+            > <img src="https://api.iconify.design/ph:linux-logo-duotone.svg?color=%23e0a23b&width=18" width="18" align="absmiddle" /> Linux AppImage: `chmod +x Dino Isekai*.AppImage && ./Dino Isekai*.AppImage`
             > <img src="https://api.iconify.design/ph:apple-logo-duotone.svg?color=%23b0b0b0&width=18" width="18" align="absmiddle" /> macOS: App chưa ký — mở lần đầu hãy **chuột phải → Open**, rồi xác nhận **Open**
           files: |
             release-files/windows/*.exe
@@ -366,7 +366,7 @@ jobs:
         if: steps.guard.outputs.enabled == 'true'
         uses: KSXGitHub/github-actions-deploy-aur@v2.7.2
         with:
-          pkgname: voxelxlauncher-bin
+          pkgname: dino-isekai-bin
           pkgbuild: ./packaging/aur/PKGBUILD
           assets: |
             ./packaging/aur/README.md

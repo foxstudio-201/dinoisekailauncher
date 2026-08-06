@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -170,7 +170,7 @@ function launchGame(opts) {
     assets_index_name: assetIndex,
     version_type:     versionJson.type || 'release',
     natives_directory: nativesDir,
-    launcher_name:    'VoxelXLauncher',
+    launcher_name:    'Dino Isekai',
     launcher_version: '1.0.0',
     classpath,
 
@@ -207,7 +207,7 @@ function launchGame(opts) {
     `-Dorg.lwjgl.library.path=${nativesDir}`,
     `-Dorg.lwjgl.librarypath=${nativesDir}`,
     `-Djava.library.path=${nativesDir}`,
-    `-Dminecraft.launcher.brand=VoxelXLauncher`,
+    `-Dminecraft.launcher.brand=Dino Isekai`,
     `-Dminecraft.launcher.version=1.0.0`,
 
     '-Dfile.encoding=UTF-8',

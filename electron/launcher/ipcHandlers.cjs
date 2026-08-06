@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -39,20 +39,17 @@ const { app } = require('electron')
 const { resolveVersion }      = require('./vanilla/versionResolver.cjs')
 const { ensureJava }          = require('./java/javaManager.cjs')
 const { downloadAssets }      = require('./vanilla/assetManager.cjs')
-const { setupFabric }         = require('./fabric/fabricLoader.cjs')
 const { setupForge }          = require('./forge/forgeLoader.cjs')
-const { setupNeoForge }       = require('./neoforge/neoforgeLoader.cjs')
-const { ensureFabricMods }    = require('./modrinth/modrinthMods.cjs')
-const { ensureVoxelXMods }    = require('./voxelxMods.cjs')
 const { searchProjects, getProject, getProjectVersions, installVersion, getGameVersions, getCategories } = require('./modrinth/modrinthSearch.cjs')
 const cfSearch = require('./curseforge/curseForgeSearch.cjs')
 const technicSearch = require('./technic/technicSearch.cjs')
 const ftbSearch = require('./ftb/ftbSearch.cjs')
 const { launchGame }          = require('./vanilla/gameRunner.cjs')
 const { startPlaytimeTracker, getProfileStats, getProfileAnalytics } = require('./statsTracker.cjs')
+const { normalizeSingleForgeProfile, FIXED_LOADER } = require('../profileManager.cjs')
 const rpc                     = require('../discordRPC.cjs')
 
-const DATA_DIR      = path.join(app.getPath('appData'), '.VoxelXClient')
+const DATA_DIR      = path.join(app.getPath('appData'), '.DinoIsekai')
 const PROFILES_FILE = path.join(DATA_DIR, 'profiles.json')
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json')
 const SKIN_DIR      = path.join(DATA_DIR, 'account_skins')
@@ -164,18 +161,19 @@ function forceKillGame(proc) {
 }
 
 
-const { createLogWindow } = require('./logWindow.cjs')
-
-
 function registerLauncherHandlers(getTrustedWindow) {
 
   ipcMain.handle('launcher:launch', async (e, { profileId, ramMb, serverAddress, accountId }) => {
     const win = getTrustedWindow(e)
     if (!win) return { error: 'Unauthorized' }
 
-    const profilesData = readProfiles()
-    const profile = profilesData.profiles.find(p => p.id === profileId)
+    let profilesData = readProfiles()
+    const norm = normalizeSingleForgeProfile(profilesData)
+    if (norm.changed) writeProfiles(norm.data)
+    profilesData = norm.data
+    const profile = profilesData.profiles[0]
     if (!profile) return { error: 'Profile not found' }
+    profileId = profile.id
 
     let accountsData
     try {
@@ -187,13 +185,17 @@ function registerLauncherHandlers(getTrustedWindow) {
     if (!account) return { error: 'No account selected' }
 
     const gameKey = makeKey(profileId, account.id)
+    for (const k of runningGames.keys()) {
+      if (k.startsWith(profileId + '::')) {
+        return { error: `Profile "${profile.name}" đang chạy. Chỉ một tài khoản chạy một profile tại một thời điểm.` }
+      }
+    }
     if (runningGames.has(gameKey)) {
       return { error: `Profile "${profile.name}" is already running with account "${account.username}".` }
     }
 
     const settings      = readSettings()
     const hideLauncher  = settings.hideLauncherOnLaunch !== false
-    const showLog       = settings.showLogWindow !== false
     const boostMode     = settings.boostMode === true
     const bigCoreMode   = settings.bigCoreMode === true
 
@@ -208,7 +210,7 @@ function registerLauncherHandlers(getTrustedWindow) {
       fs.writeFileSync(launcherProfilesPath, JSON.stringify({
         profiles: {},
         selectedProfile: null,
-        clientToken: 'VoxelXLauncher',
+        clientToken: 'Dino Isekai',
         authenticationDatabase: {},
         launcherVersion: { name: '2.0.0', format: 21 },
       }, null, 2))
@@ -328,122 +330,13 @@ function registerLauncherHandlers(getTrustedWindow) {
 
       sendProgressAndLog({ phase: 'launching', log: `Launching as ${account.username}...`, percent: 98 })
 
-      let accessToken = account.type === 'microsoft' ? (account.mcToken || '0') : '0'
-      if (account.type === 'microsoft' && account.msRefreshToken) {
-        const fiveMin = 5 * 60 * 1000
-        const needsRefresh = !account.mcTokenExpiry || (account.mcTokenExpiry - Date.now() < fiveMin)
-        if (needsRefresh) {
-          sendProgressAndLog({ phase: 'launching', log: 'Làm mới phiên đăng nhập Microsoft...', percent: 98 })
-          try {
-            const { refreshMinecraftToken } = require('../msAuth.cjs')
-            const refreshed = await refreshMinecraftToken(account.msRefreshToken)
-
-            const accountsPath = path.join(DATA_DIR, 'accounts.json')
-            try {
-              const accountsData2 = JSON.parse(fs.readFileSync(accountsPath, 'utf-8'))
-              const idx = accountsData2.accounts.findIndex(a => a.id === account.id)
-              if (idx >= 0) {
-                accountsData2.accounts[idx] = {
-                  ...accountsData2.accounts[idx],
-                  username:       refreshed.username,
-                  msRefreshToken: refreshed.msRefreshToken,
-                  mcToken:        refreshed.mcToken,
-                  mcTokenExpiry:  refreshed.mcTokenExpiry,
-                }
-                const tmp = accountsPath + '.tmp'
-                fs.writeFileSync(tmp, JSON.stringify(accountsData2, null, 2), { mode: 0o600 })
-                fs.renameSync(tmp, accountsPath)
-              }
-            } catch {}
-            accessToken = refreshed.mcToken || accessToken
-          } catch (err) {
-            writeLog(`[WARN] Không thể làm mới token Microsoft: ${err.message}`)
-          }
-        }
-      }
+      const accessToken = '0'
 
       let mainClassOverride = null
       let extraLibraries    = []
       let extraJvmArgs      = profile.jvmArgs ? profile.jvmArgs.trim().split(/\s+/).filter(Boolean) : []
       let extraGameArgs     = []
       let forgeShimJar      = null
-
-      if (profile.loader === 'fabric' && profile.loaderVersion) {
-        sendProgressAndLog({ phase: 'fabric', log: `Setting up Fabric ${profile.loaderVersion}...`, percent: 96 })
-        const fabricLibsDir = path.join(launcherDir, 'libraries')
-        let lastFabricPhase = ''
-        const fabricResult = await setupFabric(
-          profile.gameVersion,
-          profile.loaderVersion,
-          fabricLibsDir,
-          (p) => {
-            const phaseChanged = p.phase !== lastFabricPhase
-            if (phaseChanged) { lastFabricPhase = p.phase; sendProgressAndLog({ phase: 'fabric', log: p.log, percent: 96, doneFiles: p.done, totalFiles: p.total }) }
-            else sendProgressAndUpdate({ phase: 'fabric', log: p.log, percent: 96, doneFiles: p.done, totalFiles: p.total })
-          }
-        )
-        mainClassOverride = fabricResult.mainClass
-
-        function getArtifactKey(jarPath) {
-
-          const normalized = jarPath.replace(/\\/g, '/')
-          const match = normalized.match(/libraries\/(.+)\/[^/]+\/[^/]+\.jar$/)
-          return match ? match[1] : jarPath
-        }
-
-        const fabricKeys = new Set(fabricResult.extraLibraries.map(getArtifactKey))
-
-        const filteredVanillaLibs = assets.libraries.filter(lib => {
-          const key = getArtifactKey(lib)
-          return !fabricKeys.has(key)
-        })
-
-        extraLibraries = fabricResult.extraLibraries
-
-        assets.libraries = [...extraLibraries, ...filteredVanillaLibs]
-        extraLibraries = []
-
-        sendProgressAndLog({ phase: 'fabric', log: `Fabric ready. Main: ${mainClassOverride}`, percent: 97 })
-
-        sendProgressAndLog({ phase: 'fabric_mods', log: 'Checking Fabric mods (Fabric API, Mod Menu)...', percent: 97 })
-        const modsDir = path.join(instancePath, 'mods')
-
-        if (profile.autoPerformanceMods === true) {
-          await ensureFabricMods(profile.gameVersion, modsDir, (p) => {
-            sendProgressAndLog({ phase: 'fabric_mods', log: p.log, percent: 97, doneFiles: p.done, totalFiles: p.total })
-          }, false)
-
-          try {
-            const vxcJars = await ensureVoxelXMods(
-              profile.gameVersion,
-              launcherDir,
-              (p) => sendProgressAndLog({ phase: 'fabric_mods', log: p.log, percent: 97 })
-            )
-            if (vxcJars.length > 0) {
-              const sep = process.platform === 'win32' ? ';' : ':'
-              const addModsArg = `-Dfabric.addMods=${vxcJars.join(sep)}`
-              extraJvmArgs = [...extraJvmArgs, addModsArg]
-              sendProgressAndLog({ phase: 'fabric_mods', log: `VoxelXMods: loaded ${vxcJars.length} mod(s) via -Dfabric.addMods`, percent: 97 })
-            }
-          } catch (vxcErr) {
-            sendProgressAndLog({ phase: 'fabric_mods', log: `[WARN] VoxelXMods: ${vxcErr.message}`, percent: 97 })
-          }
-
-          try {
-            const vxcConfigDir = path.join(gameDataDir, 'config', 'voxelxskin')
-            if (!fs.existsSync(vxcConfigDir)) fs.mkdirSync(vxcConfigDir, { recursive: true })
-            fs.writeFileSync(
-              path.join(vxcConfigDir, 'launcher_profile.json'),
-              JSON.stringify({ launcherUuid: account.uuid }, null, 2)
-            )
-            sendProgressAndLog({ phase: 'fabric_mods', log: `VoxelXSkin: launcher_profile.json → ${account.uuid}`, percent: 97 })
-          } catch (cfgErr) {
-            writeLog(`[WARN] VoxelXSkin launcher_profile write failed: ${cfgErr.message}`)
-          }
-        } else {
-          sendProgressAndLog({ phase: 'fabric_mods', log: 'Auto-install mods: tắt.', percent: 97 })
-        }
-      }
 
       if (profile.loader === 'forge' && profile.loaderVersion) {
         sendProgressAndLog({ phase: 'forge', log: `Setting up Forge ${profile.loaderVersion}...`, percent: 93 })
@@ -495,59 +388,9 @@ function registerLauncherHandlers(getTrustedWindow) {
         sendProgressAndLog({ phase: 'forge', log: `Forge ready. Main: ${mainClassOverride}`, percent: 97 })
       }
 
-      if (profile.loader === 'neoforge' && profile.loaderVersion) {
-        sendProgressAndLog({ phase: 'neoforge', log: `Setting up NeoForge ${profile.loaderVersion}...`, percent: 93 })
-        const neoforgeLibsDir = path.join(launcherDir, 'libraries')
-        let lastNeoForgePhase = ''
-
-        const neoforgeResult = await setupNeoForge(
-          profile.gameVersion,
-          profile.loaderVersion,
-          neoforgeLibsDir,
-          assets.clientJar,
-          javaPath,
-          launcherDir,
-          (p) => {
-            const phaseChanged = p.phase !== lastNeoForgePhase
-            if (phaseChanged) {
-              lastNeoForgePhase = p.phase
-              sendProgressAndLog({ phase: 'neoforge', log: p.log, percent: 95, doneFiles: p.done, totalFiles: p.total })
-            } else {
-              sendProgressAndUpdate({ phase: 'neoforge', log: p.log, percent: 95, doneFiles: p.done, totalFiles: p.total })
-            }
-          }
-        )
-
-        mainClassOverride = neoforgeResult.mainClass
-        extraJvmArgs      = neoforgeResult.jvmArgs  || []
-        extraGameArgs     = neoforgeResult.gameArgs  || []
-        forgeShimJar      = neoforgeResult.shimJar   || null
-
-        function getArtifactKeyNeo(jarPath) {
-          const normalized = jarPath.replace(/\\/g, '/')
-          const match = normalized.match(/libraries\/(.+)\/[^/]+\/[^/]+\.jar$/)
-          return match ? match[1] : jarPath
-        }
-
-        const neoKeys = new Set(neoforgeResult.extraLibraries.map(getArtifactKeyNeo))
-        const filteredVanillaLibsNeo = assets.libraries.filter(lib => !neoKeys.has(getArtifactKeyNeo(lib)))
-
-        assets.libraries = [...neoforgeResult.extraLibraries, ...filteredVanillaLibsNeo]
-
-        if (neoforgeResult.customClientJar) {
-          assets.clientJar = neoforgeResult.customClientJar
-        }
-
-        if (neoforgeResult.needsVanillaClasspath) {
-          extraJvmArgs = [...extraJvmArgs, '__needsVanillaClasspath__']
-        }
-
-        sendProgressAndLog({ phase: 'neoforge', log: `NeoForge ready. Main: ${mainClassOverride}`, percent: 97 })
-      }
-
       // CustomSkinLoader (forge/neoforge): ignore non-critical skin-manager patch
       // failures instead of crashing the game at boot.
-      if (profile.loader === 'forge' || profile.loader === 'neoforge') {
+      if (profile.loader === 'forge') {
         try {
           const cslCoreDir = path.join(instancePath, 'CustomSkinLoader', 'Core')
           const modsDir = path.join(instancePath, 'mods')
@@ -607,10 +450,6 @@ function registerLauncherHandlers(getTrustedWindow) {
           writeLog(`[WARN] GPU preference error: ${gpuErr.message}`)
         }
       }
-
-      const logWin = showLog ? createLogWindow(win, profile.name, account.username) : null
-
-      logWinRef = logWin
 
       // ── Authlib-Injector for offline skin/cape ──
       let authlibServerPort = null
@@ -672,9 +511,6 @@ function registerLauncherHandlers(getTrustedWindow) {
               win.focus()
               win.webContents.send('launcher:stopped', { profileId, accountId: account.id, code, elapsed })
             }
-            if (logWin && !logWin.isDestroyed()) {
-              logWin.webContents.send('launcher:stopped', { profileId, accountId: account.id, code, elapsed })
-            }
           }
         },
       })
@@ -698,7 +534,7 @@ function registerLauncherHandlers(getTrustedWindow) {
       }
 
       const stopTracker = startPlaytimeTracker(profileId, profilesData, writeProfiles)
-      runningGames.set(gameKey, { proc, stopTracker, logWin })
+      runningGames.set(gameKey, { proc, stopTracker })
 
       sendProgress({ phase: 'running', log: 'Minecraft is running!', percent: 100 })
       try { rpc.PRESETS.playing(profile.gameVersion, profile.name, account.username) } catch {}
@@ -775,17 +611,9 @@ function registerLauncherHandlers(getTrustedWindow) {
         })
       })
 
-      if (profile.loader === 'fabric' && profile.loaderVersion) {
-        sendProgress({ phase: 'predownload', log: `Setting up Fabric ${profile.loaderVersion}...`, percent: 90 })
-        await setupFabric(profile.gameVersion, profile.loaderVersion, path.join(launcherDir, 'libraries'), (p) => {
-          sendProgress({ phase: 'predownload', log: p.log, percent: 90, doneFiles: p.done, totalFiles: p.total })
-        })
-      }
-
-      if ((profile.loader === 'forge' || profile.loader === 'neoforge') && profile.loaderVersion) {
-        const setup = profile.loader === 'forge' ? setupForge : setupNeoForge
-        sendProgress({ phase: 'predownload', log: `Setting up ${profile.loader} ${profile.loaderVersion}...`, percent: 90 })
-        await setup(profile.gameVersion, profile.loaderVersion, path.join(launcherDir, 'libraries'), assets.clientJar, javaPath, launcherDir, (p) => {
+      if (profile.loader === 'forge' && profile.loaderVersion) {
+        sendProgress({ phase: 'predownload', log: `Setting up Forge ${profile.loaderVersion}...`, percent: 90 })
+        await setupForge(profile.gameVersion, profile.loaderVersion, path.join(launcherDir, 'libraries'), assets.clientJar, javaPath, launcherDir, (p) => {
           sendProgress({ phase: 'predownload', log: p.log, percent: 90, doneFiles: p.done, totalFiles: p.total })
         })
       }
@@ -977,7 +805,7 @@ function registerLauncherHandlers(getTrustedWindow) {
         const url = query
           ? `https://api.spiget.org/v2/search/resources/${encoded}?size=${size}&page=${page}&sort=-downloads&fields=id,name,tag,icon,downloads,rating,testedVersions,premium,file`
           : `https://api.spiget.org/v2/resources/free?size=${size}&page=${page}&sort=-downloads&fields=id,name,tag,icon,downloads,rating,testedVersions,premium,file`
-        https.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' }, timeout: 8000 }, res => {
+        https.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' }, timeout: 8000 }, res => {
           let body = ''
           res.on('data', c => { body += c })
           res.on('end', () => {

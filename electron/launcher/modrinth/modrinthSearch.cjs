@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -37,7 +37,7 @@ const fs    = require('fs')
 const path  = require('path')
 
 const BASE = 'https://api.modrinth.com/v2'
-const UA   = 'VoxelXLauncher/1.0 (github.com/foxstudio-201/VoxelXLauncher)'
+const UA   = 'DinoIsekai/1.0 (github.com/foxstudio-201/VoxelXClient)'
 
 function httpsGetJson(url) {
   return new Promise((resolve, reject) => {

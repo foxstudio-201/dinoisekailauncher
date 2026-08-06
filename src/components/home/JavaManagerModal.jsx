@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -41,9 +41,9 @@ const DISTROS = {
     name:  'Eclipse Temurin',
     short: 'Adoptium',
     icon:  adoptiumIcon,
-    color: '#f97316',
+    color: '#8b5cf6',
     badge: 'Recommended',
-    badgeColor: 'bg-orange-500/20 text-orange-400',
+    badgeColor: 'bg-violet-500/20 text-violet-400',
     desc:  'OpenJDK chính thống, ổn định, được dùng rộng rãi nhất. Phù hợp cho mọi phiên bản Minecraft.',
     tags:  ['Ổn định', 'Phổ biến', 'OpenJDK'],
   },
@@ -260,12 +260,12 @@ export default function JavaManagerModal({ profile, onClose, onJavaSelected, ser
 
         {/* Success message banner */}
         {successMsg && (
-          <div className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-orange-500/10 border-b border-orange-500/20">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-orange-400 flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-violet-500/10 border-b border-violet-500/20">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-violet-400 flex-shrink-0">
               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
             </svg>
-            <p className="text-xs text-orange-400">{successMsg}</p>
-            <button onClick={() => setSuccessMsg(null)} className="ml-auto text-orange-400/50 hover:text-orange-400 transition-colors">
+            <p className="text-xs text-violet-400">{successMsg}</p>
+            <button onClick={() => setSuccessMsg(null)} className="ml-auto text-violet-400/50 hover:text-violet-400 transition-colors">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
               </svg>
@@ -277,7 +277,7 @@ export default function JavaManagerModal({ profile, onClose, onJavaSelected, ser
         <div className="flex-1 overflow-y-auto" style={{ scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
           {loading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <svg className="animate-spin w-6 h-6 text-orange-400/50" viewBox="0 0 24 24" fill="none">
+              <svg className="animate-spin w-6 h-6 text-violet-400/50" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
@@ -318,7 +318,7 @@ export default function JavaManagerModal({ profile, onClose, onJavaSelected, ser
                         <span className="text-sm font-bold text-white/90">{d.name}</span>
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${d.badgeColor}`}>{d.badge}</span>
                         {installedCount > 0 && (
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
                             {installedCount} đã cài
                           </span>
                         )}
@@ -385,14 +385,14 @@ export default function JavaManagerModal({ profile, onClose, onJavaSelected, ser
                             </div>
                             <div className="flex flex-col items-end gap-1 flex-shrink-0 mt-0.5">
                               {alreadyInstalled && (
-                                <div className="w-5 h-5 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
-                                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-orange-400">
+                                <div className="w-5 h-5 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-violet-400">
                                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                                   </svg>
                                 </div>
                               )}
                               {isCurrentlyUsed && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 whitespace-nowrap">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30 whitespace-nowrap">
                                   Đang dùng
                                 </span>
                               )}
@@ -402,10 +402,10 @@ export default function JavaManagerModal({ profile, onClose, onJavaSelected, ser
                           {/* MC note */}
                           {mcNote && (
                             <div className="flex items-center gap-1.5 mb-3">
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-orange-400/60 flex-shrink-0">
+                              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-violet-400/60 flex-shrink-0">
                                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                               </svg>
-                              <span className="text-[10px] text-orange-400/70">{mcNote}</span>
+                              <span className="text-[10px] text-violet-400/70">{mcNote}</span>
                             </div>
                           )}
 
@@ -430,7 +430,7 @@ export default function JavaManagerModal({ profile, onClose, onJavaSelected, ser
                                   className="h-full rounded-full transition-all duration-300"
                                   style={{
                                     width: `${installProgress.percent ?? 0}%`,
-                                    background: installProgress.phase === 'done' ? '#f97316' : d.color,
+                                    background: installProgress.phase === 'done' ? '#8b5cf6' : d.color,
                                   }}
                                 />
                               </div>
@@ -473,7 +473,7 @@ export default function JavaManagerModal({ profile, onClose, onJavaSelected, ser
                               <button
                                 onClick={() => handleSelect(pkg.distro, pkg.javaVersion)}
                                 className="flex-1 py-2 rounded-xl text-xs font-bold transition-all text-white flex items-center justify-center gap-1.5"
-                                style={{ background: '#f97316', boxShadow: '0 4px 12px rgba(249,115,22,0.25)' }}>
+                                style={{ background: '#8b5cf6', boxShadow: '0 4px 12px rgba(249,115,22,0.25)' }}>
                                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
                                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                                 </svg>

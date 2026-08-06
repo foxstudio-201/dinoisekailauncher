@@ -3,14 +3,14 @@ import { renderMarkdown } from '../../utils/renderMarkdown'
 
 export const LOADER_COLORS = {
   fabric: 'bg-purple-500/15 text-purple-300 border-purple-500/25',
-  forge: 'bg-orange-500/15 text-orange-300 border-orange-500/25',
+  forge: 'bg-violet-500/15 text-violet-300 border-violet-500/25',
   neoforge: 'bg-rose-500/15 text-rose-300 border-rose-500/25',
   quilt: 'bg-blue-500/15 text-blue-300 border-blue-500/25',
-  vanilla: 'bg-orange-500/15 text-orange-300 border-orange-500/25',
+  vanilla: 'bg-violet-500/15 text-violet-300 border-violet-500/25',
 }
 
 export const VERSION_TYPE_STYLE = {
-  release: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+  release: 'bg-violet-500/15 text-violet-400 border-violet-500/25',
   beta: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
   alpha: 'bg-red-500/15 text-red-400 border-red-500/25',
 }
@@ -72,7 +72,7 @@ export function ContentDetailPanel({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-orange-400/30 border-t-orange-400 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
       </div>
     )
   }
@@ -126,7 +126,7 @@ export function ContentDetailPanel({
           </div>
 
           <div className="flex items-center gap-3 mb-2 text-[10px]">
-            <span className="flex items-center gap-1 text-orange-400/80">
+            <span className="flex items-center gap-1 text-violet-400/80">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               <span className="font-semibold">{formatNum(item.downloads)}</span>
               <span className="text-white/30">downloads</span>
@@ -143,7 +143,7 @@ export function ContentDetailPanel({
               <span key={l} className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold capitalize border ${LOADER_COLORS[l] || 'bg-white/8 text-white/50 border-white/10'}`}>{l}</span>
             ))}
             {(item.game_versions || []).slice(0, 3).map(v => (
-              <span key={v} className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-500/8 text-orange-400/60 border border-orange-500/15">{v}</span>
+              <span key={v} className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/8 text-violet-400/60 border border-violet-500/15">{v}</span>
             ))}
           </div>
 
@@ -152,7 +152,7 @@ export function ContentDetailPanel({
               <button key={tab.id} onClick={() => setDetailTab(tab.id)}
                 className={`px-2.5 py-1.5 text-[9px] font-semibold border-b-2 transition-all -mb-px ${
                   detailTab === tab.id
-                    ? 'border-orange-500 text-orange-400'
+                    ? 'border-violet-500 text-violet-400'
                     : 'border-transparent text-white/30 hover:text-white/60'
                 }`}>
                 {tab.label}
@@ -219,7 +219,7 @@ export function ContentDetailPanel({
                   ) : (
                     <button onClick={() => handleDownload(v)} disabled={installing}
                       className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all disabled:opacity-50 flex items-center gap-1"
-                      style={{ background: showUpdate ? 'linear-gradient(135deg,#fbbf24,#f59e0b)' : 'linear-gradient(135deg,#f97316,#ea580c)' }}>
+                      style={{ background: showUpdate ? 'linear-gradient(135deg,#fbbf24,#f59e0b)' : 'linear-gradient(135deg,#8b5cf6,#7c3aed)' }}>
                       {installing ? '...' : showUpdate ? (
                         <>
                           <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3"><path d="M11 5v11.17l-4.88-4.88-1.42 1.41L12 19.71l7.3-7.01-1.42-1.41L13 16.17V5h-2zM5 21h14v-2H5v2z"/></svg>
@@ -243,7 +243,7 @@ export function ContentDetailPanel({
                   <div className="grid grid-cols-2 gap-2">
                     {galleryItems.map((img, i) => (
                       <div key={i} onClick={() => setLightboxIdx(i)}
-                        className="rounded-xl overflow-hidden aspect-video bg-white/5 cursor-pointer hover:ring-2 hover:ring-orange-500/40 transition-all">
+                        className="rounded-xl overflow-hidden aspect-video bg-white/5 cursor-pointer hover:ring-2 hover:ring-violet-500/40 transition-all">
                         <img src={img.url} alt={img.title || ''} className="w-full h-full object-cover" loading="lazy"
                           onError={e => { e.currentTarget.src = ''; e.currentTarget.className = 'w-full h-full flex items-center justify-center text-white/20 text-[10px]' }} />
                       </div>
@@ -276,7 +276,7 @@ export function ContentDetailPanel({
                         <div className="flex items-center gap-2 overflow-x-auto py-1 max-w-full" style={{ scrollbarColor: 'rgba(255,255,255,0.15) transparent' }}>
                           {galleryItems.map((img, i) => (
                             <div key={i} onClick={() => setLightboxIdx(i)}
-                              className={`flex-shrink-0 w-14 h-10 rounded-lg overflow-hidden cursor-pointer transition-all ${i === lightboxIdx ? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-black/85' : 'opacity-50 hover:opacity-80'}`}>
+                              className={`flex-shrink-0 w-14 h-10 rounded-lg overflow-hidden cursor-pointer transition-all ${i === lightboxIdx ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-black/85' : 'opacity-50 hover:opacity-80'}`}>
                               <img src={img.url} alt={img.title || ''} className="w-full h-full object-cover"
                                 onError={e => { e.currentTarget.style.display = 'none' }} />
                             </div>
@@ -306,9 +306,9 @@ export function ContentDetailPanel({
             </div>
           )}
           {installDone && (
-            <div className="rounded-xl p-3 bg-orange-500/10 border border-orange-500/20 flex items-center gap-2">
-              <svg className="w-3 h-3 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-              <p className="text-[10px] text-orange-400 font-semibold">Installed successfully!</p>
+            <div className="rounded-xl p-3 bg-violet-500/10 border border-violet-500/20 flex items-center gap-2">
+              <svg className="w-3 h-3 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              <p className="text-[10px] text-violet-400 font-semibold">Installed successfully!</p>
             </div>
           )}
         </div>

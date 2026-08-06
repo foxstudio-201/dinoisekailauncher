@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -44,22 +44,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectAccount: (id)      => ipcRenderer.invoke('accounts:select', id),
   updateAccount: (id, patch) => ipcRenderer.invoke('accounts:update', { id, patch }),
 
-  checkUpdate:      () => ipcRenderer.invoke('updater:check'),
-  openUpdateWindow: (result) => ipcRenderer.invoke('updater:openUpdateWindow', result),
-  downloadUpdate:   (opts) => ipcRenderer.invoke('updater:download', opts),
-  installUpdate:    (opts) => ipcRenderer.invoke('updater:install', opts),
-  reinstallCurrent: () => ipcRenderer.invoke('updater:reinstall'),
-  onDownloadProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('updater:downloadProgress', handler)
-    return () => ipcRenderer.removeListener('updater:downloadProgress', handler)
-  },
-  onReinstallProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('updater:reinstallProgress', handler)
-    return () => ipcRenderer.removeListener('updater:reinstallProgress', handler)
-  },
-  getPreloadResult: () => ipcRenderer.invoke('updater:getPreloadResult'),
   getVersion:  () => ipcRenderer.invoke('app:version'),
   getHwid:     () => ipcRenderer.invoke('app:hwid'),
 
@@ -68,6 +52,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isInitialSetupRequired: () => ipcRenderer.invoke('settings:isInitialSetupRequired'),
   pickBgFile:   ()       => ipcRenderer.invoke('bg:pickFile'),
   readBgFile:   (path)   => ipcRenderer.invoke('bg:readFile', path),
+  getBackgroundPath: () => ipcRenderer.invoke('app:backgroundPath'),
+  getServerStatus: () => ipcRenderer.invoke('server:status'),
   systemBoostMode: (enable) => ipcRenderer.invoke('system:boostMode', enable),
 
   getProfiles:    ()            => ipcRenderer.invoke('profiles:get'),
@@ -107,21 +93,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     } catch {
       return null
     }
-  },
-
-  msStartLogin:   ()   => ipcRenderer.invoke('ms:startLogin'),
-  msCancelLogin:  ()   => ipcRenderer.invoke('ms:cancelLogin'),
-  msRefreshToken: (id) => ipcRenderer.invoke('ms:refreshToken', id),
-  discordStartLink: () => ipcRenderer.invoke('discord:startLink'),
-  onMsDeviceCode: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('ms:deviceCode', handler)
-    return () => ipcRenderer.removeListener('ms:deviceCode', handler)
-  },
-  onMsLoginProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('ms:loginProgress', handler)
-    return () => ipcRenderer.removeListener('ms:loginProgress', handler)
   },
 
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
@@ -283,13 +254,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => require('electron').ipcRenderer.removeListener('server:tunnelLog', handler)
   },
 
-  // ── Server Bookmarks ───────────────────────────────────────────────────────
-  serverBookmarksGet:    ()                     => ipcRenderer.invoke('serverBookmarks:get'),
-  serverBookmarksAdd:    (server)               => ipcRenderer.invoke('serverBookmarks:add', server),
-  serverBookmarksUpdate: (id, patch)            => ipcRenderer.invoke('serverBookmarks:update', { id, patch }),
-  serverBookmarksDelete: (id)                   => ipcRenderer.invoke('serverBookmarks:delete', id),
-  serverBookmarksPing:   (address, port)        => ipcRenderer.invoke('serverBookmarks:ping', { address, port }),
-
   // ── LAN World Auto-Tunnel ──────────────────────────────────────────────────
   lanStartScan:  ()  => ipcRenderer.invoke('lan:startScan'),
   lanStopScan:   ()  => ipcRenderer.invoke('lan:stopScan'),
@@ -330,39 +294,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_, data) => cb(data)
     ipcRenderer.on('lan:error', handler)
     return () => ipcRenderer.removeListener('lan:error', handler)
-  },
-  serverInstallMod:    (opts)                 => ipcRenderer.invoke('server:installMod', opts),
-  serverOpenFolder:    (id, sub)             => ipcRenderer.invoke('server:openFolder', id, sub),
-  serverBrowse:        ()                    => ipcRenderer.invoke('server:browse'),
-  serverInstallJava:   (pkg, id)             => ipcRenderer.invoke('server:installJava', pkg, id),
-  serverGetVersions:   ()                    => ipcRenderer.invoke('server:getVersions'),
-  serverGetVersionsForType: (type)           => ipcRenderer.invoke('server:getVersionsForType', type),
-  serverCheckBuildAvailable: (type, version) => ipcRenderer.invoke('server:checkBuildAvailable', type, version),
-  serverPing:          (id)                  => ipcRenderer.invoke('server:ping', id),
-  onServerPlayerCount: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('server:playerCount', handler)
-    return () => ipcRenderer.removeListener('server:playerCount', handler)
-  },
-  onServerLog: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('server:log', handler)
-    return () => ipcRenderer.removeListener('server:log', handler)
-  },
-  onServerStatus: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('server:status', handler)
-    return () => ipcRenderer.removeListener('server:status', handler)
-  },
-  onServerDownloadProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('server:downloadProgress', handler)
-    return () => ipcRenderer.removeListener('server:downloadProgress', handler)
-  },
-  onServerJavaProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('server:javaProgress', handler)
-    return () => ipcRenderer.removeListener('server:javaProgress', handler)
   },
 
   // ── Skin/Cape Local Files (for offline Authlib-Injector) ─────────────────

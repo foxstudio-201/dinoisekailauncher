@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -182,9 +182,9 @@ async function getVersionGroups() {
 }
 
 const LOADERS = [
-  { id: 'vanilla',  label: 'Vanilla',   icon: vanillaIcon,  color: '#fb923c', bg: 'bg-orange-500',  ring: 'ring-orange-500/40',  text: 'text-orange-400',  btnClass: 'bg-orange-500 hover:bg-orange-400 shadow-orange-500/20' },
+  { id: 'vanilla',  label: 'Vanilla',   icon: vanillaIcon,  color: '#a78bfa', bg: 'bg-violet-500',  ring: 'ring-violet-500/40',  text: 'text-violet-400',  btnClass: 'bg-violet-500 hover:bg-violet-400 shadow-violet-500/20' },
   { id: 'fabric',   label: 'Fabric',    icon: fabricIcon,   color: '#a855f7', bg: 'bg-purple-500', ring: 'ring-purple-500/40', text: 'text-purple-400', btnClass: 'bg-purple-500 hover:bg-purple-400 shadow-purple-500/20' },
-  { id: 'forge',    label: 'Forge',     icon: forgeIcon,    color: '#f97316', bg: 'bg-orange-500', ring: 'ring-orange-500/40', text: 'text-orange-400', btnClass: 'bg-orange-500 hover:bg-orange-400 shadow-orange-500/20' },
+  { id: 'forge',    label: 'Forge',     icon: forgeIcon,    color: '#8b5cf6', bg: 'bg-violet-500', ring: 'ring-violet-500/40', text: 'text-violet-400', btnClass: 'bg-violet-500 hover:bg-violet-400 shadow-violet-500/20' },
   { id: 'neoforge', label: 'NeoForge',  icon: neoforgeIcon, color: '#f43f5e', bg: 'bg-rose-500',   ring: 'ring-rose-500/40',   text: 'text-rose-400',   btnClass: 'bg-rose-500 hover:bg-rose-400 shadow-rose-500/20' },
 ]
 
@@ -208,7 +208,7 @@ function GroupContent({ group, selectedVersion, onSelect }) {
   const currentTab = sections.find(s => s.label === activeTab) ? activeTab : sections[0]?.label
 
   const TAB_COLORS = {
-    'Release':          'bg-orange-500/15 border-orange-500/30 text-orange-400',
+    'Release':          'bg-violet-500/15 border-violet-500/30 text-violet-400',
     'Pre-release / RC': 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400',
     'Snapshot':         'bg-blue-500/15 border-blue-500/30 text-blue-400',
   }
@@ -254,7 +254,7 @@ function GroupContent({ group, selectedVersion, onSelect }) {
                   py-2 px-2 rounded-lg text-xs font-mono font-semibold
                   transition-all duration-150 active:scale-95 truncate
                   ${active
-                    ? 'bg-orange-500/25 text-orange-400 border border-orange-500/40'
+                    ? 'bg-violet-500/25 text-violet-400 border border-violet-500/40'
                     : 'bg-white/5 text-white/50 border border-white/5 hover:bg-white/10 hover:text-white/90'
                   }
                 `}
@@ -407,7 +407,7 @@ function VersionAccordion({ selectedVersion, onSelect, groups }) {
                         py-2 px-3 rounded-lg text-sm font-mono font-semibold
                         transition-all duration-150 active:scale-95
                         ${active
-                          ? 'bg-orange-500/25 text-orange-400 border border-orange-500/40 shadow-sm shadow-orange-500/20'
+                          ? 'bg-violet-500/25 text-violet-400 border border-violet-500/40 shadow-sm shadow-violet-500/20'
                           : 'bg-white/5 text-white/55 border border-white/5 hover:bg-white/10 hover:text-white/90 hover:border-white/15'
                         }
                       `}
@@ -493,7 +493,7 @@ function LoaderVersionList({ loader, gameVersion, selectedVersion, onSelect }) {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-12 gap-3">
-      <svg className={`animate-spin w-5 h-5 ${loader === 'fabric' ? 'text-purple-400' : 'text-orange-400'}`}
+      <svg className={`animate-spin w-5 h-5 ${loader === 'fabric' ? 'text-purple-400' : 'text-violet-400'}`}
         viewBox="0 0 24 24" fill="none">
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -523,7 +523,7 @@ function LoaderVersionList({ loader, gameVersion, selectedVersion, onSelect }) {
     const recommended  = allStable[0]?.version ?? null
 
     const TABS = [
-      { id: 'stable', label: 'Stable', count: stableLatest.length, activeBg: 'bg-orange-500/15 border-orange-500/30 text-orange-400' },
+      { id: 'stable', label: 'Stable', count: stableLatest.length, activeBg: 'bg-violet-500/15 border-violet-500/30 text-violet-400' },
       { id: 'beta',   label: 'Beta',   count: allBeta.length,      activeBg: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400' },
       { id: 'old',    label: 'Old',    count: oldVersions.length,  activeBg: 'bg-white/8 border-white/15 text-white/70' },
     ]
@@ -560,7 +560,7 @@ function LoaderVersionList({ loader, gameVersion, selectedVersion, onSelect }) {
                       ${active ? `bg-white/8 border ring-1 ${loaderCfg?.ring} border-white/10 ${loaderCfg?.text}` : 'border border-transparent text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
                     <span>{v}</span>
                     <div className="flex items-center gap-2">
-                      {isRec && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${active ? 'bg-orange-500/25 text-orange-300' : 'bg-orange-500/12 text-orange-400/80'}`}>Recommended</span>}
+                      {isRec && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${active ? 'bg-violet-500/25 text-violet-300' : 'bg-violet-500/12 text-violet-400/80'}`}>Recommended</span>}
                       {active && <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 flex-shrink-0"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
                     </div>
                   </button>
@@ -586,8 +586,8 @@ function LoaderVersionList({ loader, gameVersion, selectedVersion, onSelect }) {
           { id: 'all',    label: 'All',    count: allVersions.length,    activeBg: 'bg-white/8 border-white/15 text-white/70' },
         ]
       : [
-          { id: 'recommended', label: 'Recommended', count: recVersions.length,    activeBg: 'bg-orange-500/15 border-orange-500/30 text-orange-400' },
-          { id: 'latest',      label: 'Latest',      count: latestVersions.length, activeBg: 'bg-orange-500/15 border-orange-500/30 text-orange-400' },
+          { id: 'recommended', label: 'Recommended', count: recVersions.length,    activeBg: 'bg-violet-500/15 border-violet-500/30 text-violet-400' },
+          { id: 'latest',      label: 'Latest',      count: latestVersions.length, activeBg: 'bg-violet-500/15 border-violet-500/30 text-violet-400' },
           { id: 'all',         label: 'All',          count: allVersions.length,    activeBg: 'bg-white/8 border-white/15 text-white/70' },
         ]
 
@@ -626,8 +626,8 @@ function LoaderVersionList({ loader, gameVersion, selectedVersion, onSelect }) {
                       ${active ? `bg-white/8 border ring-1 ${loaderCfg?.ring} border-white/10 ${loaderCfg?.text}` : 'border border-transparent text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
                     <span>{v}</span>
                     <div className="flex items-center gap-2">
-                      {isRec && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${active ? 'bg-orange-500/25 text-orange-300' : 'bg-orange-500/12 text-orange-400/80'}`}>Recommended</span>}
-                      {isLat && !isRec && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${active ? 'bg-orange-500/25 text-orange-300' : 'bg-orange-500/12 text-orange-400/80'}`}>Latest</span>}
+                      {isRec && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${active ? 'bg-violet-500/25 text-violet-300' : 'bg-violet-500/12 text-violet-400/80'}`}>Recommended</span>}
+                      {isLat && !isRec && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${active ? 'bg-violet-500/25 text-violet-300' : 'bg-violet-500/12 text-violet-400/80'}`}>Latest</span>}
                       {isNeo && v === allVersions[0] && <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${active ? 'bg-rose-500/25 text-rose-300' : 'bg-rose-500/12 text-rose-400/80'}`}>Latest</span>}
                       {active && <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 flex-shrink-0"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>}
                     </div>

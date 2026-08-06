@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -87,32 +87,32 @@ export default function TabLoadingOverlay({ visible }) {
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
           style={{ animation: 'tab-glow 3s ease-in-out infinite' }}
         >
-          <div className="w-16 h-16 bg-orange-500/25 rounded-full blur-2xl" />
+          <div className="w-16 h-16 bg-violet-500/25 rounded-full blur-2xl" />
         </div>
 
         {}
         <div className="absolute rounded-lg" style={{
           width: 18, height: 18,
-          background: '#fb923c',
-          boxShadow: '0 0 10px #fb923c99',
+          background: '#a78bfa',
+          boxShadow: '0 0 10px #a78bfa99',
           animation: 'tab-tl 3s ease-in-out 0s infinite',
         }} />
         <div className="absolute rounded-lg" style={{
           width: 18, height: 18,
-          background: '#f97316',
-          boxShadow: '0 0 10px #f9731699',
+          background: '#8b5cf6',
+          boxShadow: '0 0 10px #8b5cf699',
           animation: 'tab-tr 3s ease-in-out 0.06s infinite',
         }} />
         <div className="absolute rounded-lg" style={{
           width: 18, height: 18,
-          background: '#ea580c',
-          boxShadow: '0 0 10px #ea580c99',
+          background: '#7c3aed',
+          boxShadow: '0 0 10px #7c3aed99',
           animation: 'tab-bl 3s ease-in-out 0.12s infinite',
         }} />
         <div className="absolute rounded-lg" style={{
           width: 18, height: 18,
-          background: '#fb923c',
-          boxShadow: '0 0 10px #fb923c99',
+          background: '#a78bfa',
+          boxShadow: '0 0 10px #a78bfa99',
           animation: 'tab-br 3s ease-in-out 0.18s infinite',
         }} />
       </div>

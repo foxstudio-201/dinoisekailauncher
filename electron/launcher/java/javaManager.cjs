@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -75,7 +75,7 @@ function getJavaExecutable(javaDir) {
 function httpsGetRaw(url) {
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http
-    client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+    client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return httpsGetRaw(res.headers.location).then(resolve).catch(reject)
       }
@@ -96,7 +96,7 @@ function downloadFile(url, destPath, onProgress) {
     const dir = path.dirname(destPath)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
-    client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, (res) => {
+    client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return downloadFile(res.headers.location, destPath, onProgress).then(resolve).catch(reject)
       }
@@ -258,7 +258,7 @@ async function findJavaInstallations() {
   const promises = []
 
   const { app } = require('electron')
-  const runtimesDir = path.join(app.getPath('appData'), '.VoxelXClient', 'runtimes')
+  const runtimesDir = path.join(app.getPath('appData'), '.DinoIsekai', 'runtimes')
   if (fs.existsSync(runtimesDir)) {
     for (const comp of fs.readdirSync(runtimesDir)) {
       const exe = getJavaExecutable(path.join(runtimesDir, comp))
@@ -313,8 +313,8 @@ async function findJavaInstallations() {
   await Promise.allSettled(promises)
 
   return results.sort((a, b) => {
-    const aManaged = a.path.includes('.VoxelXClient')
-    const bManaged = b.path.includes('.VoxelXClient')
+    const aManaged = a.path.includes('.DinoIsekai')
+    const bManaged = b.path.includes('.DinoIsekai')
     if (aManaged !== bManaged) return aManaged ? -1 : 1
     return parseInt(b.version) - parseInt(a.version)
   })

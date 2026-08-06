@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * LAN World Scanner + Auto Tunnel
@@ -42,7 +42,7 @@ let tunnelAddr     = null
 let tunnelStatus   = 'idle' 
 let onEventCb      = null   
 
-const DATA_DIR  = path.join(app.getPath('appData'), '.VoxelXClient')
+const DATA_DIR  = path.join(app.getPath('appData'), '.DinoIsekai')
 const BORE_DIR  = path.join(DATA_DIR, 'bore')
 const BORE_EXE  = path.join(BORE_DIR, process.platform === 'win32' ? 'bore.exe' : 'bore')
 
@@ -86,7 +86,7 @@ async function ensureBore(sendLog) {
     https.get(
       'https://api.github.com/repos/ekzhang/bore/releases/latest',
       {
-        headers: { 'User-Agent': 'VoxelXLauncher/1.0', 'Accept': 'application/vnd.github.v3+json' },
+        headers: { 'User-Agent': 'DinoIsekai/1.0', 'Accept': 'application/vnd.github.v3+json' },
         timeout: 10000,
       },
       res => {
@@ -121,7 +121,7 @@ async function ensureBore(sendLog) {
   await new Promise((resolve, reject) => {
     function doGet(url) {
       const client = url.startsWith('https') ? https : require('http')
-      client.get(url, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, res => {
+      client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, res => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) return doGet(res.headers.location)
         if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`))
         const out = fs.createWriteStream(archivePath)

@@ -1,5 +1,5 @@
 /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -13,7 +13,7 @@
  */
 
  /**
- * VoxelXLauncher — Minecraft Launcher
+ * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
  * Source code : https://github.com/foxstudio-201/VoxelXLauncher
@@ -44,13 +44,13 @@ function SplashLogoInline({ size = 64, label }) {
       <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
         {}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-orange-500/15 rounded-full blur-2xl" style={{ width: size * 0.8, height: size * 0.8, animation: 'md-logo-glow 3s ease-in-out infinite' }} />
+          <div className="bg-violet-500/15 rounded-full blur-2xl" style={{ width: size * 0.8, height: size * 0.8, animation: 'md-logo-glow 3s ease-in-out infinite' }} />
         </div>
         {}
-        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#fb923c', boxShadow: '0 0 10px #fb923c99', animation: 'md-logo-tl 3s ease-in-out 0s infinite' }} />
-        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#f97316', boxShadow: '0 0 10px #f9731699', animation: 'md-logo-tr 3s ease-in-out 0.06s infinite' }} />
-        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#ea580c', boxShadow: '0 0 10px #ea580c99', animation: 'md-logo-bl 3s ease-in-out 0.12s infinite' }} />
-        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#fb923c', boxShadow: '0 0 10px #fb923c99', animation: 'md-logo-br 3s ease-in-out 0.18s infinite' }} />
+        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#a78bfa', boxShadow: '0 0 10px #a78bfa99', animation: 'md-logo-tl 3s ease-in-out 0s infinite' }} />
+        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#8b5cf6', boxShadow: '0 0 10px #8b5cf699', animation: 'md-logo-tr 3s ease-in-out 0.06s infinite' }} />
+        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#7c3aed', boxShadow: '0 0 10px #7c3aed99', animation: 'md-logo-bl 3s ease-in-out 0.12s infinite' }} />
+        <div className="absolute rounded-lg" style={{ width: s, height: s, background: '#a78bfa', boxShadow: '0 0 10px #a78bfa99', animation: 'md-logo-br 3s ease-in-out 0.18s infinite' }} />
       </div>
       {label && <p className="text-[11px] text-white/30 font-medium">{label}</p>}
       <style>{`
@@ -99,14 +99,14 @@ const DETAIL_TABS = [
 
 const LOADER_COLORS = {
   fabric: 'bg-purple-500/15 text-purple-300 border-purple-500/25',
-  forge: 'bg-orange-500/15 text-orange-300 border-orange-500/25',
+  forge: 'bg-violet-500/15 text-violet-300 border-violet-500/25',
   neoforge: 'bg-rose-500/15 text-rose-300 border-rose-500/25',
   quilt: 'bg-blue-500/15 text-blue-300 border-blue-500/25',
-  vanilla: 'bg-orange-500/15 text-orange-300 border-orange-500/25',
+  vanilla: 'bg-violet-500/15 text-violet-300 border-violet-500/25',
 }
 
 const VERSION_TYPE_STYLE = {
-  release: 'bg-orange-500/15 text-orange-400 border-orange-500/25',
+  release: 'bg-violet-500/15 text-violet-400 border-violet-500/25',
   beta: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
   alpha: 'bg-red-500/15 text-red-400 border-red-500/25',
 }
@@ -128,7 +128,7 @@ function FilterPill({ label, active, onClick, colorClass }) {
     <button
       onClick={onClick}
       className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-all capitalize ${active
-          ? (colorClass || 'bg-orange-500/15 text-orange-400 border-orange-500/30')
+          ? (colorClass || 'bg-violet-500/15 text-violet-400 border-violet-500/30')
           : 'bg-white/5 text-white/40 border-white/10 hover:text-white/65 hover:bg-white/8'
         }`}
     >
@@ -239,7 +239,7 @@ export default function TechnicDetail({ projectId, projectType, activeLoaders = 
 
         {}
         <div className="flex items-center gap-4 mb-3 text-sm">
-          <span className="flex items-center gap-1.5 text-orange-400/80">
+          <span className="flex items-center gap-1.5 text-violet-400/80">
             <DownloadSimple size={15} weight="duotone" />
             <span className="font-semibold">{formatNum(project.downloads)}</span>
             <span className="text-white/30 text-xs font-normal">downloads</span>
@@ -265,7 +265,7 @@ export default function TechnicDetail({ projectId, projectType, activeLoaders = 
               </span>
             ))}
             {gameVersions.slice(0, 3).map(v => (
-              <span key={v} className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500/8 text-orange-400/60 border border-orange-500/15">{v}</span>
+              <span key={v} className="text-[10px] px-2 py-0.5 rounded-full bg-violet-500/8 text-violet-400/60 border border-violet-500/15">{v}</span>
             ))}
             {gameVersions.length > 3 && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/25 border border-white/8">+{gameVersions.length - 3} more</span>
@@ -330,7 +330,7 @@ export default function TechnicDetail({ projectId, projectType, activeLoaders = 
           {DETAIL_TABS.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all -mb-px ${activeTab === tab.id
-                  ? 'border-orange-500 text-orange-400'
+                  ? 'border-violet-500 text-violet-400'
                   : 'border-transparent text-white/30 hover:text-white/60'
                 }`}>
               {tab.label}
@@ -390,7 +390,7 @@ export default function TechnicDetail({ projectId, projectType, activeLoaders = 
                 <div className="px-3 py-2.5 rounded-xl flex flex-col gap-0.5"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <span className="text-white/30 uppercase tracking-widest text-[9px]">Installs</span>
-                  <span className="text-orange-400 font-semibold">{formatNum(project.downloads)}</span>
+                  <span className="text-violet-400 font-semibold">{formatNum(project.downloads)}</span>
                 </div>
                 <div className="px-3 py-2.5 rounded-xl flex flex-col gap-0.5"
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
@@ -448,7 +448,7 @@ export default function TechnicDetail({ projectId, projectType, activeLoaders = 
               <div key={v.id}
                 className="flex items-center gap-3 px-3.5 py-3 rounded-xl cursor-pointer transition-all"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(251,146,60,0.2)'; e.currentTarget.style.background = 'rgba(251,146,60,0.03)' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.2)'; e.currentTarget.style.background = 'rgba(167,139,250,0.03)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
               >
                 <div className="flex-1 min-w-0">
@@ -471,7 +471,7 @@ export default function TechnicDetail({ projectId, projectType, activeLoaders = 
                     <span>{formatDate(v.date_published)}</span>
                     <span>·</span>
                     <span className="flex items-center gap-0.5">
-                      <DownloadSimple size={10} weight="duotone" className="text-orange-400/50" />
+                      <DownloadSimple size={10} weight="duotone" className="text-violet-400/50" />
                       {formatNum(v.downloads)}
                     </span>
                   </div>
@@ -484,7 +484,7 @@ export default function TechnicDetail({ projectId, projectType, activeLoaders = 
                     else setShowInstall(true)
                   }}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-white transition-all hover:-translate-y-0.5"
-                  style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)', boxShadow: '0 2px 12px rgba(251,146,60,0.2)' }}
+                  style={{ background: 'linear-gradient(135deg,#8b5cf6,#7c3aed)', boxShadow: '0 2px 12px rgba(167,139,250,0.2)' }}
                 >
                   <DownloadSimple size={13} weight="duotone" />
                   Install

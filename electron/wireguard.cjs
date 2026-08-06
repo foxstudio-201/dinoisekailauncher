@@ -19,7 +19,7 @@ const WG_PORT          = 51820
 const PING_INTERVAL_MS = 10000
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
-const DATA_DIR = path.join(app.getPath('appData'), '.VoxelXClient')
+const DATA_DIR = path.join(app.getPath('appData'), '.DinoIsekai')
 const WG_DIR   = path.join(DATA_DIR, 'wireguard')
 const WG_CONF  = path.join(WG_DIR,   'voxelx-lan.conf')
 const WG_EXE   = path.join(WG_DIR,   'wireguard.exe')
@@ -79,7 +79,7 @@ function httpsDownload(url, destPath, onProgress) {
   return new Promise((resolve, reject) => {
     function doGet(u) {
       const client = u.startsWith('https') ? https : http
-      client.get(u, { headers: { 'User-Agent': 'VoxelXLauncher/1.0' } }, res => {
+      client.get(u, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, res => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location)
           return doGet(res.headers.location)
         if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}: ${u}`))
@@ -190,7 +190,7 @@ async function detectPublicIp() {
       const ip = await new Promise((resolve, reject) => {
         const u = new URL(url)
         const req = https.get({ hostname: u.hostname, path: u.pathname, timeout: 4000,
-          headers: { 'User-Agent': 'VoxelXLauncher/1.0' }
+          headers: { 'User-Agent': 'DinoIsekai/1.0' }
         }, res => {
           let d = ''; res.on('data', c => { d += c })
           res.on('end', () => resolve(d.trim()))
@@ -357,7 +357,7 @@ function apiPost(action, body) {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(bodyStr),
-          'User-Agent': 'VoxelXLauncher/1.0',
+          'User-Agent': 'DinoIsekai/1.0',
         },
       }, res => {
         if ([301,302,307,308].includes(res.statusCode) && res.headers.location) {
@@ -387,7 +387,7 @@ function apiGet(action, params = {}) {
   return new Promise((resolve, reject) => {
     function doGet(host, p) {
       https.get({ hostname: host, port: 443, path: p,
-        headers: { 'User-Agent': 'VoxelXLauncher/1.0' }, timeout: 10000,
+        headers: { 'User-Agent': 'DinoIsekai/1.0' }, timeout: 10000,
       }, res => {
         if ([301,302,307,308].includes(res.statusCode) && res.headers.location) {
           res.resume(); const loc = new URL(res.headers.location)
