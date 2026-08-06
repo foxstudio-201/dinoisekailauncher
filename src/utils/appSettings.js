@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   hideLauncherOnLaunch: true,
   showLogWindow:        true,
   dataSyncEnabled:      true,
+  loadAssetsOnStart:     false,
   discordRPC:           false,
   boostMode:            false,
   bigCoreMode:          false,
@@ -46,8 +47,6 @@ export const DEFAULT_SETTINGS = {
   starTrail:            true,
   agreedTos:            false,
   agreedPrivacy:        false,
-  musicEnabled:         true,
-  musicVolume:          35,
   language:             'vi',
   initialSetupCompleted: false,
 }
@@ -146,13 +145,6 @@ export function applyAppSettings(settings) {
   if (typeof window === 'undefined') return
 
   const safe = sanitizeSettings(settings)
-
-  window.dispatchEvent(new CustomEvent('vxc-music-init', {
-    detail: {
-      enabled: safe.musicEnabled !== false,
-      volume:  safe.musicVolume  ?? 35,
-    }
-  }))
 
   if (safe.borderRadius !== undefined) {
     document.documentElement.style.setProperty('--app-radius', `${safe.borderRadius}px`)

@@ -121,26 +121,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('curseforge:installProgress', handler)
   },
 
-  technicSearch:          (opts)           => ipcRenderer.invoke('technic:search', opts),
-  technicGetProject:      (id)             => ipcRenderer.invoke('technic:getProject', id),
-  technicGetVersions:     (id)             => ipcRenderer.invoke('technic:getVersions', id),
-  technicInstall:         (opts)           => ipcRenderer.invoke('technic:install', opts),
-  onTechnicInstallProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('technic:installProgress', handler)
-    return () => ipcRenderer.removeListener('technic:installProgress', handler)
-  },
-
-  ftbSearch:          (opts)  => ipcRenderer.invoke('ftb:search', opts),
-  ftbGetProject:      (id)    => ipcRenderer.invoke('ftb:getProject', id),
-  ftbGetVersions:     (id)    => ipcRenderer.invoke('ftb:getVersions', id),
-  ftbInstall:         (opts)  => ipcRenderer.invoke('ftb:install', opts),
-  onFtbInstallProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('ftb:installProgress', handler)
-    return () => ipcRenderer.removeListener('ftb:installProgress', handler)
-  },
-
   launchGame:      (opts)       => ipcRenderer.invoke('launcher:launch', opts),
   stopGame:        (opts)       => ipcRenderer.invoke('launcher:stop', opts),
   preDownload:     (opts)       => ipcRenderer.invoke('launcher:preDownload', opts),
@@ -156,6 +136,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     const handler = (_e, data) => cb(data)
     ipcRenderer.on('dinosync:progress', handler)
     return () => ipcRenderer.removeListener('dinosync:progress', handler)
+  },
+  checkUpdate:      ()       => ipcRenderer.invoke('update:check'),
+  downloadUpdate:   ()       => ipcRenderer.invoke('update:download'),
+  installUpdate:    (p)      => ipcRenderer.invoke('update:install', { installerPath: p }),
+  getSystemInfo:    ()       => ipcRenderer.invoke('system:info'),
+  onUpdateProgress: (cb) => {
+    const handler = (_e, data) => cb(data)
+    ipcRenderer.on('updater:progress', handler)
+    return () => ipcRenderer.removeListener('updater:progress', handler)
   },
   listRunningGames: ()          => ipcRenderer.invoke('launcher:listRunning'),
   getProfileStats: (opts) => ipcRenderer.invoke('launcher:getStats', opts),
@@ -183,9 +172,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('launcher:stopped', handler)
   },
 
-  saveSkinPrefs: (opts) => ipcRenderer.invoke('skin:savePrefs', opts),
-  getSkinPrefs:  (opts) => ipcRenderer.invoke('skin:getPrefs', opts),
-  uploadSkinToWeb: (opts) => ipcRenderer.invoke('skin:uploadToWeb', opts),
 
   profileListMods:          (profileId, accountId)            => ipcRenderer.invoke('profile:listMods', profileId, accountId),
   profileGetInstalledContent: (profileId)                     => ipcRenderer.invoke('profile:getInstalledContent', profileId),
@@ -261,85 +247,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => require('electron').ipcRenderer.removeListener('server:tunnelLog', handler)
   },
 
-  // ── LAN World Auto-Tunnel ──────────────────────────────────────────────────
-  lanStartScan:  ()  => ipcRenderer.invoke('lan:startScan'),
-  lanStopScan:   ()  => ipcRenderer.invoke('lan:stopScan'),
-  lanStopTunnel: ()  => ipcRenderer.invoke('lan:stopTunnel'),
-  lanGetStatus:  ()  => ipcRenderer.invoke('lan:getStatus'),
-  lanOpenWindow: ()  => ipcRenderer.invoke('lan:openWindow'),
-  closeLanWindow: () => ipcRenderer.send('lan:closeWindow'),
-
-  onLanDetected: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('lan:detected', handler)
-    return () => ipcRenderer.removeListener('lan:detected', handler)
-  },
-  onLanScanning: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('lan:scanning', handler)
-    return () => ipcRenderer.removeListener('lan:scanning', handler)
-  },
-  onLanTunnelStatus: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('lan:tunnelStatus', handler)
-    return () => ipcRenderer.removeListener('lan:tunnelStatus', handler)
-  },
-  offLanTunnelStatus: (cb) => ipcRenderer.removeListener('lan:tunnelStatus', cb),
-  onLanTunnelLog: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('lan:tunnelLog', handler)
-    return () => ipcRenderer.removeListener('lan:tunnelLog', handler)
-  },
-  offLanTunnelLog: (cb) => ipcRenderer.removeListener('lan:tunnelLog', cb),
-  onLanWindowData: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('lan:windowData', handler)
-    return () => ipcRenderer.removeListener('lan:windowData', handler)
-  },
-  offLanWindowData: (cb) => ipcRenderer.removeListener('lan:windowData', cb),
-  onLanError: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('lan:error', handler)
-    return () => ipcRenderer.removeListener('lan:error', handler)
-  },
-
-  // ── Skin/Cape Local Files (for offline Authlib-Injector) ─────────────────
-  saveSkinLocalFile:   (opts)              => ipcRenderer.invoke('skin:saveLocalFile', opts),
-  getSkinLocalStatus:  (uuid)              => ipcRenderer.invoke('skin:getLocalStatus', { uuid }),
-  deleteSkinLocalFile: (opts)              => ipcRenderer.invoke('skin:deleteLocalFile', opts),
-
-  // ── VoxelX P2P LAN (WireGuard) ────────────────────────────────────────────
-  vxlanCheck:  ()                    => ipcRenderer.invoke('vxlan:check'),
-  vxlanCreate: (opts)                => ipcRenderer.invoke('vxlan:create', opts),
-  vxlanJoin:   (opts)                => ipcRenderer.invoke('vxlan:join', opts),
-  vxlanLeave:  ()                    => ipcRenderer.invoke('vxlan:leave'),
-  vxlanState:  ()                    => ipcRenderer.invoke('vxlan:state'),
-  vxlanRelaunchAsAdmin: ()           => ipcRenderer.invoke('vxlan:relaunchAsAdmin'),
-
-  onVxlanLog: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('vxlan:log', handler)
-    return () => ipcRenderer.removeListener('vxlan:log', handler)
-  },
-  onVxlanCreated: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('vxlan:created', handler)
-    return () => ipcRenderer.removeListener('vxlan:created', handler)
-  },
-  onVxlanJoined: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('vxlan:joined', handler)
-    return () => ipcRenderer.removeListener('vxlan:joined', handler)
-  },
-  onVxlanPeers: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('vxlan:peers', handler)
-    return () => ipcRenderer.removeListener('vxlan:peers', handler)
-  },
-  onVxlanLeft: (cb) => {
-    const handler = (_, data) => cb(data)
-    ipcRenderer.on('vxlan:left', handler)
-    return () => ipcRenderer.removeListener('vxlan:left', handler)
-  },
 })
 

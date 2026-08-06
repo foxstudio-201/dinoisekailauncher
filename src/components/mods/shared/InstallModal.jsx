@@ -32,8 +32,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useModrinthInstall } from '../modrinth/useModrinth'
 import { useCurseForgeInstall } from '../curseforge/useCurseForge'
-import { useTechnicInstall } from '../technic/useTechnic'
-import { useFtbInstall } from '../ftb/useFtb'
 import ModpackInstallModal from './ModpackInstallModal'
 import { useAccounts } from '../../../hooks/useAccounts'
 
@@ -144,12 +142,8 @@ export default function InstallModal({ project, versions, projectType, source = 
 
   const modrinthInstall = useModrinthInstall()
   const curseforgeInstall = useCurseForgeInstall()
-  const technicInstall = useTechnicInstall()
-  const ftbInstall = useFtbInstall()
 
-  const installer = source === 'ftb' ? ftbInstall
-    : source === 'technic' ? technicInstall
-    : source === 'curseforge' ? curseforgeInstall
+  const installer = source === 'curseforge' ? curseforgeInstall
     : modrinthInstall
   const { install, installing, progress, error, done, reset } = installer
 

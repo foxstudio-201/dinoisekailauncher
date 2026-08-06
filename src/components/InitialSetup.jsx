@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, DiscordLogo, DownloadSimple, MusicNote } from '@phosphor-icons/react'
+import { Check, DiscordLogo, DownloadSimple } from '@phosphor-icons/react'
 import { useLang } from '../i18n/LangProvider'
 import { applyAppSettings, saveAppSettings } from '../utils/appSettings'
 import martianIcon from '../assets/martian-icon.png'
@@ -8,24 +8,22 @@ const COPY = {
   vi: {
     welcome: ['Chào mừng đến với Dino Isekai', 'Thiết lập nhanh vài tùy chọn để launcher phù hợp với bạn.'],
     language: ['Chọn ngôn ngữ', 'Bạn luôn có thể đổi lại trong phần Cài đặt.'],
-    music: ['Nhạc nền', 'Phát nhạc LIGHTS khi launcher mở.'],
     discord: ['Discord Rich Presence', 'Hiển thị hoạt động Minecraft của bạn trên Discord.'],
     updates: ['Cập nhật tự động', 'Kiểm tra phiên bản mới mỗi khi launcher khởi động.'],
     appearance: ['Chế độ hiển thị', 'Chọn giao diện bạn muốn sử dụng.'],
     done: ['Thiết lập hoàn tất!', 'Dino Isekai đã sẵn sàng để bạn bắt đầu.'],
     continue: 'Tiếp tục', finish: 'Bắt đầu sử dụng', enabled: 'Bật', disabled: 'Tắt',
-    default: 'Mặc định', gaming: 'Gaming', musicOn: 'Bật nhạc nền', musicOff: 'Tắt nhạc nền',
+    default: 'Mặc định', gaming: 'Gaming',
   },
   en: {
     welcome: ['Welcome to Dino Isekai', 'Set up a few preferences to make the launcher yours.'],
     language: ['Choose your language', 'You can change this anytime in Settings.'],
-    music: ['Background music', 'Play LIGHTS music while the launcher is open.'],
     discord: ['Discord Rich Presence', 'Show your Minecraft activity on Discord.'],
     updates: ['Automatic updates', 'Check for a new version whenever the launcher starts.'],
     appearance: ['Display mode', 'Choose the interface you want to use.'],
     done: ['Setup complete!', 'Dino Isekai is ready when you are.'],
     continue: 'Continue', finish: 'Start using launcher', enabled: 'On', disabled: 'Off',
-    default: 'Default', gaming: 'Gaming', musicOn: 'Enable background music', musicOff: 'Disable background music',
+    default: 'Default', gaming: 'Gaming',
   },
 }
 
@@ -54,12 +52,11 @@ export default function InitialSetup({ initialSettings, onComplete }) {
   const [settings, setSettings] = useState({
     ...initialSettings,
     language: initialSettings?.language || lang || 'vi',
-    musicEnabled: initialSettings?.musicEnabled !== false,
     discordRPC: !!initialSettings?.discordRPC,
     autoCheckUpdate: initialSettings?.autoCheckUpdate !== false,
   })
   const [saving, setSaving] = useState(false)
-  const stepNames = ['welcome', 'language', 'music', 'discord', 'updates', 'done']
+  const stepNames = ['welcome', 'language', 'discord', 'updates', 'done']
   const current = stepNames[step]
   const [title, description] = copy[current]
 
@@ -73,14 +70,13 @@ export default function InitialSetup({ initialSettings, onComplete }) {
     const finalSettings = { ...settings, initialSetupCompleted: true }
     await saveAppSettings(finalSettings)
     applyAppSettings(finalSettings)
-    window.dispatchEvent(new CustomEvent('vxc-music-init', { detail: { enabled: finalSettings.musicEnabled, volume: finalSettings.musicVolume ?? 35 } }))
     onComplete(finalSettings)
   }
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-[#090a0c]/96 p-5">
       <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'radial-gradient(ellipse at 50% -10%, rgba(255,255,255,.06), transparent 48%)' }} />
-      <div className="relative w-full max-w-[720px] rounded-2xl border border-white/[0.09] bg-[#111216] shadow-[0_24px_80px_rgba(0,0,0,.5)] overflow-hidden">
+      <div className="relative w-full max-w-[720px] rounded-2xl border border-white/[0.09] bg-[#111216] overflow-hidden">
         <div className="px-7 sm:px-9 pt-6"><div className="h-px bg-white/[0.08]"><div className="h-px bg-violet-400 transition-all duration-500" style={{ width: `${(step / (stepNames.length - 1)) * 100}%` }} /></div></div>
         <div className="px-7 pb-7 pt-5 sm:px-9 sm:pb-9">
           <div className="flex items-center justify-between mb-9">
@@ -96,7 +92,6 @@ export default function InitialSetup({ initialSettings, onComplete }) {
 
             {current === 'language' && <div className="grid grid-cols-2 gap-3">{langs.map(item => <button key={item.code} type="button" onClick={() => selectLanguage(item.code)} className={`rounded-xl border p-4 text-left transition-all ${settings.language === item.code ? 'border-violet-400/70 bg-violet-400/[0.07]' : 'border-white/[0.08] bg-white/[0.02] hover:border-white/20'}`}><div className="text-xl grayscale-[.15]">{item.flag}</div><p className="text-sm font-semibold text-white/80 mt-3">{item.name}</p>{settings.language === item.code && <Check size={15} weight="bold" className="text-violet-400 mt-2" />}</button>)}</div>}
 
-            {current === 'music' && <ToggleChoice enabled={settings.musicEnabled} onClick={() => setSettings(value => ({ ...value, musicEnabled: !value.musicEnabled }))} onLabel={copy.musicOn} offLabel={copy.musicOff} icon={MusicNote} />}
             {current === 'discord' && <ToggleChoice enabled={settings.discordRPC} onClick={() => setSettings(value => ({ ...value, discordRPC: !value.discordRPC }))} onLabel={`${copy.enabled} Discord Rich Presence`} offLabel={`${copy.disabled} Discord Rich Presence`} icon={DiscordLogo} />}
             {current === 'updates' && <ToggleChoice enabled={settings.autoCheckUpdate} onClick={() => setSettings(value => ({ ...value, autoCheckUpdate: !value.autoCheckUpdate }))} onLabel={`${copy.enabled} auto update`} offLabel={`${copy.disabled} auto update`} icon={DownloadSimple} />}
 

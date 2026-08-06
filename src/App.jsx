@@ -35,22 +35,18 @@ import CloseModal from './components/CloseModal'
 import NavBar from './components/NavBar'
 import HomePage from './components/HomePage'
 import MinecraftPage from './components/MinecraftPage'
-import Toast from './components/Toast'
 import InitialSetup from './components/InitialSetup'
-import { ToastContext, useToastState, useToast } from './hooks/useToast'
 import CursorTrail from './components/CursorTrail'
-import { AccountsProvider, useAccounts } from './hooks/useAccounts'
+import UpdateModal from './components/UpdateModal'
+import { AccountsProvider } from './hooks/useAccounts'
 import { loadAppSettings, applyAppSettings, isInitialSetupRequired } from './utils/appSettings'
 import { LangProvider, useLang } from './i18n/LangProvider'
 import { ModpackInstallProvider } from './components/mods/shared/ModpackInstallContext'
 
-import LanShareWindow from './components/LanShareWindow'
-import { useBgMusic } from './hooks/useBgMusic'
 import vanillaBg from './assets/vanilla-mc.png'
 
 const SettingsPage = lazy(() => import('./components/settings/SettingsPage'))
 const CrashAnalyzerModal = lazy(() => import('./components/crash/CrashAnalyzerModal'))
-const AddAccountModal = lazy(() => import('./components/account/AddAccountModal'))
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
 
@@ -78,7 +74,6 @@ const PAGE_ORDER = ['home', 'minecraft']
 
 function AppInner() {
   const { t } = useLang()
-  const toast = useToast()
   const [activePage, setActivePage] = useState('home')
   const [outgoingPage, setOutgoingPage] = useState(null)
   const [direction, setDirection] = useState('forward')
@@ -97,8 +92,6 @@ function AppInner() {
     setActivePage(page)
     setTimeout(() => setOutgoingPage(null), 480)
   }, [activePage])
-  const { addAccount } = useAccounts()
-  const [showAddAccount, setShowAddAccount] = useState(false)
   const [logPanelOpen, setLogPanelOpen] = useState(false)
   const [showCloseModal, setShowCloseModal] = useState(false)
 
@@ -405,7 +398,6 @@ function AppInner() {
             activePage={activePage}
             onNavigate={handleNavigate}
             onOpenSettings={() => setSettingsOpen(true)}
-            onAddAccount={() => setShowAddAccount(true)}
             hidden={logPanelOpen}
           />
           {renderPage()}
@@ -426,42 +418,24 @@ function AppInner() {
         </Suspense>
       )}
 
-      {showAddAccount && (
-        <Suspense fallback={null}>
-          <AddAccountModal
-            onClose={() => setShowAddAccount(false)}
-            onAdd={async (account) => {
-              await addAccount(account)
-            }}
-          />
-        </Suspense>
-      )}
       {showCloseModal && (
         <CloseModal onClose={() => setShowCloseModal(false)} />
       )}
+      <UpdateModal />
       <CursorTrail />
     </div>
   )
 }
 
 export default function App() {
-  const toastState = useToastState()
   const [initialSettings, setInitialSettings] = useState(null)
   const [initialSetupOpen, setInitialSetupOpen] = useState(false)
   const [initialSetupChecked, setInitialSetupChecked] = useState(false)
-
-  useBgMusic(initialSetupChecked && !initialSetupOpen)
 
   useEffect(() => {
     loadAppSettings().then(s => {
       setInitialSettings(s)
       applyAppSettings(s)
-      window.dispatchEvent(new CustomEvent('vxc-music-init', {
-        detail: {
-          enabled: s?.musicEnabled !== false,
-          volume:  s?.musicVolume  ?? 35,
-        }
-      }))
     }).catch(() => {})
   }, [])
 
@@ -472,33 +446,20 @@ export default function App() {
     }).catch(() => setInitialSetupChecked(true))
   }, [])
 
-  const params = new URLSearchParams(window.location.search)
-  const isLanWindow = params.get('window') === 'lan'
-  if (isLanWindow) {
-    return <LanShareWindow />
-  }
-
   return (
     <LangProvider>
       <AccountsProvider>
         <ModpackInstallProvider>
-          <ToastContext.Provider value={toastState}>
-            <AppInner />
-            {initialSetupChecked && initialSetupOpen && (
-              <InitialSetup
-                initialSettings={initialSettings || {}}
-                onComplete={(settings) => {
-                  setInitialSettings(settings)
-                  setInitialSetupOpen(false)
-                }}
-              />
-            )}
-            <Toast
-              toast={toastState.toast}
-              visible={toastState.visible}
-              onDismiss={toastState.dismiss}
+          <AppInner />
+          {initialSetupChecked && initialSetupOpen && (
+            <InitialSetup
+              initialSettings={initialSettings || {}}
+              onComplete={(settings) => {
+                setInitialSettings(settings)
+                setInitialSetupOpen(false)
+              }}
             />
-          </ToastContext.Provider>
+          )}
         </ModpackInstallProvider>
       </AccountsProvider>
     </LangProvider>

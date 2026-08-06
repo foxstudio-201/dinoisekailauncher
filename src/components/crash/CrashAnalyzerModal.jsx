@@ -663,7 +663,7 @@ function LogViewer({ logs }) {
         </button>
       </div>
       <div
-        className="rounded-xl bg-black/60 border border-white/5 p-3 font-mono text-[11px] leading-relaxed overflow-y-auto"
+        className="rounded-xl bg-[#14101f]/80 border border-violet-500/10 p-3 font-mono text-[11px] leading-relaxed overflow-y-auto"
         style={{ maxHeight: 340, scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}
       >
         {logs.length === 0
@@ -827,10 +827,10 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
   const allFixed = missingMods.length > 0 && fixedMods.size >= missingMods.length
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4">
       <div
-        className="border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col" style={{ background: 'rgba(14,14,14,0.98)' }}
-        style={{ maxHeight: '90vh' }}
+        className="border border-violet-500/15 rounded-2xl w-full max-w-2xl flex flex-col"
+        style={{ background: 'rgba(23,16,36,0.98)', maxHeight: '90vh' }}
       >
         {/* Header */}
         <div className="flex-shrink-0 flex items-start gap-4 px-6 py-4 border-b border-white/5">
@@ -947,7 +947,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
                     </button>
                   </div>
                   <div
-                    className="rounded-xl bg-black/50 border border-white/5 p-3 font-mono text-[11px] leading-relaxed overflow-y-auto"
+                    className="rounded-xl bg-[#14101f]/80 border border-violet-500/10 p-3 font-mono text-[11px] leading-relaxed overflow-y-auto"
                     style={{ maxHeight: 160, scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}
                   >
                     {relevantLines.map((line, i) => (

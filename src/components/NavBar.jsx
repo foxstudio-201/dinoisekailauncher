@@ -7,7 +7,7 @@ export default function NavBar({ activePage, onNavigate, onOpenSettings, hidden 
   const { t } = useLang()
 
   return (
-    <nav className={`absolute left-0 top-9 bottom-0 z-50 w-[76px] flex flex-col items-center transition-all duration-300 ${
+    <nav className={`absolute left-0 top-9 bottom-0 z-50 w-[84px] flex flex-col items-center transition-all duration-300 ${
       hidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
     }`}>
 
@@ -15,26 +15,28 @@ export default function NavBar({ activePage, onNavigate, onOpenSettings, hidden 
       <button
         onClick={() => onNavigate('home')}
         title={t('sidebar.home')}
-        className={`mt-6 w-14 h-14 rounded-2xl flex items-center justify-center transition-all border ${
-          activePage === 'home'
-            ? 'bg-violet-500/25 border-violet-400/30'
-            : 'bg-white/[0.08] border-white/15 hover:bg-white/15'
-        }`}
+        className="mt-6 w-16 h-16 rounded-2xl flex items-center justify-center transition-all hover:scale-105"
       >
-        <img src={martianIcon} alt="" className="w-10 h-10 object-contain" draggable={false} />
+        <img
+          src={martianIcon}
+          alt=""
+          draggable={false}
+          className={`object-contain transition-all duration-200 ${activePage === 'home' ? 'w-12 h-12' : 'w-10 h-10'}`}
+        />
       </button>
 
       {/* Minecraft — page sắp ra mắt */}
       <button
         onClick={() => onNavigate('minecraft')}
         title="Minecraft"
-        className={`mt-3 w-14 h-14 rounded-2xl flex items-center justify-center transition-all border ${
-          activePage === 'minecraft'
-            ? 'bg-violet-500/25 border-violet-400/30 text-violet-300'
-            : 'bg-white/[0.08] border-white/15 text-white/85 hover:bg-white/15 hover:text-white'
-        }`}
+        className="mt-2 w-16 h-16 rounded-2xl flex items-center justify-center transition-all hover:scale-105"
       >
-        <img src={craftingTableIcon} alt="" className="w-9 h-9 object-contain" draggable={false} />
+        <img
+          src={craftingTableIcon}
+          alt=""
+          draggable={false}
+          className={`object-contain transition-all duration-200 ${activePage === 'minecraft' ? 'w-11 h-11' : 'w-9 h-9'}`}
+        />
       </button>
 
       {/* Khoảng trống giữa */}
@@ -46,9 +48,9 @@ export default function NavBar({ activePage, onNavigate, onOpenSettings, hidden 
         <button
           onClick={onOpenSettings}
           title={t('sidebar.settings')}
-          className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all border border-white/15 bg-white/[0.08] text-white/85 hover:bg-white/15 hover:text-white"
+          className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all hover:scale-105"
         >
-          <Gear size={30} weight="duotone" />
+          <Gear size={32} weight="duotone" />
         </button>
       </div>
     </nav>

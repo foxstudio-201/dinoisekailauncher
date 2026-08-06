@@ -49,7 +49,7 @@ function InstanceModal({ instances, onKill, onClose }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {}
-      <div className="relative z-10 w-[420px] bg-[#141414] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative z-10 w-[420px] bg-[#141414] border border-white/10 rounded-2xl overflow-hidden">
         {}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/5">
           <div className="flex items-center gap-2">

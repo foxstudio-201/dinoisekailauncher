@@ -123,59 +123,6 @@ export default function LauncherTab({ settings, onChange }) {
         </div>
       </Section>
 
-      {}
-      <Section title={t('settings.launcher.music')}>
-        <SettingRow
-          label={t('settings.launcher.musicEnabled')}
-          description={t('settings.launcher.musicEnabledDesc')}
-        >
-          <Toggle
-            checked={settings.musicEnabled !== false}
-            onChange={v => {
-              onChange({ musicEnabled: v })
-              window.dispatchEvent(new CustomEvent('vxc-music-change', { detail: { enabled: v } }))
-            }}
-          />
-        </SettingRow>
-        <div className="py-3">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-white/80">{t('settings.launcher.musicVolume')}</p>
-            <span className="text-xs font-mono text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-md">
-              {settings.musicVolume ?? 35}%
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-white/25 flex-shrink-0">
-              <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
-            </svg>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={1}
-              value={settings.musicVolume ?? 35}
-              disabled={settings.musicEnabled === false}
-              onChange={e => {
-                const v = Number(e.target.value)
-                onChange({ musicVolume: v })
-                window.dispatchEvent(new CustomEvent('vxc-music-change', { detail: { volume: v } }))
-              }}
-              className={`
-                flex-1 h-1.5 rounded-full appearance-none cursor-pointer
-                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4
-                [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full
-                [&::-webkit-slider-thumb]:bg-violet-400 [&::-webkit-slider-thumb]:cursor-pointer
-                ${settings.musicEnabled === false ? 'opacity-30 cursor-not-allowed' : 'bg-white/10'}
-              `}
-            />
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-white/25 flex-shrink-0">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-          </div>
-        </div>
-      </Section>
-
-      {}
       <Section title={t('settings.launcher.game')}>
         <SettingRow
           label={t('settings.launcher.hideLauncher')}
@@ -184,6 +131,15 @@ export default function LauncherTab({ settings, onChange }) {
           <Toggle
             checked={settings.hideLauncherOnLaunch ?? true}
             onChange={v => onChange({ hideLauncherOnLaunch: v })}
+          />
+        </SettingRow>
+        <SettingRow
+          label="Tải assets khi khởi động"
+          description="Bật để quét/tải lại assets mỗi lần mở launcher. Để tắt (mặc định) sẽ bỏ qua — assets tự xử lý lúc chạy game"
+        >
+          <Toggle
+            checked={settings.loadAssetsOnStart === true}
+            onChange={v => onChange({ loadAssetsOnStart: v })}
           />
         </SettingRow>
         <SettingRow

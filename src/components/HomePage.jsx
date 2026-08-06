@@ -6,10 +6,9 @@ import ProfileSettingsPanel from './home/ProfileSettingsPanel'
 import GamingModalWrapper from './ui/GamingModalWrapper'
 import LogPanel from './LogPanel'
 import AppBackground from './AppBackground'
+import SystemInfo from './SystemInfo'
 import PlayerHead from './ui/PlayerHead'
 import { offlineUUID } from '../utils/offlineUUID'
-import selectSound from '../assets/sound/selected.mp3'
-import clickSound from '../assets/sound/click.mp3'
 import martianIcon from '../assets/martian-icon.png'
 import vanillaIcon from '../assets/loader/vanilla.png'
 import fabricIcon from '../assets/loader/fabric.png'
@@ -188,10 +187,15 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   // Tìm instance đang chạy của một profile cụ thể
   function getProfileInstance(profileId, accountId) {
     if (!instances || !profileId) return null
-    return instances.find(inst =>
+    const exact = instances.find(inst =>
       inst.profileId === profileId &&
       inst.state !== 'stopped' &&
       (!accountId || inst.accountId === accountId)
+    )
+    if (exact) return exact
+    // Fallback: bất kỳ instance đang chạy của profile (account có thể lệch nhịp)
+    return instances.find(inst =>
+      inst.profileId === profileId && inst.state !== 'stopped'
     ) || null
   }
 
@@ -201,24 +205,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     return inst.state // 'downloading' | 'running' | 'error' | 'stopped'
   }
 
-  const selectAudioRef = useRef(null)
-  const clickAudioRef = useRef(null)
-
-  function playSelectSound() {
-    if (!selectAudioRef.current) {
-      selectAudioRef.current = new Audio(selectSound)
-    }
-    selectAudioRef.current.currentTime = 0
-    selectAudioRef.current.play().catch(() => {})
-  }
-
-  function playClickSound() {
-    if (!clickAudioRef.current) {
-      clickAudioRef.current = new Audio(clickSound)
-    }
-    clickAudioRef.current.currentTime = 0
-    clickAudioRef.current.play().catch(() => {})
-  }
+  function playSelectSound() {}
+  function playClickSound() {}
 
   function handleLaunch(profileId, ramMb, profileName, accountName, serverAddress, explicitAccountId) {
     const pid = profileId || currentProfile?.id
@@ -296,16 +284,16 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     }
   }, [launchState])
 
-  // Persist launcherLogs so they survive instance deletion (after game stops)
+  // Persist logs so they survive instance deletion (after game stops)
   useEffect(() => {
-    const ll = currentInst?.launcherLogs
+    const ll = currentInst?.logs
     if (ll?.length > 0) {
       setPersistedLauncherLogs(ll)
     }
-  }, [currentInst?.launcherLogs])
+  }, [currentInst?.logs])
 
-  // Display live launcherLogs when available, otherwise persisted (from last session)
-  const displayLogs = currentInst?.launcherLogs || persistedLauncherLogs
+  // Display live logs when available, otherwise persisted (from last session)
+  const displayLogs = currentInst?.logs || persistedLauncherLogs
 
   function handleCloseLogPanel() {
     setLogPanelVisible(false)
@@ -323,8 +311,9 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
       <style dangerouslySetInnerHTML={{__html:[
         '@property --ca { syntax: \'<angle>\'; inherits: true; initial-value: 0deg; }',
-        '.glow-play{position:relative;isolation:isolate;overflow:visible;border-radius:1rem;--ep:100}',
-        '.glow-play .glow-inner{position:relative;z-index:1;isolation:isolate;border-radius:1rem;display:flex;align-items:center;gap:.5rem;height:3.5rem;padding:0 2rem;background:rgba(15,15,18,0.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff;font-weight:700;font-size:1rem;box-shadow:0 8px 30px rgba(0,0,0,0.45)}',
+        '.glow-play{position:relative;overflow:visible;border-radius:1rem;--ep:100}',
+        '.glow-play .glow-inner{position:relative;z-index:1;border-radius:1rem;background:rgba(20,20,28,0.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}',
+        '.glow-play .glow-btn{display:flex;align-items:center;gap:.5rem;height:3.5rem;padding:0 2rem;background:transparent;border:none;color:#fff;font-weight:700;font-size:1rem;cursor:pointer}',
         '.glow-play .glow-edge{position:absolute;inset:-25px;border-radius:inherit;z-index:0;pointer-events:none;opacity:calc((var(--ep,0) - 30)/70);transition:opacity .12s ease-out;-webkit-mask-image:conic-gradient(from var(--ca,0deg) at center,#000 5%,transparent 15%,transparent 85%,#000 95%);mask-image:conic-gradient(from var(--ca,0deg) at center,#000 5%,transparent 15%,transparent 85%,#000 95%);mix-blend-mode:plus-lighter;animation:glow-rotate 3.5s linear infinite}',
         '.glow-play .glow-edge::before{content:"";position:absolute;inset:25px;border-radius:inherit;box-shadow:0 0 0 1.5px var(--gc),0 0 12px 3px color-mix(in srgb,var(--gc) 45%,transparent),inset 0 0 0 1.5px var(--gc),inset 0 0 10px 0 color-mix(in srgb,var(--gc) 35%,transparent)}',
         '@keyframes glow-rotate{from{--ca:0deg}to{--ca:360deg}}',
@@ -334,12 +323,13 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
       {/* Profile display */}
       <div className="flex-1 flex flex-col justify-center pl-36">
+        <SystemInfo />
         <div className="flex items-center gap-6">
           <img src={martianIcon} alt="Dino Isekai" className="w-24 h-24 object-contain drop-shadow-xl" draggable={false} />
 
           <div className="text-left">
             {/* Server box */}
-            <div className="rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 p-6 shadow-2xl">
+            <div className="rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 p-6">
               <h1 className="text-5xl font-extrabold text-white tracking-tight drop-shadow-lg">
                 Dino Isekai Server
               </h1>
@@ -369,7 +359,6 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                   <>
                     <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,.8)]" />
                     <span className="text-lg font-bold text-white/70">Offline</span>
-                    <span className="text-sm text-white/40">{serverStatus.server?.ip}</span>
                   </>
                 ) : (
                   <>
@@ -383,7 +372,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
 
             {/* Info box */}
-            <div className="mt-4 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 px-5 py-4 shadow-2xl">
+            <div className="mt-4 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 px-5 py-4">
               <p className="text-sm text-white/50">Hỗ trợ Minecraft 1.20.1 · Forge</p>
               <p className="text-sm text-white/50 mt-1">Launcher hiện tại: 1.20.1</p>
             </div>
@@ -397,30 +386,35 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       </div>
 
       {/* Bottom-right: username + Play + Settings */}
-      <div className="absolute bottom-6 right-7 z-50 flex flex-col items-end gap-2">
+      <div className="absolute bottom-6 right-7 flex flex-col items-end gap-2">
         {usernameError && (
-          <p className="text-[11px] text-red-400 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-sm">{usernameError}</p>
+          <p className="text-sm font-bold text-white bg-red-600 px-3 py-1.5 rounded-lg">{usernameError}</p>
         )}
         <div className="flex items-center gap-3">
           {/* Logs — bên trái nút tài khoản */}
-          <button
-            onClick={() => { logPanelVisible ? handleCloseLogPanel() : handleReopenLog(); playClickSound() }}
-            className={`w-14 h-14 rounded-2xl border flex items-center justify-center transition-all active:scale-95 shadow-xl backdrop-blur-sm ${
+          <div
+            className={`rounded-2xl overflow-hidden border transition-all active:scale-95 ${
               logPanelVisible
-                ? 'bg-violet-500/20 border-violet-400/30 text-violet-300'
-                : 'bg-black/50 border-white/15 text-white/60 hover:text-white hover:bg-black/70'
+                ? 'bg-violet-500/20 border-violet-400/30'
+                : 'border-white/15'
             }`}
-            title="Logs"
+            style={{ backgroundColor: logPanelVisible ? undefined : 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
-              <path d="M7 9h10v2H7zm0 3h7v2H7zm0-6h10v2H7z"/>
-            </svg>
-          </button>
+            <button
+              onClick={() => { logPanelVisible ? handleCloseLogPanel() : handleReopenLog(); playClickSound() }}
+              className={`w-14 h-14 flex items-center justify-center transition-colors ${logPanelVisible ? 'text-violet-300' : 'text-white/60 hover:text-white'}`}
+              title="Logs"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
+                <path d="M7 9h10v2H7zm0 3h7v2H7zm0-6h10v2H7z"/>
+              </svg>
+            </button>
+          </div>
 
           {/* Username: collapsed icon, click to expand */}
           <div className="flex items-center">
-            <div className={`flex items-center overflow-hidden rounded-2xl bg-black/60 backdrop-blur-md shadow-xl border transition-all duration-300 ease-out ${
+            <div className={`flex items-center overflow-hidden rounded-2xl bg-black/60 backdrop-blur-md border transition-all duration-300 ease-out ${
               usernameExpanded
                 ? 'max-w-[430px] opacity-100 border-white/15 p-1.5'
                 : 'max-w-0 opacity-0 border-transparent p-0 pointer-events-none'
@@ -459,22 +453,25 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 </button>
               </div>
             </div>
-            <button
-              onClick={() => { setUsernameExpanded(v => !v); playClickSound() }}
-              className={`w-14 h-14 rounded-2xl bg-black/50 border border-white/15 text-white/70 hover:text-white hover:bg-black/70 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 shadow-xl ${
-                usernameExpanded ? 'ml-2' : ''
-              }`}
-              title="Nhập tên người chơi"
+            <div
+              className={`rounded-2xl border overflow-hidden transition-all active:scale-95 ${usernameExpanded ? 'ml-2 border-white/15' : 'border-white/15'}`}
+              style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
             >
-              <User size={26} weight="duotone" />
-            </button>
+              <button
+                onClick={() => { setUsernameExpanded(v => !v); playClickSound() }}
+                className={`w-14 h-14 flex items-center justify-center transition-colors text-white/70 hover:text-white ${usernameExpanded ? 'ml-0' : ''}`}
+                title="Nhập tên người chơi"
+              >
+                <User size={26} weight="duotone" />
+              </button>
+            </div>
           </div>
 
           {/* Play / Kill */}
           {playing ? (
             <button
               onClick={handlePlayClick}
-              className="flex items-center gap-2 px-6 h-14 rounded-2xl font-bold text-base transition-all hover:brightness-110 active:scale-95 shadow-xl bg-red-500/80 hover:bg-red-500 text-white"
+              className="flex items-center gap-2 px-6 h-14 rounded-2xl font-bold text-base transition-all hover:brightness-110 active:scale-95 bg-red-500/80 hover:bg-red-500 text-white"
             >
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -484,7 +481,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           ) : downloading ? (
             <button
               disabled
-              className="flex items-center gap-2 px-6 h-14 rounded-2xl font-bold text-base text-black/80 shadow-xl cursor-not-allowed"
+              className="flex items-center gap-2 px-6 h-14 rounded-2xl font-bold text-base text-black/80 cursor-not-allowed"
               style={{ background: colors.primary, opacity: 0.75 }}
             >
               <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
@@ -496,41 +493,48 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           ) : (
             <div className="glow-play" style={{ '--gc': dataUpdate ? '#a78bfa' : colors.primary }}>
               <span className="glow-edge" />
-              <button
-                onClick={handlePlayClick}
-                className="glow-inner transition-transform active:scale-95"
-              >
-                {dataUpdate ? (
-                  <>
-                    <ArrowClockwise size={26} weight="duotone" className="text-violet-400" />
-                    <span className="text-violet-200">Update</span>
-                  </>
-                ) : (
-                  <>
-                    <PlayCircle size={26} weight="fill" className="text-violet-400" />
-                    <span>{t('gaming.play')}</span>
-                  </>
-                )}
-              </button>
+              <div className="glow-inner">
+                <button
+                  onClick={handlePlayClick}
+                  className="glow-btn transition-transform active:scale-95"
+                >
+                  {dataUpdate ? (
+                    <>
+                      <ArrowClockwise size={26} weight="duotone" className="text-violet-400" />
+                      <span className="text-violet-200">Update</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle size={26} weight="fill" className="text-violet-400" />
+                      <span>{t('gaming.play')}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
 
           {/* Settings */}
           {currentProfile && (
-            <button
-              onClick={() => { setProfileSettingsOpen(true); playClickSound() }}
-              className="w-14 h-14 flex items-center justify-center rounded-2xl bg-black/50 border border-white/15 text-white/60 hover:text-white hover:bg-black/70 backdrop-blur-sm transition-all active:scale-95 shadow-xl"
-              title={t('homepage.profile.settings')}
+            <div
+              className="rounded-2xl border border-white/15 overflow-hidden transition-all active:scale-95"
+              style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
             >
-              <Gear size={26} weight="duotone" />
-            </button>
+              <button
+                onClick={() => { setProfileSettingsOpen(true); playClickSound() }}
+                className="w-14 h-14 flex items-center justify-center transition-colors text-white/60 hover:text-white"
+                title={t('homepage.profile.settings')}
+              >
+                <Gear size={26} weight="duotone" />
+              </button>
+            </div>
           )}
         </div>
       </div>
 
       {preDl?.active && (
-        <div className={`absolute bottom-[116px] right-7 z-50 w-[380px] ${preDl.closing ? 'preDl-down' : 'preDl-modal'}`}>
-          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 shadow-2xl p-4">
+        <div className={`absolute bottom-[116px] right-7 w-[380px] ${preDl.closing ? 'preDl-down' : 'preDl-modal'}`}>
+          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -538,13 +542,13 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
-                <span className="text-xs font-bold text-white/80">
+                <span className="text-xs font-bold text-white">
                   {preDl.phase === 'done' ? 'Hoàn tất tải tài nguyên' : 'Đang tải tài nguyên'}
                 </span>
               </div>
               <button
                 onClick={() => setPreDl(prev => prev ? { ...prev, active: false } : prev)}
-                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/30 hover:text-white/60 transition-all"
+                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
                 title="Đóng"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
@@ -554,16 +558,16 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
 
             {/* Message */}
-            <p className="text-[11px] text-white/45 mt-2 leading-relaxed">{preDl.log}</p>
+            <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed">{preDl.log}</p>
 
             {/* Single progress bar — mỗi giai đoạn về 0 rồi chạy lên 100% */}
             <div className="mt-3">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className={`font-semibold ${preDl.phase === 'done' ? 'text-green-400' : 'text-violet-300'}`}>
+              <div className="flex items-center justify-between text-xs">
+                <span className={`font-bold ${preDl.phase === 'done' ? 'text-emerald-300' : 'text-white'}`}>
                   {preDl.item || '...'}
                 </span>
-                <span className="text-white/40 font-mono flex items-center gap-2">
-                  {preDl.phase !== 'done' && preDl.eta && <span className="text-white/30">còn {preDl.eta}</span>}
+                <span className="text-white/80 font-mono font-semibold flex items-center gap-2">
+                  {preDl.phase !== 'done' && preDl.eta && <span className="text-white/70">còn {preDl.eta}</span>}
                   {Math.round(preDl.percent || 0)}%
                 </span>
               </div>
@@ -577,8 +581,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       )}
 
       {dSync?.active && (
-        <div className={`absolute bottom-[116px] right-[440px] z-50 w-[380px] ${dSync.closing ? 'preDl-down' : 'preDl-modal'}`}>
-          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 shadow-2xl p-4">
+        <div className={`absolute bottom-[116px] right-7 w-[380px] ${dSync.closing ? 'preDl-down' : 'preDl-modal'}`}>
+          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -586,13 +590,13 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
-                <span className="text-xs font-bold text-white/80">
+                <span className="text-xs font-bold text-white">
                   {dSync.phase === 'done' ? 'Hoàn tất đồng bộ dữ liệu' : 'Đồng bộ dữ liệu server'}
                 </span>
               </div>
               <button
                 onClick={() => setDSync(prev => prev ? { ...prev, active: false } : prev)}
-                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/30 hover:text-white/60 transition-all"
+                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
                 title="Đóng"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
@@ -602,22 +606,22 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
 
             {/* Message */}
-            <p className="text-[11px] text-white/45 mt-2 leading-relaxed">{dSync.log}</p>
+            <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed">{dSync.log}</p>
 
             {/* Current phase */}
             <div className="mt-3">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className={`font-semibold ${dSync.phase === 'done' ? 'text-green-400' : 'text-violet-300'}`}>
+              <div className="flex items-center justify-between text-xs">
+                <span className={`font-bold ${dSync.phase === 'done' ? 'text-emerald-300' : 'text-white'}`}>
                   {dSync.item || '...'}
                 </span>
-                <span className="text-white/40 font-mono">{Math.round(dSync.percent || 0)}%</span>
+                <span className="text-white/80 font-mono font-semibold">{Math.round(dSync.percent || 0)}%</span>
               </div>
               <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
                 <div className="h-full rounded-full transition-all duration-300"
                   style={{ width: `${Math.max(0, Math.min(100, dSync.percent || 0))}%`, background: dSync.phase === 'done' ? '#34d399' : '#a78bfa' }} />
               </div>
               {dSync.downloaded != null && (
-                <p className="text-[10px] text-white/35 mt-1.5 font-mono">
+                <p className="text-[11px] font-medium text-white/80 mt-1.5 font-mono">
                   Đã tải: {fmtBytes(dSync.downloaded)} / {fmtBytes(dSync.total)} {dSync.done != null && dSync.total != null && dSync.phase === 'sync' ? `(${dSync.done}/${dSync.total} files)` : ''}
                 </p>
               )}
@@ -633,7 +637,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         >
           <GamingModalWrapper
             onClose={() => setProfileSettingsOpen(false)}
-            className="border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]"
+            className="border border-white/10 rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]"
             style={{ background: 'rgba(14,14,14,0.98)' }}
           >
             <ProfileSettingsPanel

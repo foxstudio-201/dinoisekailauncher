@@ -119,7 +119,7 @@ export default function SettingsPage({ onClose: onCloseProp }) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose?.() }}>
-      <GamingModalWrapper onClose={onClose} className="border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]"
+      <GamingModalWrapper onClose={onClose} className="border border-white/10 rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]"
         style={{ background: 'rgba(14,14,14,0.98)' }}>
         <div className="flex flex-col min-h-0 flex-1">
           <div className="flex-shrink-0 px-6 pt-6 pb-0">

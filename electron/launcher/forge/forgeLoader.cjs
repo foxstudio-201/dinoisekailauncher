@@ -34,7 +34,44 @@ const https  = require('https')
 const http   = require('http')
 const fs     = require('fs')
 const path   = require('path')
-const { spawnSync } = require('child_process')
+const { spawn } = require('child_process')
+
+// Chạy tiến trình con bất đồng bộ — không block main process (tránh window "not responding")
+// và stream log theo dòng để UI cập nhật tiến trình.
+function runProcess(cmd, args, opts = {}, onLine) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, {
+      cwd: opts.cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      ...(opts.timeout ? { timeout: opts.timeout } : {}),
+    })
+    let stdout = ''
+    let stderr = ''
+    let settled = false
+
+    const timer = opts.timeout ? setTimeout(() => {
+      if (settled) return
+      settled = true
+      try { child.kill('SIGKILL') } catch {}
+      reject(new Error(`Tiến trình hết thời gian (${opts.timeout}ms)`))
+    }, opts.timeout) : null
+
+    child.stdout.on('data', d => { stdout += d.toString(); for (const line of d.toString().split('\n')) if (line.trim()) onLine?.(line) })
+    child.stderr.on('data', d => { stderr += d.toString(); for (const line of d.toString().split('\n')) if (line.trim()) onLine?.(line) })
+    child.on('error', err => {
+      if (settled) return
+      settled = true
+      if (timer) clearTimeout(timer)
+      reject(err)
+    })
+    child.on('close', code => {
+      if (settled) return
+      settled = true
+      if (timer) clearTimeout(timer)
+      resolve({ code, stdout, stderr })
+    })
+  })
+}
 
 const { buildLoaderConfig, readVersionJsonFromInstaller, readVersionJsonFromInstance, readInstallProfileFromInstance } = require('./forgeVersionJson.cjs')
 
@@ -322,19 +359,16 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
   })()
 
   if (!fs.existsSync(versionJsonPath) || clientJarsMissing) {
-    onProgress?.({ phase: 'forge_install', log: 'Running Forge installer (this may take a minute)...', done: 0, total: 1 })
-    const result = spawnSync(javaPath, [
+    onProgress?.({ phase: 'forge_install', log: 'Đang cài đặt Forge...', done: 0, total: 1 })
+    const res = await runProcess(javaPath, [
       '-Djava.awt.headless=true', '-jar', installerPath, '--installClient', instanceRoot,
-    ], { cwd: instanceRoot, stdio: ['ignore', 'pipe', 'pipe'], timeout: 600_000, maxBuffer: 256 * 1024 * 1024 })
-    const allOutput = ((result.stdout?.toString() || '') + '\n' + (result.stderr?.toString() || '')).split('\n').filter(Boolean)
-    for (const line of allOutput) onProgress?.({ phase: 'forge_install', log: `[Installer] ${line}` })
-    if (result.error) throw new Error(`Forge installer failed: ${result.error.message}`)
-    if (result.status !== 0 && !fs.existsSync(versionJsonPath)) {
-      throw new Error(`Forge installer exited with code ${result.status}.\n${(result.stderr?.toString() || '').slice(-500)}`)
+    ], { cwd: instanceRoot, timeout: 600_000 })
+    if (res.code !== 0 && !fs.existsSync(versionJsonPath)) {
+      throw new Error(`Forge installer exited with code ${res.code}.\n${res.stderr.slice(-500)}`)
     }
-    onProgress?.({ phase: 'forge_install', log: 'Forge installer finished.', done: 1, total: 1 })
+    onProgress?.({ phase: 'forge_install', log: 'Đã cài xong Forge.', done: 1, total: 1 })
   } else {
-    onProgress?.({ phase: 'forge_install', log: 'Forge already installed, skipping installer.', done: 1, total: 1 })
+    onProgress?.({ phase: 'forge_install', log: 'Đã cài xong Forge.', done: 1, total: 1 })
   }
 
   // ── Linux fix: run processor tools directly if output JARs are missing ────
@@ -342,7 +376,7 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
   // (common on Linux due to non-deterministic ZIP entry ordering). We bypass this
   // by running jarsplitter, ForgeAutoRenamingTool, and binarypatcher directly.
   if (!isModernForge && !forgeOutputsExist() && process.platform !== 'win32') {
-    onProgress?.({ phase: 'forge_install', log: '[Linux] Output JARs missing after installer. Running processors directly...', done: 0, total: 1 })
+    onProgress?.({ phase: 'forge_install', log: 'Đang cài đặt Forge...', done: 0, total: 1 })
 
     const sep = ':'
     const mcClientDir  = path.join(instLibDir, 'net', 'minecraft', 'client', `${mcVersion}-20230612.114412`)
@@ -350,13 +384,10 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
     const mergedMappings = path.join(instLibDir, 'de', 'oceanlabs', 'mcp', 'mcp_config',
       `${mcVersion}-20230612.114412`, `mcp_config-${mcVersion}-20230612.114412-mappings-merged.txt`)
 
-    function runTool(label, args) {
-      onProgress?.({ phase: 'forge_install', log: `[Linux] Running ${label}...` })
-      const r = spawnSync(javaPath, args, {
-        stdio: ['ignore', 'pipe', 'pipe'], timeout: 300_000, maxBuffer: 64 * 1024 * 1024,
-      })
-      if (r.error) throw new Error(`${label} failed: ${r.error.message}`)
-      return r.status === 0
+    async function runTool(args) {
+      onProgress?.({ phase: 'forge_install', log: 'Đang cài đặt Forge...' })
+      const r = await runProcess(javaPath, args, { timeout: 300_000 })
+      return r.code === 0
     }
 
     // Step 1: jarsplitter → slim + extra
@@ -366,7 +397,7 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
         path.join(instLibDir, 'net', 'sf', 'jopt-simple', 'jopt-simple', '5.0.4', 'jopt-simple-5.0.4.jar'),
         path.join(instLibDir, 'net', 'minecraftforge', 'srgutils', '0.4.3', 'srgutils-0.4.3.jar'),
       ].filter(jarOk).join(sep)
-      runTool('jarsplitter', ['-cp', cp1, 'net.minecraftforge.jarsplitter.ConsoleTool',
+      await runTool(['-cp', cp1, 'net.minecraftforge.jarsplitter.ConsoleTool',
         '--input', vanillaJarDest, '--slim', slimJar, '--extra', extraJar, '--srg', mergedMappings])
     }
 
@@ -374,7 +405,7 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
     if (!jarOk(srgJar)) {
       const fart = path.join(instLibDir, 'net', 'minecraftforge', 'ForgeAutoRenamingTool', '0.1.22', 'ForgeAutoRenamingTool-0.1.22-all.jar')
       if (jarOk(fart) && jarOk(slimJar)) {
-        runTool('ForgeAutoRenamingTool', ['-jar', fart,
+        await runTool(['-jar', fart,
           '--input', slimJar, '--output', srgJar, '--names', mergedMappings,
           '--ann-fix', '--ids-fix', '--src-fix', '--record-fix'])
       }
@@ -385,14 +416,17 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
       // Extract client.lzma from installer JAR
       const lzmaPath = path.join(installerDir, 'client.lzma')
       if (!jarOk(lzmaPath)) {
-        const { execFileSync } = require('child_process')
+        const fd = require('fs').openSync(lzmaPath, 'w')
         try {
-          const fd = require('fs').openSync(lzmaPath, 'w')
-          execFileSync('unzip', ['-p', installerPath, 'data/client.lzma'],
-            { stdio: ['ignore', fd, 'pipe'] })
-          require('fs').closeSync(fd)
+          await new Promise((resolve, reject) => {
+            const child = spawn('unzip', ['-p', installerPath, 'data/client.lzma'], { stdio: ['ignore', fd, 'pipe'] })
+            child.on('error', reject)
+            child.on('close', code => code === 0 ? resolve() : reject(new Error(`unzip exit ${code}`)))
+          })
         } catch (e) {
           onProgress?.({ phase: 'forge_install', log: `[WARN] Failed to extract client.lzma: ${e.message}` })
+        } finally {
+          require('fs').closeSync(fd)
         }
       }
       if (jarOk(lzmaPath)) {
@@ -406,7 +440,7 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
           path.join(instLibDir, 'com', 'nothome', 'javaxdelta', '2.0.1', 'javaxdelta-2.0.1.jar'),
         ].filter(jarOk).join(sep)
         if (jarOk(bp)) {
-          runTool('binarypatcher', ['-cp', bpCp, 'net.minecraftforge.binarypatcher.ConsoleTool',
+          await runTool(['-cp', bpCp, 'net.minecraftforge.binarypatcher.ConsoleTool',
             '--clean', srgJar, '--output', forgeClientJar, '--apply', lzmaPath])
         }
       }

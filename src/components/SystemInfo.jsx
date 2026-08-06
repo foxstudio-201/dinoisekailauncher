@@ -1,0 +1,65 @@
+import { useEffect, useState } from 'react'
+import { Cpu, GraphicsCard } from '@phosphor-icons/react'
+
+const isElectron = typeof window !== 'undefined' && window.electronAPI
+
+// Tách tên thành 2 dòng: hãng / model
+// VD: "NVIDIA Corporation TU117 [GeForce GTX 1650]" → "NVIDIA Corporation TU117" / "GeForce GTX 1650"
+//     "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz" → "Intel(R) Core(TM)" / "i5-10400F CPU @ 2.90GHz"
+function splitLines(name) {
+  const n = String(name || '').trim()
+  if (!n) return ['', '']
+
+  // Có dạng "[Model]" → dòng 1 trước ngoặc, dòng 2 trong ngoặc
+  const b = n.match(/^(.+?)\s*\[\s*([^\]]+)\s*\]\s*$/)
+  if (b && b[1] && b[2]) return [b[1].trim(), b[2].trim()]
+
+  // Cắt trước token model (i5/r5/Ryzen/GeForce/Radeon/RTX/Arc/...)
+  const tokens = n.split(/\s+/)
+  const idx = tokens.findIndex(t => /^(i\d|r\d|Ryzen|A\d|GeForce|Radeon|RTX|Arc|Quadro|Ultra|EPYC|PRO\d?)/i.test(t))
+  if (idx > 0) return [tokens.slice(0, idx).join(' '), tokens.slice(idx).join(' ')]
+
+  return [n, '']
+}
+
+function InfoCol({ Icon, iconCls, label, name }) {
+  const [line1, line2] = splitLines(name)
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      <Icon size={20} weight="duotone" className={`${iconCls} flex-shrink-0`} />
+      <div className="min-w-0">
+        <p className="text-[9px] uppercase tracking-widest text-white/40 font-bold">{label}</p>
+        <p className="text-[11px] font-semibold text-white leading-snug">
+          {line1}
+          {line2 ? <span className="block">{line2}</span> : null}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default function SystemInfo() {
+  const [info, setInfo] = useState(null)
+
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI.getSystemInfo) return
+    let cancelled = false
+    window.electronAPI.getSystemInfo()
+      .then(r => { if (!cancelled && r) setInfo(r) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  if (!info) return null
+
+  return (
+    <div
+      className="absolute bottom-6 left-28 flex items-center gap-4 px-4 py-3 rounded-2xl border border-white/10"
+      style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+    >
+      <InfoCol Icon={Cpu} iconCls="text-cyan-400" label="CPU" name={info.cpu} />
+      <div className="w-px h-9 bg-white/10" />
+      <InfoCol Icon={GraphicsCard} iconCls="text-emerald-400" label="GPU" name={info.gpu} />
+    </div>
+  )
+}

@@ -337,3 +337,9 @@
   from { opacity: 1; transform: translateY(0) scale(1); }
   to   { opacity: 0; transform: translateY(18px) scale(.98); }
 }
+
+.update-in { animation: update-slide-in .4s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes update-slide-in {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

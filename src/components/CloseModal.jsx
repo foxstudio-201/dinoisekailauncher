@@ -29,7 +29,7 @@ export default function CloseModal({ onClose }) {
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+        className="w-full max-w-sm rounded-2xl border border-white/10 overflow-hidden"
         style={{ background: 'rgba(14,14,14,0.98)' }}
       >
         <div className="px-5 py-4 border-b border-white/5">

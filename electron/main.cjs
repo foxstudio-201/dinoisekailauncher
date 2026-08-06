@@ -38,12 +38,8 @@ const { getHwid, getHwidFormatted } = require('./hwid.cjs')
 const { registerProfileHandlers, registerProfileContentHandlers, registerJavaDistroHandlers } = require('./profileManager.cjs')
 const { registerLauncherHandlers } = require('./launcher.cjs')
 const { pingServer } = require('./launcher/serverPing.cjs')
-const { registerLanHandlers, setLanWindowRef } = require('./lanScanner.cjs')
-const { openLanWindow, registerLanWindowHandlers, injectSetLanWindowRef } = require('./lanWindow.cjs')
-const { registerVxLanHandlers } = require('./wireguard.cjs')
+const { checkUpdate, downloadUpdateToTemp, installUpdate } = require('./updater.cjs')
 
-
-injectSetLanWindowRef(setLanWindowRef)
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -171,6 +167,7 @@ const DEFAULT_SETTINGS = {
   hideLauncherOnLaunch: true,
   showLogWindow:        true,
   dataSyncEnabled:      true,
+  loadAssetsOnStart:     false,
   discordRPC:           false,
   boostMode:            false,
   bigCoreMode:          false,
@@ -184,8 +181,6 @@ const DEFAULT_SETTINGS = {
   borderColor:          'rgba(255,255,255,0.08)',
   agreedTos:            false,
   agreedPrivacy:        false,
-  musicEnabled:         true,
-  musicVolume:          35,
   language:             'vi',
   gamingMode:           false,
   initialSetupCompleted: false,
@@ -342,10 +337,6 @@ function createTray() {
         label: 'Mở Dino Isekai',
         click: () => openMainWindow(),
       },
-      {
-        label: 'P2P LAN (F10)',
-        click: () => { openLanWindow({ motd: null, port: null, tunnelAddr: null }) },
-      },
       { type: 'separator' },
       {
         label: 'Thoát',
@@ -374,6 +365,38 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'vxc-bg', privileges: { standard: true, secure: true, supportFetchAPI: true, bypassCSP: true, corsEnabled: true, stream: true } }
 ])
 
+function execOut(cmd, args) {
+  return new Promise((resolve) => {
+    const { execFile } = require('child_process')
+    execFile(cmd, args, { timeout: 6000 }, (err, stdout) => resolve(err ? '' : String(stdout)))
+  })
+}
+
+async function linuxGpuName() {
+  try {
+    const out = await execOut('lspci', ['-nn'])
+    for (const line of out.split('\n')) {
+      if (/VGA compatible controller|3D controller|Display controller/i.test(line)) {
+        const m = line.match(/(?:VGA compatible controller|3D controller|Display controller)\s*(\[[0-9a-f]{4}\])?:\s*(.+)$/i)
+        if (m && m[2]) {
+          let name = m[2]
+          name = name.replace(/\s*\(rev\s+[0-9a-f]+\)\s*$/i, '')          // bỏ (rev a1)
+          name = name.replace(/\s*\[[0-9a-f]{4}:[0-9a-f]{4}\]\s*$/, '')     // bỏ [10de:1f82]
+          name = name.trim()
+          if (name) return name
+        }
+      }
+    }
+  } catch {}
+  try {
+    const out = await execOut('nvidia-smi', ['--query-gpu=name', '--format=csv,noheader'])
+    const name = out.trim().split('\n')[0]
+    if (name) return name.trim()
+  } catch {}
+  return null
+}
+
+
 app.whenReady().then(() => {
 
   ipcMain.handle('bg:readFile', async (e, filePath) => {
@@ -396,6 +419,57 @@ app.whenReady().then(() => {
     } catch (err) {
       return { error: err.message }
     }
+  })
+
+  // ── Cập nhật launcher (chỉ Windows) ───────────────────────────────────────
+  ipcMain.handle('update:check', async () => {
+    return checkUpdate()
+  })
+
+  ipcMain.handle('update:download', async (e) => {
+    const win = BrowserWindow.fromWebContents(e.sender)
+    if (!win) return { error: 'no_window' }
+    const info = await checkUpdate()
+    if (!info.ok || !info.hasUpdate || !info.assetUrl) return { ok: false, error: 'no_update' }
+    try {
+      const installerPath = await downloadUpdateToTemp(info.assetUrl, (p) => {
+        if (!win.isDestroyed()) win.webContents.send('updater:progress', { ...p, version: info.latest })
+      })
+      return { ok: true, installerPath }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('update:install', async (e, { installerPath }) => {
+    if (!installerPath || !fs.existsSync(installerPath)) return { error: 'file_not_found' }
+    installUpdate(installerPath)
+    setTimeout(() => app.quit(), 600)
+    return { ok: true }
+  })
+
+  // ── Thông tin hệ thống (CPU / GPU) ────────────────────────────────────────
+  ipcMain.handle('system:info', async (e) => {
+    if (!getTrustedWindow(e)) return null
+    const os = require('os')
+    const cpu = os.cpus()[0]?.model?.trim() || 'Unknown CPU'
+    let gpu = 'Unknown GPU'
+
+    if (process.platform === 'linux') {
+      // Linux: ưu tiên lspci / nvidia-smi (Electron hay trả ID hex như "10de:1f82")
+      const name = await linuxGpuName()
+      if (name) gpu = name
+    }
+
+    if (!gpu || gpu === 'Unknown GPU' || /unknown/i.test(gpu) || /^[0-9a-f]{4}:[0-9a-f]{4}$/i.test(gpu)) {
+      try {
+        const info = await app.getGPUInfo('basic')
+        const dev = info?.gpuDevice?.[0]
+        if (dev?.deviceName && !/^[0-9a-f]{4}:[0-9a-f]{4}$/i.test(dev.deviceName)) gpu = dev.deviceName
+      } catch {}
+    }
+
+    return { cpu, gpu }
   })
 
   protocol.handle('vxc-bg', async (request) => {
@@ -461,36 +535,6 @@ app.whenReady().then(() => {
   createMainWindow()
   createTray()
 
-  // ── F10: toggle cửa sổ VoxelX P2P LAN ────────────────────────────────────
-  const { globalShortcut } = require('electron')
-
-  function registerLanShortcut() {
-    const success = globalShortcut.register('F10', () => {
-      openLanWindow({ motd: null, port: null, tunnelAddr: null })
-    })
-    if (!success) {
-      console.warn('[Shortcut] F10 đăng ký thất bại, thử lại sau 2s...')
-      setTimeout(() => {
-        try { globalShortcut.unregister('F10') } catch {}
-        const retry = globalShortcut.register('F10', () => {
-          openLanWindow({ motd: null, port: null, tunnelAddr: null })
-        })
-        if (!retry) console.warn('[Shortcut] F10 vẫn không đăng ký được')
-      }, 2000)
-    }
-  }
-  registerLanShortcut()
-
-  // Mở LAN window qua IPC (backup khi F10 không hoạt động)
-  ipcMain.handle('lan:openWindow', (e) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    openLanWindow({ motd: null, port: null, tunnelAddr: null })
-    return { ok: true }
-  })
-
-  app.on('will-quit', () => {
-    globalShortcut.unregisterAll()
-  })
   const initSettings = readSettings()
   if (initSettings.discordRPC) { rpc.connect(); rpc.PRESETS.menu() }
 
@@ -609,9 +653,6 @@ registerProfileHandlers(getTrustedWindow)
 registerProfileContentHandlers(getTrustedWindow)
 registerJavaDistroHandlers(getTrustedWindow)
 registerLauncherHandlers(getTrustedWindow)
-registerLanHandlers(getTrustedWindow, openLanWindow)
-registerLanWindowHandlers(getTrustedWindow)
-registerVxLanHandlers(getTrustedWindow)
 
 ipcMain.handle('fabric:getLoaderVersions', async (e, gameVersion) => {
   if (!getTrustedWindow(e)) return { error: 'Unauthorized' }

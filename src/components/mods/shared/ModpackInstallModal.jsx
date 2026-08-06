@@ -33,7 +33,6 @@ import { useState, useEffect, useRef } from 'react'
 import { DownloadSimple, X, CheckCircle, WarningCircle } from '@phosphor-icons/react'
 import curseforgeIcon from '../../../assets/loader/curseforge.png'
 import modrinthIcon   from '../../../assets/loader/modrinth.png'
-import technicIcon    from '../../../assets/loader/technic.png'
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
 
@@ -42,7 +41,6 @@ const MINIMIZED_LEFT = 80
 const SOURCE_META = {
   modrinth:   { label: 'Modrinth',   color: '#8b5cf6', icon: modrinthIcon },
   curseforge: { label: 'CurseForge', color: '#8b5cf6', icon: curseforgeIcon },
-  technic:    { label: 'Technic',    color: '#3b82f6', icon: technicIcon },
 }
 
 const VERSION_TYPE_STYLE = {

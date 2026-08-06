@@ -43,8 +43,6 @@ const { setupForge }          = require('./forge/forgeLoader.cjs')
 const { runDataSync, checkDataSync } = require('./dataSync.cjs')
 const { searchProjects, getProject, getProjectVersions, installVersion, getGameVersions, getCategories } = require('./modrinth/modrinthSearch.cjs')
 const cfSearch = require('./curseforge/curseForgeSearch.cjs')
-const technicSearch = require('./technic/technicSearch.cjs')
-const ftbSearch = require('./ftb/ftbSearch.cjs')
 const { launchGame }          = require('./vanilla/gameRunner.cjs')
 const { startPlaytimeTracker, getProfileStats, getProfileAnalytics } = require('./statsTracker.cjs')
 const { normalizeSingleForgeProfile, FIXED_LOADER } = require('../profileManager.cjs')
@@ -53,14 +51,7 @@ const rpc                     = require('../discordRPC.cjs')
 const DATA_DIR      = path.join(app.getPath('appData'), '.DinoIsekai')
 const PROFILES_FILE = path.join(DATA_DIR, 'profiles.json')
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json')
-const SKIN_DIR      = path.join(DATA_DIR, 'account_skins')
-const CAPE_DIR      = path.join(DATA_DIR, 'account_capes')
-const AUTHLIB_JAR   = path.join(DATA_DIR, 'authlib-injector.jar')
 const LAUNCHER_DIR  = path.join(DATA_DIR, 'launcher')
-
-for (const d of [SKIN_DIR, CAPE_DIR]) {
-  if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true })
-}
 
 function readProfiles() {
   try { return JSON.parse(fs.readFileSync(PROFILES_FILE, 'utf-8')) }
@@ -75,76 +66,14 @@ function readSettings() {
   try { return JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8')) }
   catch { return {} }
 }
+function getClientJarFromCache(versionJson, launcherDir) {
+  return path.join(launcherDir, 'versions', versionJson.id, `${versionJson.id}.jar`)
+}
 
 const runningGames = new Map()
 
 function makeKey(profileId, accountId) {
   return `${profileId}::${accountId}`
-}
-
-// ── Authlib-Injector / local Yggdrasil server ───────────────────────────
-
-async function ensureAuthlibInjector() {
-  if (fs.existsSync(AUTHLIB_JAR)) {
-    const stat = fs.statSync(AUTHLIB_JAR)
-    if (stat.size > 10000) return AUTHLIB_JAR // valid jar ~500KB+
-    fs.unlinkSync(AUTHLIB_JAR) // broken, re-download
-  }
-  const url = 'https://github.com/yushijinhun/authlib-injector/releases/download/v1.2.7/authlib-injector-1.2.7.jar'
-  const { createWriteStream } = require('fs')
-  const { get } = require('https')
-  const MAX_REDIRECTS = 5
-  return new Promise((resolve, reject) => {
-    const tmp = AUTHLIB_JAR + '.download'
-    function download(currentUrl, redirectCount) {
-      if (redirectCount > MAX_REDIRECTS) { reject(new Error('Too many redirects')); return }
-      const file = createWriteStream(tmp)
-      const cleanup = () => { try { file.close() } catch {} }
-      get(currentUrl, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400) {
-          cleanup()
-          const location = res.headers.location
-          if (!location) { reject(new Error('Redirect with no Location')); return }
-          download(location, redirectCount + 1)
-          return
-        }
-        if (res.statusCode !== 200) { cleanup(); reject(new Error(`HTTP ${res.statusCode}`)); return }
-        res.pipe(file)
-        file.on('finish', () => {
-          file.close(() => {
-            const stat = fs.statSync(tmp)
-            if (stat.size < 10000) { reject(new Error('Downloaded file too small')); return }
-            fs.renameSync(tmp, AUTHLIB_JAR)
-            resolve(AUTHLIB_JAR)
-          })
-        })
-      }).on('error', (err) => { cleanup(); reject(err) })
-    }
-    download(url, 0)
-  })
-}
-
-const { createServer } = require('./localYggdrasilServer.cjs')
-const activeAuthlibServers = new Map() // gameKey -> { server, listening }
-
-function startAuthlibServer(uuid, username) {
-  const server = createServer({ skinDir: SKIN_DIR, capeDir: CAPE_DIR })
-  return new Promise((resolve, reject) => {
-    server.server.listen(0, '127.0.0.1', () => {
-      const port = server.server.address().port
-      server.registered.set(uuid, { username })
-      resolve({ port, server: server.server })
-    })
-    server.server.on('error', reject)
-  })
-}
-
-function stopAuthlibServer(gameKey) {
-  const entry = activeAuthlibServers.get(gameKey)
-  if (entry) {
-    try { entry.close() } catch {}
-    activeAuthlibServers.delete(gameKey)
-  }
 }
 
 function forceKillGame(proc) {
@@ -452,25 +381,7 @@ function registerLauncherHandlers(getTrustedWindow) {
         }
       }
 
-      // ── Authlib-Injector for offline skin/cape ──
-      let authlibServerPort = null
-      if (account.type === 'offline' || account.type === 'discord') {
-        const skinFile = path.join(SKIN_DIR, `${account.uuid}.png`)
-        const capeFile = path.join(CAPE_DIR, `${account.uuid}.png`)
-        if (fs.existsSync(skinFile) || fs.existsSync(capeFile)) {
-          try {
-            sendProgressAndLog({ phase: 'launching', log: 'Starting local skin server...', percent: 98 })
-            const jar = await ensureAuthlibInjector()
-            const authlibServer = await startAuthlibServer(account.uuid, account.username)
-            authlibServerPort = authlibServer.port
-            activeAuthlibServers.set(gameKey, authlibServer)
-            extraJvmArgs.push(`-javaagent:${jar}=http://127.0.0.1:${authlibServerPort}`)
-            sendProgressAndLog({ phase: 'launching', log: `Authlib-Injector ready on port ${authlibServerPort}`, percent: 98 })
-          } catch (aiErr) {
-            writeLog(`[WARN] Authlib-Injector setup failed: ${aiErr.message}. Continuing without custom skin/cape.`)
-          }
-        }
-      }
+      // ── Offline account: không cần skin server ──
 
       const proc = launchGame({
         javaPath,
@@ -499,7 +410,6 @@ function registerLauncherHandlers(getTrustedWindow) {
         },
         onExit: (code) => {
           try { rpc.PRESETS.menu() } catch {}
-          stopAuthlibServer(gameKey)
           try { logStream.end() } catch {}
           logWinRef = null
           const game = runningGames.get(gameKey)
@@ -633,11 +543,20 @@ function registerLauncherHandlers(getTrustedWindow) {
         }
       }, versionJson)
 
-      nextPhase('assets', 'Game assets')
-      const assets = await downloadAssets(versionJson, launcherDir, (p) => {
-        const pc = p.percent != null ? p.percent : (p.totalFiles ? Math.round(p.doneFiles / p.totalFiles * 100) : 0)
-        emit('assets', 'Game assets', pc, { log: `Assets: ${p.doneFiles}/${p.totalFiles}`, done: p.doneFiles, total: p.totalFiles })
-      })
+      // Assets: mặc định bỏ qua (async) — chỉ tải nếu bật "Tải assets khi khởi động"
+      const settingsNow = readSettings()
+      let assets
+      if (settingsNow.loadAssetsOnStart === true) {
+        nextPhase('assets', 'Game assets')
+        assets = await downloadAssets(versionJson, launcherDir, (p) => {
+          const pc = p.percent != null ? p.percent : (p.totalFiles ? Math.round(p.doneFiles / p.totalFiles * 100) : 0)
+          emit('assets', 'Game assets', pc, { log: `Assets: ${p.doneFiles}/${p.totalFiles}`, done: p.doneFiles, total: p.totalFiles })
+        })
+      } else {
+        // Bỏ qua — assets sẽ tự xử lý lúc khởi động game (async)
+        emit('assets', 'Game assets', 100, { log: 'Assets: async (bỏ qua kiểm tra)', async: true })
+        assets = { clientJar: getClientJarFromCache(versionJson, launcherDir) }
+      }
 
       if (profile.loader === 'forge' && profile.loaderVersion) {
         const forgeLabel = `Forge ${profile.gameVersion}-${profile.loaderVersion}`
@@ -801,50 +720,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     })
   })
 
-  ipcMain.handle('technic:search', async (e, opts) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await technicSearch.searchProjects(opts)
-  })
-  ipcMain.handle('technic:getProject', async (e, id) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await technicSearch.getProject(id)
-  })
-  ipcMain.handle('technic:getVersions', async (e, id) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await technicSearch.getProjectVersions(id)
-  })
-  ipcMain.handle('technic:install', async (e, opts) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await technicSearch.installVersion(opts, (p) => {
-      const wins = require('electron').BrowserWindow.getAllWindows()
-      wins.forEach(w => {
-        if (!w.isDestroyed()) w.webContents.send('technic:installProgress', p)
-      })
-    })
-  })
-
-  ipcMain.handle('ftb:search', async (e, opts) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await ftbSearch.searchProjects(opts)
-  })
-  ipcMain.handle('ftb:getProject', async (e, id) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await ftbSearch.getProject(id)
-  })
-  ipcMain.handle('ftb:getVersions', async (e, id) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await ftbSearch.getProjectVersions(id)
-  })
-  ipcMain.handle('ftb:install', async (e, opts) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await ftbSearch.installVersion(opts, (p) => {
-      const wins = require('electron').BrowserWindow.getAllWindows()
-      wins.forEach(w => {
-        if (!w.isDestroyed()) w.webContents.send('ftb:installProgress', p)
-      })
-    })
-  })
-
   ipcMain.handle('modrinth:search', async (e, opts) => {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
     try { return await searchProjects(opts) }
@@ -931,92 +806,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     if (!getTrustedWindow(e)) return []
     try { return await getCategories() }
     catch { return [] }
-  })
-
-  ipcMain.handle('skin:savePrefs', (e, { uuid, skinUrl, capeUrl, elytraUrl, skinPreview }) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    if (!uuid || typeof uuid !== 'string') return { error: 'Invalid UUID' }
-    try {
-      const skinPrefsPath = path.join(DATA_DIR, 'skin_prefs.json')
-      let prefs = {}
-      if (fs.existsSync(skinPrefsPath)) {
-        try { prefs = JSON.parse(fs.readFileSync(skinPrefsPath, 'utf-8')) } catch {}
-      }
-      prefs[uuid] = {
-        skinUrl:     skinUrl     || null,
-        capeUrl:     capeUrl     || null,
-        elytraUrl:   elytraUrl   || null,
-        skinPreview: skinPreview || prefs[uuid]?.skinPreview || null,
-        updatedAt:   new Date().toISOString(),
-      }
-      const tmp = skinPrefsPath + '.tmp'
-      fs.writeFileSync(tmp, JSON.stringify(prefs, null, 2), { mode: 0o600 })
-      fs.renameSync(tmp, skinPrefsPath)
-      return { ok: true }
-    } catch (err) {
-      return { error: err.message }
-    }
-  })
-
-  ipcMain.handle('skin:getPrefs', (e, { uuid }) => {
-    if (!getTrustedWindow(e)) return null
-    if (!uuid) return null
-    try {
-      const skinPrefsPath = path.join(DATA_DIR, 'skin_prefs.json')
-      if (!fs.existsSync(skinPrefsPath)) return null
-      const prefs = JSON.parse(fs.readFileSync(skinPrefsPath, 'utf-8'))
-      return prefs[uuid] || null
-    } catch {
-      return null
-    }
-  })
-
-  ipcMain.handle('skin:saveLocalFile', (e, { uuid, dataUrl, type }) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    if (!uuid || !dataUrl || !type) return { error: 'Missing params' }
-    try {
-      const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, '')
-      const buf = Buffer.from(base64, 'base64')
-      const dir = type === 'cape' ? CAPE_DIR : SKIN_DIR
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-      const filePath = path.join(dir, `${uuid}.png`)
-      const tmp = filePath + '.tmp'
-      fs.writeFileSync(tmp, buf)
-      fs.renameSync(tmp, filePath)
-      return { ok: true }
-    } catch (err) {
-      return { error: err.message }
-    }
-  })
-
-  ipcMain.handle('skin:getLocalStatus', (e, { uuid }) => {
-    if (!getTrustedWindow(e)) return null
-    if (!uuid) return null
-    try {
-      const skinFile = path.join(SKIN_DIR, `${uuid}.png`)
-      const capeFile = path.join(CAPE_DIR, `${uuid}.png`)
-      return {
-        hasSkin: fs.existsSync(skinFile),
-        hasCape: fs.existsSync(capeFile),
-      }
-    } catch { return null }
-  })
-
-  ipcMain.handle('skin:deleteLocalFile', (e, { uuid, type }) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    if (!uuid || !type) return { error: 'Missing params' }
-    try {
-      const dir = type === 'cape' ? CAPE_DIR : SKIN_DIR
-      const filePath = path.join(dir, `${uuid}.png`)
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
-      return { ok: true }
-    } catch (err) {
-      return { error: err.message }
-    }
-  })
-
-  ipcMain.handle('skin:uploadToWeb', async () => {
-    return { error: 'Web API không khả dụng' }
   })
 }
 
