@@ -396,6 +396,22 @@ async function linuxGpuName() {
   return null
 }
 
+async function windowsGpuName() {
+  // PowerShell lấy tên các card đồ họa
+  try {
+    const out = await execOut('powershell', ['-NoProfile', '-Command', '(Get-CimInstance Win32_VideoController).Name'])
+    const names = out.split('\n').map(s => s.trim()).filter(Boolean)
+    if (names.length) return names[0]
+  } catch {}
+  // Fallback wmic
+  try {
+    const out = await execOut('wmic', ['path', 'win32_VideoController', 'get', 'name'])
+    const names = out.split('\n').map(s => s.trim()).filter(Boolean).filter(s => !/^name$/i.test(s))
+    if (names.length) return names[0]
+  } catch {}
+  return null
+}
+
 
 app.whenReady().then(() => {
 
@@ -458,6 +474,10 @@ app.whenReady().then(() => {
     if (process.platform === 'linux') {
       // Linux: ưu tiên lspci / nvidia-smi (Electron hay trả ID hex như "10de:1f82")
       const name = await linuxGpuName()
+      if (name) gpu = name
+    } else if (process.platform === 'win32') {
+      // Windows: ưu tiên PowerShell (lấy tên card đầy đủ)
+      const name = await windowsGpuName()
       if (name) gpu = name
     }
 

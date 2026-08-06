@@ -149,8 +149,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     // Java runtime dùng chung cho tất cả profiles — lưu ở DATA_DIR/runtimes/
     // tránh mỗi profile tải Java riêng gây tốn disk và RAM
     const runtimesDir = path.join(DATA_DIR, 'runtimes')
-    const gameDataDir = path.join(instancePath, 'accounts', account.id)
-    if (!fs.existsSync(gameDataDir)) fs.mkdirSync(gameDataDir, { recursive: true })
 
 
     function sendProgress(data) {

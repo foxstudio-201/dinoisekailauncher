@@ -23,7 +23,7 @@ export default function MinecraftPage() {
           <img src={martianIcon} alt="Dino Isekai" className="w-24 h-24 object-contain drop-shadow-xl" draggable={false} />
 
           <div className="text-left">
-            <div className="rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 p-6">
+            <div className="rounded-2xl blur-glass bg-black/40 backdrop-blur-sm border border-white/10 p-6">
               <h1 className="text-5xl font-extrabold text-white tracking-tight drop-shadow-lg">Minecraft</h1>
               <div className="flex items-center gap-2.5 mt-4">
                 <Clock size={22} weight="duotone" className="text-violet-400" />
@@ -32,7 +32,7 @@ export default function MinecraftPage() {
               <p className="text-sm text-white/45 mt-2">Tính năng này đang được phát triển. Hãy quay lại sau!</p>
             </div>
 
-            <div className="mt-4 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 px-5 py-4">
+            <div className="mt-4 rounded-2xl blur-glass bg-black/40 backdrop-blur-sm border border-white/10 px-5 py-4">
               <p className="text-sm text-white/50">Trạng thái: Sắp ra mắt</p>
             </div>
           </div>

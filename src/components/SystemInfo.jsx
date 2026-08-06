@@ -54,7 +54,7 @@ export default function SystemInfo() {
 
   return (
     <div
-      className="absolute bottom-6 left-28 flex items-center gap-4 px-4 py-3 rounded-2xl border border-white/10"
+      className="absolute bottom-6 left-28 blur-glass flex items-center gap-4 px-4 py-3 rounded-2xl border border-white/10"
       style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
     >
       <InfoCol Icon={Cpu} iconCls="text-cyan-400" label="CPU" name={info.cpu} />

@@ -8,7 +8,7 @@ export default function LogPanel({ logs = [], onClose }) {
   }, [logs])
 
   return (
-    <div className="w-[420px] h-[400px] rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 flex flex-col overflow-hidden flex-shrink-0">
+    <div className="w-[420px] h-[400px] blur-glass rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 flex flex-col overflow-hidden flex-shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 flex-shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">

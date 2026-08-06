@@ -252,13 +252,8 @@ function getDirSizeLazy(dirPath) {
 
 
 function getGameDir(profile, accountId) {
-  if (!profile?.instancePath) return null
-  if (accountId) {
-    const accDir = path.join(profile.instancePath, 'accounts', accountId)
-    ensureDir(accDir)
-    return accDir
-  }
-  return profile.instancePath
+  // Không còn thư mục account riêng trong profile — luôn dùng chính instancePath
+  return profile?.instancePath || null
 }
 
 function registerProfileHandlers(getTrustedWindow) {

@@ -62,7 +62,7 @@ export default function UpdateModal() {
     : 'Có bản cập nhật mới'
 
   return (
-    <div className="fixed top-14 right-4 z-[10000] w-[340px] update-in">
+    <div className="fixed top-14 right-4 z-[10000] w-[340px] blur-glass update-in">
       <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-4">
         {/* Header */}
         <div className="flex items-center justify-between">

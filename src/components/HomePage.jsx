@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAccounts } from '../hooks/useAccounts'
 import { useLang } from '../i18n/LangProvider'
-import { Gear, PlayCircle, Check, User, Sword, Campfire, Mountains, ArrowClockwise } from '@phosphor-icons/react'
+import { Gear, PlayCircle, Check, User, Sword, Campfire, Mountains, ArrowClockwise, FolderOpen, SlidersHorizontal, Memory, GraphicsCard, BookOpen, Gauge } from '@phosphor-icons/react'
 import ProfileSettingsPanel from './home/ProfileSettingsPanel'
 import GamingModalWrapper from './ui/GamingModalWrapper'
 import LogPanel from './LogPanel'
@@ -42,12 +42,48 @@ function fmtBytes(b) {
   return (b / 1024 / 1024).toFixed(1) + ' MB'
 }
 
+const INTRO_VI = 'Bạn bị một luồng sáng dịch chuyển và đưa bạn vào thế giới lạ, nơi đây đầy dãy quái vật mạnh mẽ, nhưng không vì thế, bạn tỉnh dậy ở nơi gọi là Hư Không, và gặp được một ông lão. Ông lão nói rằng "Chào mừng ngươi đến với thế giới này, ta là Bụi Tiên..." Và rồi sau đó bạn nhận lấy một vật phẩm từ người này và bắt đầu cuộc hành trình chinh phục thế giới mới. Bạn được chọn một nơi để sinh sống, ở đó bạn gặp được dân làng lương thiện. Tuy nhiên mọi thứ sẽ bắt đầu từ đây.....'
+
+const INTRO_EN = 'You suddenly find yourself transported to a strange world, teeming with powerful monsters, but you are not afraid. You wake up in a place called the Void and meet an old man, who says: "Welcome to this world, I am the Fairy Dust..." Then you receive an item from him and begin your journey to conquer this new world. You get to choose a place to live, where you meet kind-hearted villagers. However, everything begins from here.....'
+
 export default function HomePage({ launchState, launchError, onLaunch, instances, onKillInstance, onLogPanelOpen }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const { accounts, selectedAccount, addAccount, selectAccount } = useAccounts()
   const accountId = selectedAccount?.id
   const [profiles, setProfiles] = useState([])
   const [profileSettingsOpen, setProfileSettingsOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef(null)
+  const [profileTab, setProfileTab] = useState('intro')
+  const [typedIntro, setTypedIntro] = useState('')
+  const introRef = useRef(null)
+  const introText = lang?.startsWith('vi') ? INTRO_VI : INTRO_EN
+
+  // Đánh chữ từng chữ giới thiệu (chỉ theo ngôn ngữ launcher)
+  useEffect(() => {
+    let i = 0
+    let cancelled = false
+    const iv = setInterval(() => {
+      i++
+      setTypedIntro(introText.slice(0, i))
+      if (i >= introText.length) clearInterval(iv)
+    }, 45)
+    return () => { cancelled = true; clearInterval(iv) }
+  }, [introText])
+
+  // Tự động cuộn xuống theo chữ mới
+  useEffect(() => {
+    if (introRef.current) introRef.current.scrollTop = introRef.current.scrollHeight
+  }, [typedIntro])
+
+  useEffect(() => {
+    if (!profileMenuOpen) return
+    function onDown(e) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) setProfileMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [profileMenuOpen])
   const [logPanelVisible, setLogPanelVisible] = useState(false)
   const [logManuallyClosed, setLogManuallyClosed] = useState(false)
   const [persistedLauncherLogs, setPersistedLauncherLogs] = useState([])
@@ -258,7 +294,11 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     handleLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId)
   }
 
+  // Đang tải tài nguyên / tải file GitHub → chặn nút Play/Update
+  const busyDownloading = (preDl?.active && !preDl.closing) || (dSync?.active && !dSync.closing)
+
   function handlePlayClick() {
+    if (busyDownloading) return
     playClickSound()
     if (playing) {
       handleKill(currentProfile?.id, selectedAccount?.id)
@@ -322,68 +362,140 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       ].join('')}} />
 
       {/* Profile display */}
-      <div className="flex-1 flex flex-col justify-center pl-36">
+      <div className="flex-1 flex flex-col justify-center pl-36 gap-6">
         <SystemInfo />
-        <div className="flex items-center gap-6">
-          <img src={martianIcon} alt="Dino Isekai" className="w-24 h-24 object-contain drop-shadow-xl" draggable={false} />
+        <div className="flex items-start gap-6">
+          {/* Cột trái: logo + 2 nút tab */}
+          <div className="flex flex-col items-center gap-3 pt-2">
+            <img src={martianIcon} alt="Dino Isekai" className="w-24 h-24 object-contain drop-shadow-xl" draggable={false} />
 
-          <div className="text-left">
-            {/* Server box */}
-            <div className="rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 p-6">
-              <h1 className="text-5xl font-extrabold text-white tracking-tight drop-shadow-lg">
-                Dino Isekai Server
-              </h1>
+            <button
+              onClick={() => setProfileTab('intro')}
+              className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all active:scale-95 ${
+                profileTab === 'intro' ? 'border-violet-400/40 text-violet-300 bg-violet-500/15' : 'border-white/15 text-white/50 hover:text-white hover:bg-white/10'
+              }`}
+              style={{ backgroundColor: profileTab === 'intro' ? undefined : 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+              title="Giới thiệu"
+            >
+              <BookOpen size={22} weight="duotone" />
+            </button>
 
-              <div className="flex items-center gap-3 mt-4">
-                {[
-                  { label: 'Fantasy',   Icon: Sword,     color: '#a78bfa' },
-                  { label: 'Survival',  Icon: Campfire,  color: '#34d399' },
-                  { label: 'Realistic', Icon: Mountains, color: '#60a5fa' },
-                ].map(({ label, Icon, color }) => (
-                  <span key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold"
-                    style={{ color, borderColor: `${color}55`, background: `${color}1a` }}>
-                    <Icon size={15} weight="duotone" />
-                    {label}
-                  </span>
-                ))}
-              </div>
-
-              {/* Ping status */}
-              <div className="flex items-center gap-3 mt-5">
-                {!serverStatus ? (
-                  <>
-                    <span className="w-3 h-3 rounded-full bg-white/25 animate-pulse" />
-                    <span className="text-lg font-bold text-white/50">Đang ping...</span>
-                  </>
-                ) : serverStatus.error ? (
-                  <>
-                    <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,.8)]" />
-                    <span className="text-lg font-bold text-white/70">Offline</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,.9)]" />
-                    <span className="text-lg font-bold text-white">Online</span>
-                    <span className="text-lg font-bold text-emerald-400">{serverStatus.ping} ms</span>
-                    <span className="text-sm text-white/50">{serverStatus.players}/{serverStatus.maxPlayers} players</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Info box */}
-            <div className="mt-4 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/10 px-5 py-4">
-              <p className="text-sm text-white/50">Hỗ trợ Minecraft 1.20.1 · Forge</p>
-              <p className="text-sm text-white/50 mt-1">Launcher hiện tại: 1.20.1</p>
-            </div>
+            <button
+              onClick={() => setProfileTab('config')}
+              className={`w-11 h-11 rounded-xl border flex items-center justify-center transition-all active:scale-95 ${
+                profileTab === 'config' ? 'border-violet-400/40 text-violet-300 bg-violet-500/15' : 'border-white/15 text-white/50 hover:text-white hover:bg-white/10'
+              }`}
+              style={{ backgroundColor: profileTab === 'config' ? undefined : 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+              title="Cấu hình"
+            >
+              <Gauge size={22} weight="duotone" />
+            </button>
           </div>
 
-          {/* Log modal — hiện bên cạnh thông tin profile */}
-          {logPanelVisible && (
-            <LogPanel logs={displayLogs} onClose={handleCloseLogPanel} />
-          )}
+            <div className="text-left">
+              {/* Server box — luôn hiện */}
+              <div className="rounded-2xl blur-glass bg-black/10 backdrop-blur-[2px] border border-white/10 p-6">
+                <h1 className="text-5xl font-extrabold text-white tracking-tight drop-shadow-lg">
+                  Dino Isekai Server
+                </h1>
+
+                <div className="flex items-center gap-3 mt-4">
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold"
+                    style={{ color: '#facc15', borderColor: '#facc1555', background: '#facc151a' }}>
+                    Forge 1.20.1
+                  </span>
+                  {[
+                    { label: 'Fantasy',   Icon: Sword,     color: '#a78bfa' },
+                    { label: 'Survival',  Icon: Campfire,  color: '#34d399' },
+                    { label: 'Realistic', Icon: Mountains, color: '#60a5fa' },
+                  ].map(({ label, Icon, color }) => (
+                    <span key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold"
+                      style={{ color, borderColor: `${color}55`, background: `${color}1a` }}>
+                      <Icon size={15} weight="duotone" />
+                      {label}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Ping status */}
+                <div className="flex items-center gap-3 mt-5">
+                  {!serverStatus ? (
+                    <>
+                      <span className="w-3 h-3 rounded-full bg-white/25 animate-pulse" />
+                      <span className="text-lg font-bold text-white/50">Đang ping...</span>
+                    </>
+                  ) : serverStatus.error ? (
+                    <>
+                      <span className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,.8)]" />
+                      <span className="text-lg font-bold text-white/70">Offline</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,.9)]" />
+                      <span className="text-lg font-bold text-white">Online</span>
+                      <span className="text-lg font-bold text-emerald-400">{serverStatus.ping} ms</span>
+                      <span className="text-sm text-white/50">{serverStatus.players}/{serverStatus.maxPlayers} players</span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Cấu hình — hiện khi ấn nút Gauge */}
+              {profileTab === 'config' && (
+              <div className="mt-4 rounded-2xl blur-glass bg-black/10 backdrop-blur-[2px] border border-white/10 px-5 py-4">
+                <p className="text-sm text-white/50">Launcher hiện tại: 1.20.1</p>
+
+                <div className="h-px bg-white/10 my-3" />
+                <p className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Yêu cầu cấu hình</p>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white/60 flex-shrink-0">Tối thiểu</span>
+                    <Memory size={14} weight="duotone" className="text-cyan-400 flex-shrink-0" />
+                    <span className="text-[11px] text-white/70">4GB RAM</span>
+                    <GraphicsCard size={14} weight="duotone" className="text-emerald-400 ml-1 flex-shrink-0" />
+                    <span className="text-[11px] text-white/70">Intel HD Graphics 500+</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 flex-shrink-0">Đề xuất</span>
+                    <Memory size={14} weight="duotone" className="text-cyan-400 flex-shrink-0" />
+                    <span className="text-[11px] text-white/70">12GB RAM</span>
+                    <GraphicsCard size={14} weight="duotone" className="text-emerald-400 ml-1 flex-shrink-0" />
+                    <span className="text-[11px] text-white/70">RTX 2060+</span>
+                  </div>
+                </div>
+              </div>
+              )}
+
+              {/* Giới thiệu — hiện khi ấn nút BookOpen */}
+              {profileTab === 'intro' && (
+              <div className="mt-4 max-w-[500px]">
+                <div className="rounded-2xl blur-glass bg-black/10 backdrop-blur-[2px] border border-white/10 px-5 py-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-violet-300">
+                      {lang?.startsWith('vi') ? 'Giới thiệu' : 'Introduction'}
+                    </span>
+                  </div>
+                  <div
+                    ref={introRef}
+                    className="h-20 overflow-y-auto text-[12px] leading-relaxed text-white/80 whitespace-pre-wrap"
+                    style={{ scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}
+                  >
+                    {typedIntro}
+                    <span className="inline-block w-[2px] h-3.5 bg-violet-300/80 align-middle animate-pulse ml-0.5" />
+                  </div>
+                </div>
+              </div>
+              )}
+            </div>
+
+          {/* Log — luôn giữ chỗ cố định để không dịch layout khi mở/đóng */}
+          <div className="w-[420px] h-[400px] flex-shrink-0">
+            {logPanelVisible && (
+              <LogPanel logs={displayLogs} onClose={handleCloseLogPanel} />
+            )}
+          </div>
+          </div>
         </div>
-      </div>
 
       {/* Bottom-right: username + Play + Settings */}
       <div className="absolute bottom-6 right-7 flex flex-col items-end gap-2">
@@ -393,7 +505,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         <div className="flex items-center gap-3">
           {/* Logs — bên trái nút tài khoản */}
           <div
-            className={`rounded-2xl overflow-hidden border transition-all active:scale-95 ${
+            className={`rounded-2xl blur-glass overflow-hidden border transition-all active:scale-95 ${
               logPanelVisible
                 ? 'bg-violet-500/20 border-violet-400/30'
                 : 'border-white/15'
@@ -412,14 +524,26 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </button>
           </div>
 
-          {/* Username: collapsed icon, click to expand */}
+          {/* Username: icon + phần nhập nằm chung một khối mở rộng */}
           <div className="flex items-center">
-            <div className={`flex items-center overflow-hidden rounded-2xl bg-black/60 backdrop-blur-md border transition-all duration-300 ease-out ${
-              usernameExpanded
-                ? 'max-w-[430px] opacity-100 border-white/15 p-1.5'
-                : 'max-w-0 opacity-0 border-transparent p-0 pointer-events-none'
-            }`}>
-              <div className="flex items-center gap-2 whitespace-nowrap">
+            <div
+              className={`flex items-center blur-glass overflow-hidden rounded-2xl border transition-all duration-300 ${
+                usernameExpanded ? 'border-white/15' : 'border-white/15'
+              }`}
+              style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+            >
+              <button
+                onClick={() => { setUsernameExpanded(v => !v); playClickSound() }}
+                className="w-14 h-14 flex items-center justify-center flex-shrink-0 transition-colors text-white/70 hover:text-white"
+                title="Nhập tên người chơi"
+              >
+                <User size={26} weight="duotone" />
+              </button>
+
+              {/* Phần nhập mở rộng ra từ nút */}
+              <div className={`flex items-center gap-2 whitespace-nowrap overflow-hidden transition-all duration-700 ease-out ${
+                usernameExpanded ? 'max-w-[430px] opacity-100 px-1.5' : 'max-w-0 opacity-0'
+              }`}>
                 <div className="w-11 h-11 rounded-xl overflow-hidden bg-white/5 ml-0.5 flex-shrink-0">
                   <PlayerHead
                     uuid={usernameInput.trim().length >= 3 ? offlineUUID(usernameInput.trim()) : null}
@@ -453,18 +577,6 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 </button>
               </div>
             </div>
-            <div
-              className={`rounded-2xl border overflow-hidden transition-all active:scale-95 ${usernameExpanded ? 'ml-2 border-white/15' : 'border-white/15'}`}
-              style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-            >
-              <button
-                onClick={() => { setUsernameExpanded(v => !v); playClickSound() }}
-                className={`w-14 h-14 flex items-center justify-center transition-colors text-white/70 hover:text-white ${usernameExpanded ? 'ml-0' : ''}`}
-                title="Nhập tên người chơi"
-              >
-                <User size={26} weight="duotone" />
-              </button>
-            </div>
           </div>
 
           {/* Play / Kill */}
@@ -491,11 +603,12 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               {currentProgress?.percent != null ? `${currentProgress.percent}%` : '...'}
             </button>
           ) : (
-            <div className="glow-play" style={{ '--gc': dataUpdate ? '#a78bfa' : colors.primary }}>
+            <div className={`glow-play ${busyDownloading ? 'opacity-60 pointer-events-none' : ''}`} style={{ '--gc': dataUpdate ? '#a78bfa' : colors.primary }}>
               <span className="glow-edge" />
               <div className="glow-inner">
                 <button
                   onClick={handlePlayClick}
+                  disabled={busyDownloading}
                   className="glow-btn transition-transform active:scale-95"
                 >
                   {dataUpdate ? (
@@ -514,19 +627,46 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
           )}
 
-          {/* Settings */}
+          {/* Profile menu — open up: thư mục profile + profile settings */}
           {currentProfile && (
-            <div
-              className="rounded-2xl border border-white/15 overflow-hidden transition-all active:scale-95"
-              style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-            >
-              <button
-                onClick={() => { setProfileSettingsOpen(true); playClickSound() }}
-                className="w-14 h-14 flex items-center justify-center transition-colors text-white/60 hover:text-white"
-                title={t('homepage.profile.settings')}
+            <div className="relative" ref={profileMenuRef}>
+              {/* Menu popup: 2 nút icon riêng biệt */}
+              <div
+                className={`absolute bottom-full mb-2 right-0 flex flex-col items-end gap-2 transition-all duration-200 origin-bottom-right ${
+                  profileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
+                }`}
               >
-                <Gear size={26} weight="duotone" />
-              </button>
+                <button
+                  onClick={() => { window.electronAPI.openProfileFolder?.(currentProfile.id); setProfileMenuOpen(false); playClickSound() }}
+                  className="w-14 h-14 blur-glass rounded-2xl border border-white/15 flex items-center justify-center transition-colors text-cyan-400 hover:text-white hover:bg-white/10"
+                  style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+                  title="Mở thư mục profile"
+                >
+                  <FolderOpen size={26} weight="duotone" />
+                </button>
+                <button
+                  onClick={() => { setProfileSettingsOpen(true); setProfileMenuOpen(false); playClickSound() }}
+                  className="w-14 h-14 blur-glass rounded-2xl border border-white/15 flex items-center justify-center transition-colors text-violet-400 hover:text-white hover:bg-white/10"
+                  style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+                  title="Mở profile settings"
+                >
+                  <Gear size={26} weight="duotone" />
+                </button>
+              </div>
+
+              {/* Menu toggle */}
+              <div
+                className="rounded-2xl blur-glass border border-white/15 overflow-hidden transition-all active:scale-95"
+                style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+              >
+                <button
+                  onClick={() => { setProfileMenuOpen(v => !v); playClickSound() }}
+                  className="w-14 h-14 flex items-center justify-center transition-colors text-white/70 hover:text-white"
+                  title="Menu profile"
+                >
+                  <SlidersHorizontal size={26} weight="duotone" />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -534,7 +674,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
       {preDl?.active && (
         <div className={`absolute bottom-[116px] right-7 w-[380px] ${preDl.closing ? 'preDl-down' : 'preDl-modal'}`}>
-          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-4">
+          <div className="rounded-2xl blur-glass bg-black/70 backdrop-blur-md border border-white/10 p-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -582,7 +722,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
       {dSync?.active && (
         <div className={`absolute bottom-[116px] right-7 w-[380px] ${dSync.closing ? 'preDl-down' : 'preDl-modal'}`}>
-          <div className="rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 p-4">
+          <div className="rounded-2xl blur-glass bg-black/70 backdrop-blur-md border border-white/10 p-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

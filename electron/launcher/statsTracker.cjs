@@ -186,23 +186,8 @@ function getDirSize(dirPath) {
 function getProfileStats(profile) {
   const instancePath = profile.instancePath
 
-  const accountsDir = path.join(instancePath, 'accounts')
-  const gameDirs = []
-
-  if (fs.existsSync(accountsDir)) {
-    try {
-      const entries = fs.readdirSync(accountsDir, { withFileTypes: true })
-      for (const e of entries) {
-        if (e.isDirectory()) {
-          gameDirs.push(path.join(accountsDir, e.name))
-        }
-      }
-    } catch {}
-  }
-
-  if (gameDirs.length === 0) {
-    gameDirs.push(instancePath)
-  }
+  // Không còn thư mục account riêng trong profile — dùng chính instancePath
+  const gameDirs = [instancePath]
 
   const worldMap = new Map()
   for (const dir of gameDirs) {

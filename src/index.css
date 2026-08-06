@@ -343,3 +343,5 @@
   from { opacity: 0; transform: translateX(48px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+.blur-glass { transform: translateZ(0); will-change: transform; }
