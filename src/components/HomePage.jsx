@@ -5,6 +5,7 @@ import { Gear, PlayCircle, Check, User, Sword, Campfire, Mountains, ArrowClockwi
 import ProfileSettingsPanel from './home/ProfileSettingsPanel'
 import GamingModalWrapper from './ui/GamingModalWrapper'
 import LogPanel from './LogPanel'
+import DownloadErrorModal from './DownloadErrorModal'
 import AppBackground from './AppBackground'
 import SystemInfo from './SystemInfo'
 import PlayerHead from './ui/PlayerHead'
@@ -162,7 +163,13 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     const t = setTimeout(() => {
       setPreDl({ active: true, phase: 'waiting', item: 'Đang chuẩn bị', percent: 0, eta: null, log: 'Bắt đầu tải tài nguyên trong 3 giây...', phases: {}, closing: false })
       setTimeout(() => {
-        window.electronAPI.preDownload({ profileId: pid }).catch(() => {})
+        window.electronAPI.preDownload({ profileId: pid })
+          .then(res => {
+            if (res && res.ok === false && !res.paused) {
+              setDlError({ type: 'resource', message: res.error || 'Lỗi tải tài nguyên' })
+            }
+          })
+          .catch(() => {})
       }, 3000)
     }, 2000)
     return () => clearTimeout(t)
@@ -301,7 +308,13 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   async function syncThenLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId) {
     if (isElectron && window.electronAPI.runDataSync && dataUpdate) {
       setDSync({ active: true, closing: false, phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Có bản cập nhật — đang tải về temp...' })
-      await window.electronAPI.runDataSync().catch(() => {})
+      const res = await window.electronAPI.runDataSync().catch(() => null)
+      if (res && res.ok === false) {
+        if (res.paused) return // tạm dừng — không launch, người dùng bấm Play để tiếp tục
+        setDataUpdate(false)
+        setDlError({ type: 'data', message: res.error || 'Lỗi tải dữ liệu server' })
+        return // LỖI → không tự động khởi động game
+      }
       setDataUpdate(false)
     }
     handleLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId)
@@ -320,6 +333,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     : (preDl?.active && !preDl.closing ? preDlTotal : 0)
   const busyStartRef = useRef(null)
   const [pausedOp, setPausedOp] = useState(null)
+  const [dlError, setDlError] = useState(null)
   useEffect(() => {
     if (busyDownloading && !busyStartRef.current) busyStartRef.current = Date.now()
     if (!busyDownloading) { busyStartRef.current = null; setPausedOp(null) }
@@ -875,6 +889,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           </GamingModalWrapper>
         </div>
       )}
+
+      <DownloadErrorModal error={dlError} onClose={() => setDlError(null)} />
     </div>
   )
 }

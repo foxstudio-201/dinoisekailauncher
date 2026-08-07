@@ -186,16 +186,30 @@ async function syncProfile(instancePath, extractedDir, onProgress) {
 
   const total = all.length
   let done = 0
+  let skipped = 0
   for (const f of all) {
     const dest = path.join(instancePath, f.rel)
     fs.mkdirSync(path.dirname(dest), { recursive: true })
     // File giống nhau → bỏ qua; khác nhau → ghi đè; chưa có → copy thẳng
     if (!fs.existsSync(dest) || !(await filesSame(f.src, dest))) {
-      fs.copyFileSync(f.src, dest)
+      try {
+        fs.copyFileSync(f.src, dest)
+      } catch (err) {
+        // Thử gỡ quyền read-only trên file nguồn rồi copy lại (file từ rar thường bị set read-only)
+        try {
+          fs.chmodSync(f.src, 0o666)
+          fs.copyFileSync(f.src, dest)
+        } catch (err2) {
+          // Vẫn lỗi (vd. EPERM) → bỏ qua file này, tiếp tục phần còn lại
+          skipped++
+          console.error(`[dinosync] Bỏ qua file (${err2.code || err2.message}): ${f.rel}`)
+        }
+      }
     }
     done++
     onProgress?.({ done, total, file: f.rel })
   }
+  if (skipped > 0) console.warn(`[dinosync] Đã bỏ qua ${skipped}/${total} file bị lỗi quyền.`)
 }
 
 async function runDataSync(profile, onProgress) {

@@ -31,7 +31,7 @@
 
 const DiscordRPC = require('discord-rpc')
 
-const CLIENT_ID = '1502586952040452249'
+const CLIENT_ID = '1535198335470936184'
 
 let client    = null
 let connected = false
@@ -41,7 +41,7 @@ let intentionalDisconnect = false
 const DEFAULT_ACTIVITY = {
   details:      'Dino Isekai',
   state:        'Đang ở menu chính',
-  largeImageKey:  'voxelx_logo',
+  largeImageKey:  'icon.png',
   largeImageText: 'Dino Isekai',
   instance: false,
 }
@@ -125,7 +125,7 @@ const PRESETS = {
   playing: (version, profileName, username) => setActivity({
     details: `Đang chơi Minecraft ${version}`,
     state:   profileName ? `${profileName} · ${username}` : (username || 'Đang chơi'),
-    largeImageKey: 'voxelx_logo',
+    largeImageKey: 'icon.png',
     largeImageText: profileName || 'Dino Isekai',
   }),
 }
