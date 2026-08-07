@@ -172,13 +172,15 @@ async function runDataSync(profile, onProgress) {
   const instancePath = profile?.instancePath
   if (!instancePath) throw new Error('Profile không có instancePath')
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dinosync-'))
-  const zipPath = path.join(tempDir, 'data.zip')
   const extractDir = path.join(tempDir, 'data')
 
   try {
     // 1. Kiểm tra cập nhật
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu mới...' })
     const release = await getLatestRelease()
+    // Tên file tạm phải giữ đúng phần mở rộng (.zip/.rar) để giải nén đúng tool
+    const assetExt = path.extname(release.asset.name) || '.zip'
+    const zipPath = path.join(tempDir, 'data' + assetExt)
     const local = fs.existsSync(versionFilePath(instancePath))
       ? fs.readFileSync(versionFilePath(instancePath), 'utf8').trim()
       : null

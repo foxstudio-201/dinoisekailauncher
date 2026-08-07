@@ -135,7 +135,7 @@ export default function LauncherTab({ settings, onChange }) {
         </SettingRow>
         <SettingRow
           label="Tải assets khi khởi động"
-          description="Bật để quét/tải lại assets mỗi lần mở launcher. Để tắt (mặc định) sẽ bỏ qua — assets tự xử lý lúc chạy game"
+          description="Tải sẵn assets lúc mở launcher để nút Play vào game nhanh, không tải lại từ đầu. Tắt sẽ bỏ qua (assets tự xử lý lúc chạy game)"
         >
           <Toggle
             checked={settings.loadAssetsOnStart === true}
