@@ -44,10 +44,20 @@ function httpGetJson(url) {
 }
 
 async function getLatestRelease() {
-  const release = await httpGetJson(`https://api.github.com/repos/${REPO}/releases/latest`)
-  const asset = (release.assets || []).find(a => /\.(zip)$/i.test(a.name))
-  if (!asset) throw new Error('Không tìm thấy file dữ liệu (.zip) trong release')
-  return { version: release.tag_name, name: release.name, asset }
+  // Lấy TAG mới nhất trước (repo chỉ dùng tag — không có release "latest")
+  const tags = await httpGetJson(`https://api.github.com/repos/${REPO}/tags?per_page=1`)
+  const tag = tags?.[0]?.name
+  if (!tag) throw new Error('Không tìm thấy tag nào')
+
+  // Lấy release theo tag để có asset (.zip); nếu không có release thì báo lỗi tải
+  let release = null
+  try {
+    release = await httpGetJson(`https://api.github.com/repos/${REPO}/releases/tags/${encodeURIComponent(tag)}`)
+  } catch {}
+  const asset = (release?.assets || []).find(a => /\.(zip|rar)$/i.test(a.name))
+  if (!asset) throw new Error('Không tìm thấy file dữ liệu (.zip/.rar) trong release của tag này')
+
+  return { version: tag, name: release?.name || tag, asset }
 }
 
 function downloadFile(url, destPath, onProgress) {
@@ -78,6 +88,18 @@ function downloadFile(url, destPath, onProgress) {
 
 function extractZip(zipPath, destDir) {
   return new Promise((resolve, reject) => {
+    // .rar → dùng unrar (hoặc bsdtar); .zip → AdmZip
+    if (/\.rar$/i.test(zipPath)) {
+      const { spawn } = require('child_process')
+      const tool = process.platform === 'win32' ? 'bsdtar' : 'unrar'
+      const args = process.platform === 'win32'
+        ? ['-xf', zipPath, '-C', destDir]
+        : ['x', '-y', zipPath, destDir + '/']
+      const child = spawn(tool, args, { stdio: 'ignore' })
+      child.on('error', reject)
+      child.on('close', code => code === 0 ? resolve(destDir) : reject(new Error(`Giải nén .rar thất bại (${tool} exit ${code})`)))
+      return
+    }
     try {
       const zip = new AdmZip(zipPath)
       zip.extractAllTo(destDir, true)

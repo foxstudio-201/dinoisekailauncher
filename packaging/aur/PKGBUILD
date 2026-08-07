@@ -3,8 +3,8 @@
 pkgname=dino-isekai-local
 _appname="Dino Isekai"
 _binname=dino-isekai
-pkgver=0.1.0
-pkgrel=112
+pkgver=0.1.3
+pkgrel=1
 pkgdesc="Dino Isekai - Minecraft Launcher by FoxStudio (local build)"
 arch=('x86_64')
 url="https://github.com/foxstudio-201/VoxelXClient"
