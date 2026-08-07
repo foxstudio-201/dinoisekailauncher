@@ -106,11 +106,14 @@ function downloadFile(url, destPath, onProgress) {
   })
 }
 
+let _fastVerify = false
+
 async function needsDownload(filePath, expectedSha1, expectedSize) {
   if (!fs.existsSync(filePath)) return true
   const stat = fs.statSync(filePath)
   if (expectedSize && stat.size !== expectedSize) return true
-  if (expectedSha1) {
+  // fastVerify: bỏ qua kiểm tra sha1 (tin cache, không tải lại) — nhanh hơn nhiều
+  if (!_fastVerify && expectedSha1) {
     const actual = await sha1File(filePath)
     if (actual !== expectedSha1) return true
   }
@@ -177,7 +180,8 @@ class SpeedTracker {
   }
 }
 
-async function downloadAssets(versionJson, launcherDir, onProgress) {
+async function downloadAssets(versionJson, launcherDir, onProgress, opts) {
+  _fastVerify = opts?.fastVerify === true
   const os = getCurrentOS()
   const versionsDir  = path.join(launcherDir, 'versions', versionJson.id)
   const librariesDir = path.join(launcherDir, 'libraries')
@@ -369,6 +373,7 @@ async function downloadAssets(versionJson, launcherDir, onProgress) {
 
   emit('done', { log: 'All resources downloaded.' })
 
+  _fastVerify = false
   return {
     clientJar,
     libraries: libPaths,

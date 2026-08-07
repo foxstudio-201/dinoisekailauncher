@@ -345,3 +345,14 @@
 }
 
 .blur-glass { transform: translateZ(0); will-change: transform; }
+
+.progress-shine {
+  overflow: hidden;
+  background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.5) 55%, transparent 80%);
+  background-size: 200% 100%;
+  animation: progress-shine-move 1.2s linear infinite;
+}
+@keyframes progress-shine-move {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}

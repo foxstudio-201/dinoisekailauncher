@@ -60,14 +60,16 @@ async function getLatestRelease() {
   return { version: tag, name: release?.name || tag, asset }
 }
 
-function downloadFile(url, destPath, onProgress) {
+function downloadFile(url, destPath, onProgress, signal) {
   return new Promise((resolve, reject) => {
     const headers = { 'User-Agent': 'Dino-Isekai-Launcher', Accept: 'application/octet-stream' }
     if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
-    const req = https.get(url, { headers }, (res) => {
+    const opts = { headers }
+    if (signal) opts.signal = signal
+    const req = https.get(url, opts, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume()
-        return downloadFile(res.headers.location, destPath, onProgress).then(resolve).catch(reject)
+        return downloadFile(res.headers.location, destPath, onProgress, signal).then(resolve).catch(reject)
       }
       if (res.statusCode !== 200) { res.resume(); return reject(new Error(`HTTP ${res.statusCode}`)) }
       const total = parseInt(res.headers['content-length'] || '0', 10)
@@ -78,26 +80,54 @@ function downloadFile(url, destPath, onProgress) {
         onProgress?.({ downloaded, total })
       })
       res.pipe(ws)
-      ws.on('finish', () => resolve(destPath))
+      ws.on('finish', () => {
+        // Kiểm tra file tải đầy đủ (tránh file cụt gây lỗi EOF khi giải nén)
+        if (total > 0 && downloaded !== total) {
+          return reject(new Error(`File tải không đầy đủ (${downloaded}/${total} bytes) — vui lòng thử lại`))
+        }
+        resolve(destPath)
+      })
       ws.on('error', reject)
-      res.on('error', reject)
+      res.on('error', (err) => {
+        if (err.name === 'AbortError') { reject(Object.assign(new Error('aborted'), { aborted: true })); return }
+        reject(err)
+      })
     })
-    req.on('error', reject)
+    req.on('error', (err) => {
+      if (err.name === 'AbortError') { reject(Object.assign(new Error('aborted'), { aborted: true })); return }
+      reject(err)
+    })
   })
 }
 
 function extractZip(zipPath, destDir) {
   return new Promise((resolve, reject) => {
-    // .rar → dùng unrar (hoặc bsdtar); .zip → AdmZip
+    // .rar → dùng tool ngoài; .zip → AdmZip
     if (/\.rar$/i.test(zipPath)) {
-      const { spawn } = require('child_process')
-      const tool = process.platform === 'win32' ? 'bsdtar' : 'unrar'
-      const args = process.platform === 'win32'
-        ? ['-xf', zipPath, '-C', destDir]
-        : ['x', '-y', zipPath, destDir + '/']
-      const child = spawn(tool, args, { stdio: 'ignore' })
-      child.on('error', reject)
-      child.on('close', code => code === 0 ? resolve(destDir) : reject(new Error(`Giải nén .rar thất bại (${tool} exit ${code})`)))
+      const { execFile } = require('child_process')
+      // Thử lần lượt các tool có thể có
+      const candidates = process.platform === 'win32'
+        ? [
+            { tool: 'tar',   args: ['-xf', zipPath, '-C', destDir] },
+            { tool: 'bsdtar', args: ['-xf', zipPath, '-C', destDir] },
+            { tool: '7z',    args: ['x', '-y', `-o${destDir}`, zipPath] },
+          ]
+        : [
+            { tool: 'unrar', args: ['x', '-y', zipPath, destDir + '/'] },
+            { tool: 'bsdtar', args: ['-xf', zipPath, '-C', destDir] },
+            { tool: '7z',    args: ['x', '-y', `-o${destDir}`, zipPath] },
+          ]
+      ;(function tryNext(i) {
+        if (i >= candidates.length) return reject(new Error('Không tìm thấy công cụ giải nén .rar (unrar/tar/7z)'))
+        const { tool, args } = candidates[i]
+        execFile(tool, args, { stdio: 'ignore' }, (err) => {
+          if (err) {
+            console.error(`[dinosync] ${tool} thất bại: ${err.message}`)
+            return tryNext(i + 1)
+          }
+          resolve(destDir)
+        })
+      })(0)
       return
     }
     try {
@@ -173,6 +203,11 @@ async function runDataSync(profile, onProgress) {
   if (!instancePath) throw new Error('Profile không có instancePath')
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dinosync-'))
   const extractDir = path.join(tempDir, 'data')
+  const { startOp, endOp, isAborted, getSignal } = require('./abortControl.cjs')
+  startOp('dSync')
+
+  const abortedErr = Object.assign(new Error('aborted'), { aborted: true })
+  function checkAbort() { if (isAborted('dSync')) throw abortedErr }
 
   try {
     // 1. Kiểm tra cập nhật
@@ -190,13 +225,15 @@ async function runDataSync(profile, onProgress) {
       return { ok: true, skipped: true, version: release.version }
     }
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 100, log: `Có bản dữ liệu mới: ${release.version}` })
+    checkAbort()
 
     // 2. Tải về temp
     onProgress({ phase: 'download', item: 'Tải dữ liệu', percent: 0, log: 'Đang tải dữ liệu...' })
     await downloadFile(release.asset.browser_download_url, zipPath, (p) => {
       const pc = p.total ? Math.round((p.downloaded / p.total) * 100) : 0
       onProgress({ phase: 'download', item: 'Tải dữ liệu', percent: pc, downloaded: p.downloaded, total: p.total })
-    })
+    }, getSignal('dSync'))
+    checkAbort()
 
     // 3. Giải nén
     onProgress({ phase: 'extract', item: 'Giải nén', percent: 0, log: 'Đang giải nén...' })
@@ -204,6 +241,7 @@ async function runDataSync(profile, onProgress) {
     await extractZip(zipPath, extractDir)
     const root = findRoot(extractDir)
     onProgress({ phase: 'extract', item: 'Giải nén', percent: 100, log: 'Đã giải nén' })
+    checkAbort()
 
     // 4. Đồng bộ vào profile
     onProgress({ phase: 'sync', item: 'Đồng bộ dữ liệu', percent: 0, log: 'Đang đồng bộ dữ liệu vào profile...' })
@@ -211,11 +249,19 @@ async function runDataSync(profile, onProgress) {
       const pc = p.total ? Math.round((p.done / p.total) * 100) : 0
       onProgress({ phase: 'sync', item: 'Đồng bộ dữ liệu', percent: pc, done: p.done, total: p.total, file: p.file })
     })
+    checkAbort()
 
     fs.writeFileSync(versionFilePath(instancePath), release.version, 'utf8')
     onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: `Đã cập nhật dữ liệu ${release.version}` })
     return { ok: true, version: release.version }
+  } catch (err) {
+    if (err?.aborted) {
+      onProgress({ phase: 'paused', item: 'Tạm dừng', percent: 0, log: 'Đã tạm dừng tải. Bấm Play để tiếp tục.' })
+      return { ok: false, paused: true }
+    }
+    throw err
   } finally {
+    endOp('dSync')
     // Tự động xóa file tải về để tránh đầy ổ đĩa
     fs.rmSync(tempDir, { recursive: true, force: true })
   }

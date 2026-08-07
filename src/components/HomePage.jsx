@@ -42,6 +42,15 @@ function fmtBytes(b) {
   return (b / 1024 / 1024).toFixed(1) + ' MB'
 }
 
+function fmtEta(ms) {
+  if (ms == null || !isFinite(ms) || ms < 0) return null
+  const s = Math.round(ms / 1000)
+  if (s < 60) return `~${s}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `~${m}p ${s % 60}s`
+  return `~${Math.floor(m / 60)}g ${m % 60}p`
+}
+
 const INTRO_VI = 'Bạn bị một luồng sáng dịch chuyển và đưa bạn vào thế giới lạ, nơi đây đầy dãy quái vật mạnh mẽ, nhưng không vì thế, bạn tỉnh dậy ở nơi gọi là Hư Không, và gặp được một ông lão. Ông lão nói rằng "Chào mừng ngươi đến với thế giới này, ta là Bụi Tiên..." Và rồi sau đó bạn nhận lấy một vật phẩm từ người này và bắt đầu cuộc hành trình chinh phục thế giới mới. Bạn được chọn một nơi để sinh sống, ở đó bạn gặp được dân làng lương thiện. Tuy nhiên mọi thứ sẽ bắt đầu từ đây.....'
 
 const INTRO_EN = 'You suddenly find yourself transported to a strange world, teeming with powerful monsters, but you are not afraid. You wake up in a place called the Void and meet an old man, who says: "Welcome to this world, I am the Fairy Dust..." Then you receive an item from him and begin your journey to conquer this new world. You get to choose a place to live, where you meet kind-hearted villagers. However, everything begins from here.....'
@@ -129,6 +138,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     if (!isElectron || !window.electronAPI.onPreDownloadProgress) return
     return window.electronAPI.onPreDownloadProgress(data => {
       setPredownload(prev => prev ? { ...prev, log: data.log, percent: data.percent } : null)
+      if (data.phase === 'paused') setPausedOp('preDl')
       setPreDl(prev => {
         const phases = { ...(prev?.phases || {}) }
         if (data.phase !== 'done' && data.item) phases[data.phase] = { item: data.item, percent: data.percent ?? 0, eta: data.eta, log: data.log }
@@ -161,6 +171,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   useEffect(() => {
     if (!isElectron || !window.electronAPI.onDataSyncProgress) return
     return window.electronAPI.onDataSyncProgress(data => {
+      if (data.phase === 'paused') setPausedOp('dSync')
       setDSync(prev => ({ ...(prev || {}), active: true, closing: false, ...data }))
       if (data.phase === 'done') {
         setTimeout(() => {
@@ -297,8 +308,47 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   // Đang tải tài nguyên / tải file GitHub → chặn nút Play/Update
   const busyDownloading = (preDl?.active && !preDl.closing) || (dSync?.active && !dSync.closing)
 
+  // Tiến trình tổng (0-100) + ETA toàn bộ
+  const preDlPhases = preDl?.phases ? Object.values(preDl.phases) : []
+  const preDlTotal = preDlPhases.length
+    ? preDlPhases.reduce((s, p) => s + (p.percent || 0), 0) / preDlPhases.length
+    : (preDl?.percent || 0)
+  const overallPct = dSync?.active && !dSync.closing
+    ? (dSync.percent || 0)
+    : (preDl?.active && !preDl.closing ? preDlTotal : 0)
+  const busyStartRef = useRef(null)
+  const [pausedOp, setPausedOp] = useState(null)
+  useEffect(() => {
+    if (busyDownloading && !busyStartRef.current) busyStartRef.current = Date.now()
+    if (!busyDownloading) { busyStartRef.current = null; setPausedOp(null) }
+  }, [busyDownloading])
+  let overallEta = null
+  if (busyDownloading && busyStartRef.current && overallPct > 2 && overallPct < 100) {
+    const elapsed = Date.now() - busyStartRef.current
+    overallEta = fmtEta(Math.round((elapsed / overallPct) * (100 - overallPct)))
+  }
+
+  const activeOp = dSync?.active && !dSync.closing ? 'dSync' : (preDl?.active && !preDl.closing ? 'preDl' : null)
+  const isPaused = pausedOp && busyDownloading
+
+  function togglePause() {
+    if (!activeOp) return
+    if (isPaused) {
+      // Resume: bỏ cờ pause, chạy lại tác vụ
+      setPausedOp(null)
+      if (activeOp === 'preDl' && window.electronAPI.preDownload) {
+        window.electronAPI.preDownload({ profileId: currentProfile?.id }).catch(() => {})
+      } else if (activeOp === 'dSync' && window.electronAPI.runDataSync) {
+        window.electronAPI.runDataSync().catch(() => {})
+      }
+    } else {
+      window.electronAPI.dataControl?.({ op: activeOp, action: 'pause' })
+      setPausedOp(activeOp)
+    }
+  }
+
   function handlePlayClick() {
-    if (busyDownloading) return
+    if (busyDownloading) { togglePause(); return }
     playClickSound()
     if (playing) {
       handleKill(currentProfile?.id, selectedAccount?.id)
@@ -603,7 +653,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               {currentProgress?.percent != null ? `${currentProgress.percent}%` : '...'}
             </button>
           ) : (
-            <div className={`glow-play ${busyDownloading ? 'opacity-60 pointer-events-none' : ''}`} style={{ '--gc': dataUpdate ? '#a78bfa' : colors.primary }}>
+            <div className="glow-play" style={{ '--gc': isPaused ? '#f59e0b' : (dataUpdate ? '#a78bfa' : colors.primary) }}>
               <span className="glow-edge" />
               <div className="glow-inner">
                 <button
@@ -611,7 +661,33 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                   disabled={busyDownloading}
                   className="glow-btn transition-transform active:scale-95"
                 >
-                  {dataUpdate ? (
+                  {busyDownloading ? (
+                    isPaused ? (
+                      <>
+                        <PlayCircle size={26} weight="fill" className="text-amber-400" />
+                        <span className="text-amber-300">Tiếp tục</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="relative w-9 h-9 flex-shrink-0">
+                          <svg viewBox="0 0 36 36" className="w-9 h-9 -rotate-90">
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
+                            <circle cx="18" cy="18" r="15" fill="none" stroke="#a78bfa" strokeWidth="4" strokeLinecap="round"
+                              strokeDasharray={`${2 * Math.PI * 15}`}
+                              strokeDashoffset={`${2 * Math.PI * 15 * (1 - (overallPct || 0) / 100)}`}
+                              style={{ transition: 'stroke-dashoffset .3s ease' }} />
+                          </svg>
+                          <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                            {Math.round(overallPct || 0)}%
+                          </span>
+                        </div>
+                        <span className="text-left leading-tight">
+                          <span className="block text-xs font-bold text-white">Đang tải...</span>
+                          {overallEta && <span className="block text-[10px] text-white/60">còn {overallEta}</span>}
+                        </span>
+                      </>
+                    )
+                  ) : dataUpdate ? (
                     <>
                       <ArrowClockwise size={26} weight="duotone" className="text-violet-400" />
                       <span className="text-violet-200">Update</span>
@@ -632,7 +708,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             <div className="relative" ref={profileMenuRef}>
               {/* Menu popup: 2 nút icon riêng biệt */}
               <div
-                className={`absolute bottom-full mb-2 right-0 flex flex-col items-end gap-2 transition-all duration-200 origin-bottom-right ${
+                className={`absolute bottom-full mb-2 right-0 z-[80] flex flex-col items-end gap-2 transition-all duration-200 origin-bottom-right ${
                   profileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
                 }`}
               >
@@ -674,7 +750,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
       {preDl?.active && (
         <div className={`absolute bottom-[116px] right-7 w-[380px] ${preDl.closing ? 'preDl-down' : 'preDl-modal'}`}>
-          <div className="rounded-2xl blur-glass bg-black/70 backdrop-blur-md border border-white/10 p-4">
+          <div className="rounded-2xl bg-[#12101c] border border-white/10 p-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -687,7 +763,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 </span>
               </div>
               <button
-                onClick={() => setPreDl(prev => prev ? { ...prev, active: false } : prev)}
+                onClick={() => { window.electronAPI.dataControl?.({ op: 'preDl', action: 'cancel' }); setPausedOp(null); setPreDl(prev => prev ? { ...prev, active: false } : prev) }}
                 className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
                 title="Đóng"
               >
@@ -712,8 +788,12 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
-                <div className="h-full rounded-full transition-all duration-300"
-                  style={{ width: `${Math.max(0, Math.min(100, preDl.percent || 0))}%`, background: preDl.phase === 'done' ? '#34d399' : '#a78bfa' }} />
+                <div className="h-full rounded-full transition-all duration-300 relative overflow-hidden"
+                  style={{ width: `${Math.max(0, Math.min(100, preDl.percent || 0))}%`, background: preDl.phase === 'done' ? '#34d399' : '#a78bfa' }}>
+                  {preDl.phase !== 'done' && preDl.phase !== 'paused' && (
+                    <span className="progress-shine absolute inset-0" />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -722,7 +802,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
       {dSync?.active && (
         <div className={`absolute bottom-[116px] right-7 w-[380px] ${dSync.closing ? 'preDl-down' : 'preDl-modal'}`}>
-          <div className="rounded-2xl blur-glass bg-black/70 backdrop-blur-md border border-white/10 p-4">
+          <div className="rounded-2xl bg-[#12101c] border border-white/10 p-4">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -735,7 +815,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 </span>
               </div>
               <button
-                onClick={() => setDSync(prev => prev ? { ...prev, active: false } : prev)}
+                onClick={() => { window.electronAPI.dataControl?.({ op: 'dSync', action: 'cancel' }); setPausedOp(null); setDSync(prev => prev ? { ...prev, active: false } : prev) }}
                 className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
                 title="Đóng"
               >
@@ -757,8 +837,12 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 <span className="text-white/80 font-mono font-semibold">{Math.round(dSync.percent || 0)}%</span>
               </div>
               <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
-                <div className="h-full rounded-full transition-all duration-300"
-                  style={{ width: `${Math.max(0, Math.min(100, dSync.percent || 0))}%`, background: dSync.phase === 'done' ? '#34d399' : '#a78bfa' }} />
+                <div className="h-full rounded-full transition-all duration-300 relative overflow-hidden"
+                  style={{ width: `${Math.max(0, Math.min(100, dSync.percent || 0))}%`, background: dSync.phase === 'done' ? '#34d399' : '#a78bfa' }}>
+                  {dSync.phase !== 'done' && dSync.phase !== 'paused' && (
+                    <span className="progress-shine absolute inset-0" />
+                  )}
+                </div>
               </div>
               {dSync.downloaded != null && (
                 <p className="text-[11px] font-medium text-white/80 mt-1.5 font-mono">

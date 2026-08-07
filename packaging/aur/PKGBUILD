@@ -3,7 +3,7 @@
 pkgname=dino-isekai-local
 _appname="Dino Isekai"
 _binname=dino-isekai
-pkgver=0.1.4
+pkgver=0.1.6
 pkgrel=1
 pkgdesc="Dino Isekai - Minecraft Launcher by FoxStudio (local build)"
 arch=('x86_64')

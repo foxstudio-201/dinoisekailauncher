@@ -221,7 +221,10 @@ function registerLauncherHandlers(getTrustedWindow) {
         }, versionJson)
       }
 
-      sendProgressAndLog({ phase: 'assets', log: 'Checking game assets...', percent: 30 })
+      // Assets: toggle tắt → bỏ qua sha1, chỉ kiểm tra nhanh (không tải lại file đã có)
+      const settingsNow2 = readSettings()
+      const fastVerify = settingsNow2.loadAssetsOnStart !== true
+      sendProgressAndLog({ phase: 'assets', log: fastVerify ? 'Using cached assets...' : 'Checking game assets...', percent: 30 })
       let lastAssetPhase = ''
       const assets = await downloadAssets(versionJson, launcherDir, (p) => {
         let pct = 30
@@ -244,7 +247,6 @@ function registerLauncherHandlers(getTrustedWindow) {
         } else if (p.phase === 'done') {
           sendProgressAndLog({ phase: 'assets', log: p.log, percent: pct })
         } else {
-
           sendProgressAndUpdate({
             phase: 'assets',
             log: p.log || `Assets: ${p.doneFiles}/${p.totalFiles}`,
@@ -254,7 +256,7 @@ function registerLauncherHandlers(getTrustedWindow) {
             speed: p.speed,
           })
         }
-      })
+      }, { fastVerify })
 
       sendProgressAndLog({ phase: 'launching', log: `Launching as ${account.username}...`, percent: 98 })
 
@@ -524,10 +526,16 @@ function registerLauncherHandlers(getTrustedWindow) {
       emit(phase, item, 0, { log: `Đang chuẩn bị ${item}...` })
     }
 
+    const { startOp, endOp, isAborted } = require('./abortControl.cjs')
+    startOp('preDl')
+    const abortedErr = Object.assign(new Error('aborted'), { aborted: true })
+    function checkAbort() { if (isAborted('preDl')) throw abortedErr }
+
     try {
       nextPhase('version', `Phiên bản ${profile.gameVersion}`)
       const versionJson = await resolveVersion(profile.gameVersion, launcherDir)
       emit('version', `Phiên bản ${profile.gameVersion}`, 100, { log: `Đã sẵn sàng ${profile.gameVersion}` })
+      checkAbort()
 
       nextPhase('java', 'Java runtime')
       const javaPath = await ensureJava(profile.gameVersion, runtimesDir, (p) => {
@@ -540,6 +548,7 @@ function registerLauncherHandlers(getTrustedWindow) {
           emit('java', 'Java runtime', 0, { log: p.log || p.phase })
         }
       }, versionJson)
+      checkAbort()
 
       // Assets: mặc định bỏ qua (async) — chỉ tải nếu bật "Tải assets khi khởi động"
       const settingsNow = readSettings()
@@ -555,6 +564,7 @@ function registerLauncherHandlers(getTrustedWindow) {
         emit('assets', 'Game assets', 100, { log: 'Assets: async (bỏ qua kiểm tra)', async: true })
         assets = { clientJar: getClientJarFromCache(versionJson, launcherDir) }
       }
+      checkAbort()
 
       if (profile.loader === 'forge' && profile.loaderVersion) {
         const forgeLabel = `Forge ${profile.gameVersion}-${profile.loaderVersion}`
@@ -565,12 +575,19 @@ function registerLauncherHandlers(getTrustedWindow) {
         })
         emit('forge', forgeLabel, 100, { log: 'Forge đã sẵn sàng' })
       }
+      checkAbort()
 
       emit('done', 'Hoàn tất', 100, { log: 'Tất cả tài nguyên đã sẵn sàng — bấm Play là vào game!' })
       return { ok: true }
     } catch (err) {
+      if (err?.aborted) {
+        emit('paused', 'Tạm dừng', 0, { log: 'Đã tạm dừng tải. Bấm Play để tiếp tục.' })
+        return { ok: false, paused: true }
+      }
       emit('done', 'Hoàn tất', 100, { log: `Cảnh báo: ${err.message}` })
       return { ok: false, error: err.message }
+    } finally {
+      endOp('preDl')
     }
   })
 
@@ -598,6 +615,16 @@ function registerLauncherHandlers(getTrustedWindow) {
       send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi đồng bộ: ${err.message}` })
       return { ok: false, error: err.message }
     }
+  })
+
+  // Điều khiển tạm dừng / hủy tải (preDl hoặc dSync)
+  ipcMain.handle('data:control', (e, { op, action }) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    if (action === 'pause' || action === 'cancel') {
+      const { abortOp } = require('./abortControl.cjs')
+      abortOp(op)
+    }
+    return { ok: true }
   })
 
   ipcMain.handle('launcher:isRunning', (e, { profileId, accountId }) => {

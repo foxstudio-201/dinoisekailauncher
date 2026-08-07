@@ -54,7 +54,8 @@ async function checkUpdate() {
     const release = await getLatestRelease()
     const current = app.getVersion() || '0.0.0'
     const latest = String(release.tag_name || '').replace(/^v/i, '')
-    const asset = (release.assets || []).find(a => /\.exe$/i.test(a.name))
+    // CHỈ dùng bản có chữ "Setup" — tuyệt đối không dùng bản khác (portable...)
+    const asset = (release.assets || []).find(a => /Setup.*\.exe$/i.test(a.name))
     const hasUpdate = compareVersions(latest, current) > 0
     return {
       ok: true,
@@ -89,7 +90,12 @@ function downloadFile(url, destPath, onProgress) {
         onProgress?.({ downloaded, total })
       })
       res.pipe(ws)
-      ws.on('finish', () => resolve(destPath))
+      ws.on('finish', () => {
+        if (total > 0 && downloaded !== total) {
+          return reject(new Error(`File tải không đầy đủ (${downloaded}/${total} bytes)`))
+        }
+        resolve(destPath)
+      })
       ws.on('error', reject)
       res.on('error', reject)
     })
