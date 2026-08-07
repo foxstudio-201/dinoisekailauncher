@@ -289,7 +289,9 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     } else {
       const result = await addAccount({ type: 'offline', username: name })
       if (result?.error) { setUsernameError(result.error); return }
-      accId = result.id
+      // id của account offline = offlineUUID(username); select để chắc chắn dùng tên mới
+      accId = offlineUUID(name)
+      await selectAccount(accId)
     }
 
     syncThenLaunch(undefined, undefined, undefined, name, serverStatus?.server?.ip, accId)
