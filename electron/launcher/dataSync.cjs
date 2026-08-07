@@ -186,7 +186,7 @@ async function syncProfile(instancePath, extractedDir, onProgress) {
 
   const total = all.length
   let done = 0
-  let skipped = 0
+  const skippedFiles = []
   for (const f of all) {
     const dest = path.join(instancePath, f.rel)
     fs.mkdirSync(path.dirname(dest), { recursive: true })
@@ -200,8 +200,8 @@ async function syncProfile(instancePath, extractedDir, onProgress) {
           fs.chmodSync(f.src, 0o666)
           fs.copyFileSync(f.src, dest)
         } catch (err2) {
-          // Vẫn lỗi (vd. EPERM) → bỏ qua file này, tiếp tục phần còn lại
-          skipped++
+          // Vẫn lỗi (vd. EPERM) → bỏ qua file này, ghi nhận để báo modal
+          skippedFiles.push({ file: f.rel, error: err2.code || err2.message })
           console.error(`[dinosync] Bỏ qua file (${err2.code || err2.message}): ${f.rel}`)
         }
       }
@@ -209,7 +209,8 @@ async function syncProfile(instancePath, extractedDir, onProgress) {
     done++
     onProgress?.({ done, total, file: f.rel })
   }
-  if (skipped > 0) console.warn(`[dinosync] Đã bỏ qua ${skipped}/${total} file bị lỗi quyền.`)
+  if (skippedFiles.length) console.warn(`[dinosync] Đã bỏ qua ${skippedFiles.length}/${total} file bị lỗi quyền.`)
+  return { skippedFiles }
 }
 
 async function runDataSync(profile, onProgress) {
@@ -259,7 +260,7 @@ async function runDataSync(profile, onProgress) {
 
     // 4. Đồng bộ vào profile
     onProgress({ phase: 'sync', item: 'Đồng bộ dữ liệu', percent: 0, log: 'Đang đồng bộ dữ liệu vào profile...' })
-    await syncProfile(instancePath, root, (p) => {
+    const { skippedFiles } = await syncProfile(instancePath, root, (p) => {
       const pc = p.total ? Math.round((p.done / p.total) * 100) : 0
       onProgress({ phase: 'sync', item: 'Đồng bộ dữ liệu', percent: pc, done: p.done, total: p.total, file: p.file })
     })
@@ -267,7 +268,7 @@ async function runDataSync(profile, onProgress) {
 
     fs.writeFileSync(versionFilePath(instancePath), release.version, 'utf8')
     onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: `Đã cập nhật dữ liệu ${release.version}` })
-    return { ok: true, version: release.version }
+    return { ok: true, version: release.version, skippedFiles }
   } catch (err) {
     if (err?.aborted) {
       onProgress({ phase: 'paused', item: 'Tạm dừng', percent: 0, log: 'Đã tạm dừng tải. Bấm Play để tiếp tục.' })

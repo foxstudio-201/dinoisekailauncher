@@ -316,6 +316,12 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         return // LỖI → không tự động khởi động game
       }
       setDataUpdate(false)
+      // Có file bị bỏ qua (EPERM...) → vẫn hiện modal báo lỗi file nhưng vẫn chạy game
+      if (res && res.skippedFiles && res.skippedFiles.length) {
+        const list = res.skippedFiles.slice(0, 20).map(s => `• ${s.file} (${s.error})`).join('\n')
+        const more = res.skippedFiles.length > 20 ? `\n... còn ${res.skippedFiles.length - 20} file nữa` : ''
+        setDlError({ type: 'data', message: `Một số file bị lỗi quyền và đã được bỏ qua (${res.skippedFiles.length}):\n${list}${more}` })
+      }
     }
     handleLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId)
   }
