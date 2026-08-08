@@ -2,13 +2,16 @@
 
 // Điều khiển tạm dừng / hủy tải cho các tiến trình tải dữ liệu
 const controllers = new Map()
+const actions = new Map()
 
 function startOp(name) {
   controllers.delete(name)
+  actions.delete(name)
   controllers.set(name, new AbortController())
 }
 function endOp(name) {
   controllers.delete(name)
+  actions.delete(name)
 }
 function abortOp(name) {
   const c = controllers.get(name)
@@ -21,5 +24,12 @@ function isAborted(name) {
   const c = controllers.get(name)
   return c ? c.signal.aborted : false
 }
+// action: 'pause' | 'cancel'
+function setAction(name, action) {
+  if (action) actions.set(name, action)
+}
+function getAction(name) {
+  return actions.get(name) || 'pause'
+}
 
-module.exports = { startOp, endOp, abortOp, getSignal, isAborted }
+module.exports = { startOp, endOp, abortOp, getSignal, isAborted, setAction, getAction }

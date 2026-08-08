@@ -13,14 +13,64 @@ const AdmZip = require('adm-zip')
 // người dùng không cần nhập gì. Build local không có token → chạy ẩn danh.
 const DEFAULT_REPO = 'foxstudio-201/datadinoisekaiserver'
 const REPO = (process.env.GITHUB_DATA_REPO || DEFAULT_REPO).replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '')
+const BASE_REPO = 'foxstudio-201/dinostatedata'
+const BASE_TAG = 'v1.0'
 let BUILTIN_TOKEN = ''
 try { BUILTIN_TOKEN = require('./build-env.cjs').GITHUB_TOKEN || '' } catch {}
 const TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || BUILTIN_TOKEN || ''
 
-const DELETE_DIRS = ['mods', 'config', 'kubejs', 'resourcepacks', 'shaderpacks']
-
 function versionFilePath(instancePath) {
   return path.join(instancePath, '.dinosync-version')
+}
+function baseVersionFilePath(instancePath) {
+  return path.join(instancePath, '.dinobase-version')
+}
+
+// Đọc update.txt: các dòng dạng "delete:file1.jar, text.toml, thư mục"
+function parseUpdateTxt(content) {
+  const names = []
+  for (const line of String(content || '').split(/\r?\n/)) {
+    const m = line.trim().match(/^delete\s*[:=]\s*(.+)$/i)
+    if (m) {
+      m[1].split(',').forEach(n => {
+        const t = n.trim()
+        if (t) names.push(t)
+      })
+    }
+  }
+  return names
+}
+
+// Xóa file/thư mục theo tên trong baseDir (quét đệ quy tìm đúng tên)
+function deleteByName(baseDir, names) {
+  let deleted = 0
+  for (const raw of names) {
+    const n = String(raw).trim()
+    if (!n) continue
+    // Nếu là đường dẫn tương đối (có / hoặc \) → xóa trực tiếp
+    if (n.includes('/') || n.includes('\\')) {
+      const rel = n.replace(/\\/g, '/')
+      const p = path.join(baseDir, rel)
+      if (fs.existsSync(p)) {
+        try { fs.rmSync(p, { recursive: true, force: true }); deleted++ } catch {}
+      }
+      continue
+    }
+    // Quét đệ quy tìm đúng tên file/thư mục
+    ;(function walk(dir) {
+      let entries = []
+      try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return }
+      for (const ent of entries) {
+        const p = path.join(dir, ent.name)
+        if (ent.name === n) {
+          try { fs.rmSync(p, { recursive: true, force: true }); deleted++ } catch {}
+        } else if (ent.isDirectory()) {
+          walk(p)
+        }
+      }
+    })(baseDir)
+  }
+  return deleted
 }
 
 function httpGetJson(url) {
@@ -74,10 +124,21 @@ function downloadFile(url, destPath, onProgress, signal) {
       if (res.statusCode !== 200) { res.resume(); return reject(new Error(`HTTP ${res.statusCode}`)) }
       const total = parseInt(res.headers['content-length'] || '0', 10)
       let downloaded = 0
+      let lastBytes = 0
+      let lastTime = Date.now()
+      let speed = 0
       const ws = fs.createWriteStream(destPath)
       res.on('data', chunk => {
         downloaded += chunk.length
-        onProgress?.({ downloaded, total })
+        const now = Date.now()
+        const dt = (now - lastTime) / 1000
+        if (dt >= 0.3) {
+          const inst = (downloaded - lastBytes) / dt
+          if (inst >= 0 && inst < 1e9) speed = speed === 0 ? inst : (speed * 0.65 + inst * 0.35)
+          lastBytes = downloaded
+          lastTime = now
+        }
+        onProgress?.({ downloaded, total, speed: Math.round(speed) })
       })
       res.pipe(ws)
       ws.on('finish', () => {
@@ -98,6 +159,184 @@ function downloadFile(url, destPath, onProgress, signal) {
       reject(err)
     })
   })
+}
+
+// ── Tải nhanh: chia file thành nhiều luồng song song (Range) ──────────────
+const MULTI_CONNECTIONS = parseInt(process.env.DINO_DL_CONNECTIONS || '6', 10)
+const MULTI_THRESHOLD = 8 * 1024 * 1024 // file >= 8MB mới tải nhiều luồng
+
+// Lấy tổng dung lượng + URL cuối (theo redirect), qua HEAD
+function resolveHead(url, signal) {
+  return new Promise((resolve, reject) => {
+    const headers = { 'User-Agent': 'Dino-Isekai-Launcher', Accept: 'application/octet-stream' }
+    if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
+    const opts = { method: 'HEAD', headers }
+    if (signal) opts.signal = signal
+    const req = https.request(url, opts, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume()
+        return resolveHead(res.headers.location, signal).then(resolve).catch(reject)
+      }
+      const total = parseInt(res.headers['content-length'] || '0', 10)
+      res.resume()
+      resolve({ total, url })
+    })
+    req.on('error', reject)
+    req.end()
+  })
+}
+
+// Tải một phần [start..end] theo Range, lưu vào partPath (append nếu đã có dữ liệu để resume)
+function downloadRange(url, start, end, partPath, onBytes, signal) {
+  return new Promise((resolve, reject) => {
+    const existing = fs.existsSync(partPath) ? fs.statSync(partPath).size : 0
+    const from = start + existing
+    if (from > end) { resolve(partPath); return } // phần đã đủ
+    const headers = {
+      'User-Agent': 'Dino-Isekai-Launcher',
+      Accept: 'application/octet-stream',
+      Range: `bytes=${from}-${end}`,
+    }
+    if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
+    const opts = { headers }
+    if (signal) opts.signal = signal
+    const req = https.get(url, opts, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume()
+        return downloadRange(res.headers.location, from, end, partPath, onBytes, signal).then(resolve).catch(reject)
+      }
+      if (res.statusCode !== 206 && res.statusCode !== 200) { res.resume(); return reject(new Error(`HTTP ${res.statusCode}`)) }
+      const ws = fs.createWriteStream(partPath, { flags: 'a' })
+      res.on('data', c => onBytes?.(c.length))
+      res.pipe(ws)
+      ws.on('finish', () => resolve(partPath))
+      ws.on('error', reject)
+      res.on('error', (err) => {
+        if (err.name === 'AbortError') { reject(Object.assign(new Error('aborted'), { aborted: true })); return }
+        reject(err)
+      })
+    })
+    req.on('error', (err) => {
+      if (err.name === 'AbortError') { reject(Object.assign(new Error('aborted'), { aborted: true })); return }
+      reject(err)
+    })
+  })
+}
+
+// Ghép các phần lại thành file hoàn chỉnh
+function concatParts(destPath, partFiles, total, resolve, reject) {
+  try {
+    const ws = fs.createWriteStream(destPath)
+    ;(async () => {
+      for (const p of partFiles) {
+        await new Promise((res, rej) => {
+          const rs = fs.createReadStream(p)
+          rs.pipe(ws, { end: false })
+          rs.on('end', res)
+          rs.on('error', rej)
+        })
+      }
+      ws.end()
+      ws.on('finish', () => {
+        // Kiểm tra size TRƯỚC khi xóa part (tránh mất part khi ghép sai)
+        const size = fs.statSync(destPath).size
+        if (size !== total) return reject(new Error(`File ghép không đầy đủ (${size}/${total} bytes)`))
+        partFiles.forEach(p => { try { fs.unlinkSync(p) } catch {} })
+        resolve(destPath)
+      })
+      ws.on('error', reject)
+    })().catch(reject)
+  } catch (e) { reject(e) }
+}
+
+// Tải file — tự chọn multi-thread nếu file lớn, ngược lại tải 1 luồng
+async function downloadFileSmartInner(url, destPath, onProgress, signal) {
+  let head
+  try {
+    head = await resolveHead(url, signal)
+  } catch (err) {
+    if (err?.aborted) throw err
+    return downloadFile(url, destPath, onProgress, signal)
+  }
+  const total = head?.total || 0
+  // Nếu file đã tải ĐỦ (size === total) → bỏ qua tải, dọn part cũ thừa
+  if (total > 0 && fs.existsSync(destPath) && fs.statSync(destPath).size === total) {
+    const base = path.basename(destPath)
+    const dir = path.dirname(destPath)
+    const leftovers = fs.readdirSync(dir).filter(f => f.startsWith(base + '.part'))
+    leftovers.forEach(f => { try { fs.unlinkSync(path.join(dir, f)) } catch {} })
+    return destPath
+  }
+  if (total < MULTI_THRESHOLD || total <= 0) {
+    return downloadFile(url, destPath, onProgress, signal)
+  }
+
+  const parts = Math.min(MULTI_CONNECTIONS, Math.ceil(total / MULTI_THRESHOLD))
+  const size = Math.floor(total / parts)
+  let done = 0
+  let aborted = false
+  const partFiles = []
+  const abortErr = Object.assign(new Error('aborted'), { aborted: true })
+  const abortHandler = () => { aborted = true }
+
+  // downloaded khởi đầu = tổng dung lượng các part đã tải (resume)
+  let downloaded = 0
+  for (let i = 0; i < parts; i++) {
+    const partPath = destPath + `.part${i}`
+    partFiles.push(partPath)
+    if (fs.existsSync(partPath)) downloaded += fs.statSync(partPath).size
+  }
+
+  // Đo tốc độ thật (byte/giây) bằng trung bình trượt giữa các lần cập nhật
+  let lastBytes = downloaded
+  let lastTime = Date.now()
+  let speed = 0
+  const speedSmoothing = 0.35
+  const onChunk = (b) => {
+    downloaded += b
+    const now = Date.now()
+    const dt = (now - lastTime) / 1000
+    if (dt >= 0.3) {
+      const inst = (downloaded - lastBytes) / dt
+      if (inst >= 0 && inst < 1e9) speed = speed === 0 ? inst : (speed * (1 - speedSmoothing) + inst * speedSmoothing)
+      lastBytes = downloaded
+      lastTime = now
+    }
+    onProgress?.({ downloaded, total, speed: Math.round(speed) })
+  }
+
+  return new Promise((resolve, reject) => {
+    if (signal) {
+      if (signal.aborted) return reject(abortErr)
+      signal.addEventListener('abort', abortHandler)
+    }
+    const finishIfDone = () => {
+      if (done === parts && !aborted) {
+        if (signal) signal.removeEventListener('abort', abortHandler)
+        concatParts(destPath, partFiles, total, resolve, reject)
+      }
+    }
+    for (let i = 0; i < parts; i++) {
+      const start = i * size
+      const end = (i === parts - 1) ? total - 1 : start + size - 1
+      const partPath = destPath + `.part${i}`
+      const existing = fs.existsSync(partPath) ? fs.statSync(partPath).size : 0
+      // Part đã tải đủ → bỏ qua
+      if (existing >= (end - start + 1)) { done++; finishIfDone(); continue }
+      downloadRange(url, start, end, partPath, onChunk, signal).then(() => {
+        done++
+        finishIfDone()
+      }).catch((err) => {
+        if (signal) signal.removeEventListener('abort', abortHandler)
+        reject(err?.aborted ? abortErr : err)
+      })
+    }
+  })
+}
+
+// Tải file — multi-thread + resume, KHÔNG tự hủy/tải lại khi tốc độ chậm
+function downloadFileSmart(url, destPath, onProgress, signal) {
+  return downloadFileSmartInner(url, destPath, onProgress, signal)
 }
 
 function extractZip(zipPath, destDir) {
@@ -165,12 +404,20 @@ async function filesSame(a, b) {
   } catch { return false }
 }
 
-// Bước "async data profile": xóa các thư mục cũ → so trùng → ghi đè/copy mới
-async function syncProfile(instancePath, extractedDir, onProgress) {
-  for (const dir of DELETE_DIRS) {
-    fs.rmSync(path.join(instancePath, dir), { recursive: true, force: true })
+// Bước "async data profile": (cập nhật) đọc update.txt xóa file theo tên → so trùng → ghi đè/copy mới
+async function syncProfile(instancePath, extractedDir, onProgress, opts = {}) {
+  // 1. Đọc update.txt (nếu có) → xóa các file/thư mục được liệt kê
+  const applyUpdateTxt = opts.applyUpdateTxt !== false
+  let deletedCount = 0
+  if (applyUpdateTxt) {
+    const txtPath = path.join(extractedDir, 'update.txt')
+    if (fs.existsSync(txtPath)) {
+      const names = parseUpdateTxt(fs.readFileSync(txtPath, 'utf8'))
+      deletedCount = deleteByName(instancePath, names)
+    }
   }
 
+  // 2. Copy data mới vào profile
   const all = []
   ;(function walk(dir, rel) {
     let entries = []
@@ -210,27 +457,34 @@ async function syncProfile(instancePath, extractedDir, onProgress) {
     onProgress?.({ done, total, file: f.rel })
   }
   if (skippedFiles.length) console.warn(`[dinosync] Đã bỏ qua ${skippedFiles.length}/${total} file bị lỗi quyền.`)
-  return { skippedFiles }
+  return { skippedFiles, deletedCount }
+}
+
+function dlCacheDir(url) {
+  const hash = crypto.createHash('sha1').update(url).digest('hex').slice(0, 16)
+  return path.join(os.tmpdir(), 'dinosync-cache', hash)
 }
 
 async function runDataSync(profile, onProgress) {
   const instancePath = profile?.instancePath
   if (!instancePath) throw new Error('Profile không có instancePath')
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dinosync-'))
-  const extractDir = path.join(tempDir, 'data')
-  const { startOp, endOp, isAborted, getSignal } = require('./abortControl.cjs')
+  const { startOp, endOp, isAborted, getSignal, getAction } = require('./abortControl.cjs')
   startOp('dSync')
 
   const abortedErr = Object.assign(new Error('aborted'), { aborted: true })
   function checkAbort() { if (isAborted('dSync')) throw abortedErr }
 
+  let dlDir = null
+  let extractDir = null
   try {
     // 1. Kiểm tra cập nhật
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu mới...' })
     const release = await getLatestRelease()
-    // Tên file tạm phải giữ đúng phần mở rộng (.zip/.rar) để giải nén đúng tool
     const assetExt = path.extname(release.asset.name) || '.zip'
-    const zipPath = path.join(tempDir, 'data' + assetExt)
+    // Thư mục cache ổn định theo URL → giữ part files để resume khi pause/cancel
+    dlDir = dlCacheDir(release.asset.browser_download_url)
+    fs.mkdirSync(dlDir, { recursive: true })
+    const zipPath = path.join(dlDir, 'data' + assetExt)
     const local = fs.existsSync(versionFilePath(instancePath))
       ? fs.readFileSync(versionFilePath(instancePath), 'utf8').trim()
       : null
@@ -242,43 +496,52 @@ async function runDataSync(profile, onProgress) {
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 100, log: `Có bản dữ liệu mới: ${release.version}` })
     checkAbort()
 
-    // 2. Tải về temp
+    // 2. Tải về (tải tiếp nếu có part từ lần trước)
     onProgress({ phase: 'download', item: 'Tải dữ liệu', percent: 0, log: 'Đang tải dữ liệu...' })
-    await downloadFile(release.asset.browser_download_url, zipPath, (p) => {
+    await downloadFileSmart(release.asset.browser_download_url, zipPath, (p) => {
       const pc = p.total ? Math.round((p.downloaded / p.total) * 100) : 0
-      onProgress({ phase: 'download', item: 'Tải dữ liệu', percent: pc, downloaded: p.downloaded, total: p.total })
+      onProgress({ phase: 'download', item: 'Tải dữ liệu', percent: pc, downloaded: p.downloaded, total: p.total, speed: p.speed })
     }, getSignal('dSync'))
     checkAbort()
 
-    // 3. Giải nén
+    // 3. Giải nén (thư mục tạm riêng)
+    extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dinosync-ext-'))
     onProgress({ phase: 'extract', item: 'Giải nén', percent: 0, log: 'Đang giải nén...' })
-    fs.mkdirSync(extractDir, { recursive: true })
     await extractZip(zipPath, extractDir)
     const root = findRoot(extractDir)
     onProgress({ phase: 'extract', item: 'Giải nén', percent: 100, log: 'Đã giải nén' })
     checkAbort()
 
-    // 4. Đồng bộ vào profile
+    // 4. Đồng bộ vào profile (đọc update.txt để xóa file cũ theo tên, rồi copy mới)
     onProgress({ phase: 'sync', item: 'Đồng bộ dữ liệu', percent: 0, log: 'Đang đồng bộ dữ liệu vào profile...' })
-    const { skippedFiles } = await syncProfile(instancePath, root, (p) => {
+    const { skippedFiles, deletedCount } = await syncProfile(instancePath, root, (p) => {
       const pc = p.total ? Math.round((p.done / p.total) * 100) : 0
       onProgress({ phase: 'sync', item: 'Đồng bộ dữ liệu', percent: pc, done: p.done, total: p.total, file: p.file })
-    })
+    }, { applyUpdateTxt: true })
     checkAbort()
 
     fs.writeFileSync(versionFilePath(instancePath), release.version, 'utf8')
     onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: `Đã cập nhật dữ liệu ${release.version}` })
-    return { ok: true, version: release.version, skippedFiles }
+    return { ok: true, version: release.version, skippedFiles, deletedCount }
   } catch (err) {
     if (err?.aborted) {
+      const action = getAction('dSync')
+      if (action === 'cancel') {
+        onProgress({ phase: 'cancelled', item: 'Đã hủy', percent: 0, log: 'Đã hủy tải.' })
+        return { ok: false, cancelled: true }
+      }
       onProgress({ phase: 'paused', item: 'Tạm dừng', percent: 0, log: 'Đã tạm dừng tải. Bấm Play để tiếp tục.' })
       return { ok: false, paused: true }
     }
     throw err
   } finally {
     endOp('dSync')
-    // Tự động xóa file tải về để tránh đầy ổ đĩa
-    fs.rmSync(tempDir, { recursive: true, force: true })
+    // Xóa extractDir (luôn); giữ dlDir (part files) nếu chưa hoàn tất để resume lần sau
+    if (extractDir) fs.rmSync(extractDir, { recursive: true, force: true })
+    // Nếu đã đồng bộ xong (có version file) → dọn dlDir
+    if (dlDir && fs.existsSync(versionFilePath(instancePath))) {
+      fs.rmSync(dlDir, { recursive: true, force: true })
+    }
   }
 }
 
@@ -295,4 +558,84 @@ async function checkDataSync(profile) {
   }
 }
 
-module.exports = { runDataSync, checkDataSync }
+// ── Dữ liệu gốc (dinostatedata) — tải 1 lần sau khi cài tài nguyên ──────────
+async function getBaseRelease() {
+  const release = await httpGetJson(`https://api.github.com/repos/${BASE_REPO}/releases/tags/${encodeURIComponent(BASE_TAG)}`)
+  const asset = (release.assets || []).find(a => /\.(zip|rar)$/i.test(a.name))
+  if (!asset) throw new Error('Không tìm thấy file data gốc (.zip/.rar)')
+  return { version: release.tag_name, name: release.name, asset }
+}
+
+async function runBaseDataSync(profile, onProgress) {
+  const instancePath = profile?.instancePath
+  if (!instancePath) throw new Error('Profile không có instancePath')
+  const { startOp, endOp, isAborted, getSignal, getAction } = require('./abortControl.cjs')
+  startOp('dSync')
+  const abortedErr = Object.assign(new Error('aborted'), { aborted: true })
+  function checkAbort() { if (isAborted('dSync')) throw abortedErr }
+
+  let dlDir = null
+  let extractDir = null
+  try {
+    onProgress({ phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: 'Đang lấy dữ liệu gốc...' })
+    const base = await getBaseRelease()
+    const assetExt = path.extname(base.asset.name) || '.zip'
+    dlDir = dlCacheDir(base.asset.browser_download_url)
+    fs.mkdirSync(dlDir, { recursive: true })
+    const zipPath = path.join(dlDir, 'base' + assetExt)
+
+    onProgress({ phase: 'download', item: 'Dữ liệu gốc', percent: 0, log: 'Đang tải dữ liệu gốc...' })
+    await downloadFileSmart(base.asset.browser_download_url, zipPath, (p) => {
+      const pc = p.total ? Math.round((p.downloaded / p.total) * 100) : 0
+      onProgress({ phase: 'download', item: 'Dữ liệu gốc', percent: pc, downloaded: p.downloaded, total: p.total, speed: p.speed })
+    }, getSignal('dSync'))
+    checkAbort()
+
+    extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dinobase-ext-'))
+    onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: 0, log: 'Đang giải nén...' })
+    await extractZip(zipPath, extractDir)
+    const root = findRoot(extractDir)
+    onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: 100, log: 'Đã giải nén' })
+    checkAbort()
+
+    onProgress({ phase: 'sync', item: 'Dữ liệu gốc', percent: 0, log: 'Đang đồng bộ dữ liệu gốc...' })
+    const { skippedFiles } = await syncProfile(instancePath, root, (p) => {
+      const pc = p.total ? Math.round((p.done / p.total) * 100) : 0
+      onProgress({ phase: 'sync', item: 'Dữ liệu gốc', percent: pc, done: p.done, total: p.total, file: p.file })
+    }, { applyUpdateTxt: false })
+    checkAbort()
+
+    fs.writeFileSync(baseVersionFilePath(instancePath), base.version, 'utf8')
+    onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: `Đã cài dữ liệu gốc ${base.version}` })
+    return { ok: true, version: base.version, skippedFiles }
+  } catch (err) {
+    if (err?.aborted) {
+      const action = getAction('dSync')
+      if (action === 'cancel') {
+        onProgress({ phase: 'cancelled', item: 'Đã hủy', percent: 0, log: 'Đã hủy tải dữ liệu gốc.' })
+        return { ok: false, cancelled: true }
+      }
+      onProgress({ phase: 'paused', item: 'Tạm dừng', percent: 0, log: 'Đã tạm dừng tải dữ liệu gốc.' })
+      return { ok: false, paused: true }
+    }
+    throw err
+  } finally {
+    endOp('dSync')
+    if (extractDir) fs.rmSync(extractDir, { recursive: true, force: true })
+    // Nếu đã cài xong (có marker base) → dọn dlDir
+    if (dlDir && fs.existsSync(baseVersionFilePath(instancePath))) {
+      fs.rmSync(dlDir, { recursive: true, force: true })
+    }
+  }
+}
+
+async function checkBaseData(profile) {
+  if (!profile?.instancePath) return { ok: false, error: 'no_instance' }
+  try {
+    return { ok: true, installed: fs.existsSync(baseVersionFilePath(profile.instancePath)) }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+}
+
+module.exports = { runDataSync, checkDataSync, runBaseDataSync, checkBaseData }

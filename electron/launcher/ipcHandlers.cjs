@@ -40,7 +40,7 @@ const { resolveVersion }      = require('./vanilla/versionResolver.cjs')
 const { ensureJava }          = require('./java/javaManager.cjs')
 const { downloadAssets }      = require('./vanilla/assetManager.cjs')
 const { setupForge }          = require('./forge/forgeLoader.cjs')
-const { runDataSync, checkDataSync } = require('./dataSync.cjs')
+const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData } = require('./dataSync.cjs')
 const { searchProjects, getProject, getProjectVersions, installVersion, getGameVersions, getCategories } = require('./modrinth/modrinthSearch.cjs')
 const cfSearch = require('./curseforge/curseForgeSearch.cjs')
 const { launchGame }          = require('./vanilla/gameRunner.cjs')
@@ -581,6 +581,11 @@ function registerLauncherHandlers(getTrustedWindow) {
       return { ok: true }
     } catch (err) {
       if (err?.aborted) {
+        const { getAction } = require('./abortControl.cjs')
+        if (getAction('preDl') === 'cancel') {
+          emit('cancelled', 'Đã hủy', 0, { log: 'Đã hủy tải tài nguyên.' })
+          return { ok: false, cancelled: true }
+        }
         emit('paused', 'Tạm dừng', 0, { log: 'Đã tạm dừng tải. Bấm Play để tiếp tục.' })
         return { ok: false, paused: true }
       }
@@ -596,6 +601,29 @@ function registerLauncherHandlers(getTrustedWindow) {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
     const profiles = readProfiles().profiles
     return checkDataSync(profiles[0])
+  })
+
+  ipcMain.handle('dataSync:checkBase', async (e) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    return checkBaseData(profiles[0])
+  })
+
+  ipcMain.handle('dataSync:runBase', async (e) => {
+    const win = getTrustedWindow(e)
+    if (!win) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    const profile = profiles[0]
+    if (!profile) return { error: 'Profile not found' }
+    function send(data) {
+      if (!win.isDestroyed()) win.webContents.send('dinosync:progress', data)
+    }
+    try {
+      return await runBaseDataSync(profile, send)
+    } catch (err) {
+      send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi tải dữ liệu gốc: ${err.message}` })
+      return { ok: false, error: err.message }
+    }
   })
 
   ipcMain.handle('dataSync:run', async (e) => {
@@ -620,10 +648,9 @@ function registerLauncherHandlers(getTrustedWindow) {
   // Điều khiển tạm dừng / hủy tải (preDl hoặc dSync)
   ipcMain.handle('data:control', (e, { op, action }) => {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    if (action === 'pause' || action === 'cancel') {
-      const { abortOp } = require('./abortControl.cjs')
-      abortOp(op)
-    }
+    const { abortOp, setAction } = require('./abortControl.cjs')
+    setAction(op, action || 'pause')
+    abortOp(op)
     return { ok: true }
   })
 

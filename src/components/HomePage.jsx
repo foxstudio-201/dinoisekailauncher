@@ -52,6 +52,13 @@ function fmtEta(ms) {
   return `~${Math.floor(m / 60)}g ${m % 60}p`
 }
 
+function fmtSpeed(bps) {
+  if (bps == null || !isFinite(bps) || bps <= 0) return '0 KB'
+  if (bps >= 1024 * 1024 * 1024) return (bps / 1024 / 1024 / 1024).toFixed(2) + ' GB'
+  if (bps >= 1024 * 1024) return (bps / 1024 / 1024).toFixed(1) + ' MB'
+  return (bps / 1024).toFixed(0) + ' KB'
+}
+
 const INTRO_VI = 'Bạn bị một luồng sáng dịch chuyển và đưa bạn vào thế giới lạ, nơi đây đầy dãy quái vật mạnh mẽ, nhưng không vì thế, bạn tỉnh dậy ở nơi gọi là Hư Không, và gặp được một ông lão. Ông lão nói rằng "Chào mừng ngươi đến với thế giới này, ta là Bụi Tiên..." Và rồi sau đó bạn nhận lấy một vật phẩm từ người này và bắt đầu cuộc hành trình chinh phục thế giới mới. Bạn được chọn một nơi để sinh sống, ở đó bạn gặp được dân làng lương thiện. Tuy nhiên mọi thứ sẽ bắt đầu từ đây.....'
 
 const INTRO_EN = 'You suddenly find yourself transported to a strange world, teeming with powerful monsters, but you are not afraid. You wake up in a place called the Void and meet an old man, who says: "Welcome to this world, I am the Fairy Dust..." Then you receive an item from him and begin your journey to conquer this new world. You get to choose a place to live, where you meet kind-hearted villagers. However, everything begins from here.....'
@@ -140,6 +147,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     return window.electronAPI.onPreDownloadProgress(data => {
       setPredownload(prev => prev ? { ...prev, log: data.log, percent: data.percent } : null)
       if (data.phase === 'paused') setPausedOp('preDl')
+      else if (data.phase === 'cancelled') setPausedOp(null)
       setPreDl(prev => {
         const phases = { ...(prev?.phases || {}) }
         if (data.phase !== 'done' && data.item) phases[data.phase] = { item: data.item, percent: data.percent ?? 0, eta: data.eta, log: data.log }
@@ -167,7 +175,15 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           .then(res => {
             if (res && res.ok === false && !res.paused) {
               setDlError({ type: 'resource', message: res.error || 'Lỗi tải tài nguyên' })
+              return
             }
+            // Tài nguyên xong → nếu chưa có dữ liệu gốc (dinostatedata) thì tự tải luôn
+            window.electronAPI.checkBaseData?.().then(r => {
+              if (r?.ok && !r.installed) {
+                setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: 'Tự động tải dữ liệu gốc lần đầu...' })
+                window.electronAPI.runBaseDataSync?.().catch(() => {})
+              }
+            }).catch(() => {})
           })
           .catch(() => {})
       }, 3000)
@@ -179,6 +195,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     if (!isElectron || !window.electronAPI.onDataSyncProgress) return
     return window.electronAPI.onDataSyncProgress(data => {
       if (data.phase === 'paused') setPausedOp('dSync')
+      else if (data.phase === 'cancelled') setPausedOp(null)
       setDSync(prev => ({ ...(prev || {}), active: true, closing: false, ...data }))
       if (data.phase === 'done') {
         setTimeout(() => {
@@ -350,23 +367,26 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     overallEta = fmtEta(Math.round((elapsed / overallPct) * (100 - overallPct)))
   }
 
-  const activeOp = dSync?.active && !dSync.closing ? 'dSync' : (preDl?.active && !preDl.closing ? 'preDl' : null)
+  const activeOp = pausedOp
+    || (dSync?.active && !dSync.closing ? 'dSync' : null)
+    || (preDl?.active && !preDl.closing ? 'preDl' : null)
   const isPaused = pausedOp && busyDownloading
+  const isPausedAny = pausedOp != null
 
   function togglePause() {
-    if (!activeOp) return
     if (isPaused) {
-      // Resume: bỏ cờ pause, chạy lại tác vụ
+      // Resume: chạy lại tác vụ (tiếp tục từ phần đã tải)
       setPausedOp(null)
-      if (activeOp === 'preDl' && window.electronAPI.preDownload) {
+      if (pausedOp === 'preDl' && window.electronAPI.preDownload) {
         window.electronAPI.preDownload({ profileId: currentProfile?.id }).catch(() => {})
-      } else if (activeOp === 'dSync' && window.electronAPI.runDataSync) {
+      } else if (pausedOp === 'dSync' && window.electronAPI.runDataSync) {
         window.electronAPI.runDataSync().catch(() => {})
       }
-    } else {
-      window.electronAPI.dataControl?.({ op: activeOp, action: 'pause' })
-      setPausedOp(activeOp)
+      return
     }
+    if (!activeOp) return
+    window.electronAPI.dataControl?.({ op: activeOp, action: 'pause' })
+    setPausedOp(activeOp)
   }
 
   function handlePlayClick() {
@@ -869,6 +889,9 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               {dSync.downloaded != null && (
                 <p className="text-[11px] font-medium text-white/80 mt-1.5 font-mono">
                   Đã tải: {fmtBytes(dSync.downloaded)} / {fmtBytes(dSync.total)} {dSync.done != null && dSync.total != null && dSync.phase === 'sync' ? `(${dSync.done}/${dSync.total} files)` : ''}
+                  {dSync.speed != null && dSync.speed > 0 && dSync.phase === 'download' && (
+                    <span className="text-emerald-300"> · {fmtSpeed(dSync.speed)}/s</span>
+                  )}
                 </p>
               )}
             </div>

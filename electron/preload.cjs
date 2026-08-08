@@ -132,6 +132,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isGameRunning:   (opts)       => ipcRenderer.invoke('launcher:isRunning', opts),
   checkDataSync:   ()           => ipcRenderer.invoke('dataSync:check'),
   runDataSync:     ()           => ipcRenderer.invoke('dataSync:run'),
+  checkBaseData:   ()           => ipcRenderer.invoke('dataSync:checkBase'),
+  runBaseDataSync: ()           => ipcRenderer.invoke('dataSync:runBase'),
   dataControl:     (opts)       => ipcRenderer.invoke('data:control', opts),
   onDataSyncProgress: (cb) => {
     const handler = (_e, data) => cb(data)
