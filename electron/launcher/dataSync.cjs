@@ -189,7 +189,15 @@ function resolveHead(url, signal) {
 // Tải một phần [start..end] theo Range, lưu vào partPath (append nếu đã có dữ liệu để resume)
 function downloadRange(url, start, end, partPath, onBytes, signal) {
   return new Promise((resolve, reject) => {
-    const existing = fs.existsSync(partPath) ? fs.statSync(partPath).size : 0
+    const need = end - start + 1
+    let existing = fs.existsSync(partPath) ? fs.statSync(partPath).size : 0
+    // Part bị phình (server trả toàn bộ file thay vì Range) → cắt bớt về đúng độ dài cần
+    if (existing > need) {
+      try {
+        fs.truncateSync(partPath, need)
+        existing = need
+      } catch {}
+    }
     const from = start + existing
     if (from > end) { resolve(partPath); return } // phần đã đủ
     const headers = {
@@ -224,29 +232,41 @@ function downloadRange(url, start, end, partPath, onBytes, signal) {
 }
 
 // Ghép các phần lại thành file hoàn chỉnh
-function concatParts(destPath, partFiles, total, resolve, reject) {
+async function concatParts(destPath, partFiles, total) {
+  const ws = fs.createWriteStream(destPath)
   try {
-    const ws = fs.createWriteStream(destPath)
-    ;(async () => {
-      for (const p of partFiles) {
-        await new Promise((res, rej) => {
-          const rs = fs.createReadStream(p)
-          rs.pipe(ws, { end: false })
-          rs.on('end', res)
-          rs.on('error', rej)
-        })
-      }
-      ws.end()
-      ws.on('finish', () => {
-        // Kiểm tra size TRƯỚC khi xóa part (tránh mất part khi ghép sai)
-        const size = fs.statSync(destPath).size
-        if (size !== total) return reject(new Error(`File ghép không đầy đủ (${size}/${total} bytes)`))
-        partFiles.forEach(p => { try { fs.unlinkSync(p) } catch {} })
-        resolve(destPath)
+    for (const p of partFiles) {
+      await new Promise((res, rej) => {
+        const rs = fs.createReadStream(p)
+        rs.on('error', rej)
+        ws.on('error', rej)
+        rs.pipe(ws, { end: false })
+        rs.on('end', res)
       })
-      ws.on('error', reject)
-    })().catch(reject)
-  } catch (e) { reject(e) }
+    }
+    await new Promise((res, rej) => {
+      ws.end()
+      ws.on('finish', res)
+      ws.on('error', rej)
+    })
+    // Windows: metadata chưa flush kịp → kiểm tra lại nhiều lần trước khi kết luận
+    for (let tries = 0; tries < 40; tries++) {
+      const size = fs.statSync(destPath).size
+      if (size === total) {
+        partFiles.forEach(p => { try { fs.unlinkSync(p) } catch {} })
+        return destPath
+      }
+      if (size > total) break // part bị thừa (server trả 200 thay vì 206) → coi như lỗi
+      await new Promise(r => setTimeout(r, 100))
+    }
+    const size = fs.statSync(destPath).size
+    // Giữ part lại để lần sau resume; xóa file ghép dở
+    try { fs.unlinkSync(destPath) } catch {}
+    throw new Error(`File ghép không đầy đủ (${size}/${total} bytes) — sẽ tự tải lại`)
+  } catch (e) {
+    try { ws.destroy() } catch {}
+    throw e
+  }
 }
 
 // Tải file — tự chọn multi-thread nếu file lớn, ngược lại tải 1 luồng
@@ -313,7 +333,7 @@ async function downloadFileSmartInner(url, destPath, onProgress, signal) {
     const finishIfDone = () => {
       if (done === parts && !aborted) {
         if (signal) signal.removeEventListener('abort', abortHandler)
-        concatParts(destPath, partFiles, total, resolve, reject)
+        concatParts(destPath, partFiles, total).then(resolve).catch(reject)
       }
     }
     for (let i = 0; i < parts; i++) {
@@ -339,42 +359,60 @@ function downloadFileSmart(url, destPath, onProgress, signal) {
   return downloadFileSmartInner(url, destPath, onProgress, signal)
 }
 
-function extractZip(zipPath, destDir, onProgress) {
+function runTool(tool, args) {
   return new Promise((resolve, reject) => {
-    // .rar → dùng tool ngoài; .zip → AdmZip
-    if (/\.rar$/i.test(zipPath)) {
-      const { execFile } = require('child_process')
-      // Thử lần lượt các tool có thể có
-      const candidates = process.platform === 'win32'
+    const { execFile } = require('child_process')
+    execFile(tool, args, { stdio: 'ignore' }, (err) => err ? reject(err) : resolve())
+  })
+}
+
+async function extractZip(zipPath, destDir, onProgress) {
+  const isRar = /\.rar$/i.test(zipPath)
+  const isWin = process.platform === 'win32'
+  // Ưu tiên tool hệ thống — nhanh, chạy ngoài process nên không đóng băng cửa sổ
+  const candidates = isRar
+    ? (isWin
         ? [
-            { tool: 'tar',   args: ['-xf', zipPath, '-C', destDir] },
+            { tool: 'tar',    args: ['-xf', zipPath, '-C', destDir] },
             { tool: 'bsdtar', args: ['-xf', zipPath, '-C', destDir] },
-            { tool: '7z',    args: ['x', '-y', `-o${destDir}`, zipPath] },
+            { tool: '7z',     args: ['x', '-y', `-o${destDir}`, zipPath] },
           ]
         : [
-            { tool: 'unrar', args: ['x', '-y', zipPath, destDir + '/'] },
+            { tool: 'unrar',  args: ['x', '-y', zipPath, destDir + '/'] },
             { tool: 'bsdtar', args: ['-xf', zipPath, '-C', destDir] },
-            { tool: '7z',    args: ['x', '-y', `-o${destDir}`, zipPath] },
+            { tool: '7z',     args: ['x', '-y', `-o${destDir}`, zipPath] },
+            { tool: 'unzip',  args: ['-o', zipPath, '-d', destDir] },
+          ])
+    : (isWin
+        ? [
+            { tool: 'tar',    args: ['-xf', zipPath, '-C', destDir] },  // Windows 10+ có sẵn tar (libarchive)
+            { tool: 'bsdtar', args: ['-xf', zipPath, '-C', destDir] },
+            { tool: '7z',     args: ['x', '-y', `-o${destDir}`, zipPath] },
           ]
-      ;(function tryNext(i) {
-        if (i >= candidates.length) return reject(new Error('Không tìm thấy công cụ giải nén .rar (unrar/tar/7z)'))
-        const { tool, args } = candidates[i]
-        execFile(tool, args, { stdio: 'ignore' }, (err) => {
-          if (err) {
-            console.error(`[dinosync] ${tool} thất bại: ${err.message}`)
-            return tryNext(i + 1)
-          }
-          resolve(destDir)
-        })
-      })(0)
-      return
+        : [
+            { tool: 'unzip',  args: ['-o', zipPath, '-d', destDir] },
+            { tool: 'bsdtar', args: ['-xf', zipPath, '-C', destDir] },
+            { tool: '7z',     args: ['x', '-y', `-o${destDir}`, zipPath] },
+          ])
+  onProgress?.({ percent: 0 })
+  for (const c of candidates) {
+    try {
+      await runTool(c.tool, c.args)
+      onProgress?.({ percent: 100 })
+      return destDir
+    } catch (err) {
+      console.error(`[dinosync] ${c.tool} thất bại: ${err.message}`)
     }
+  }
+  // Fallback: AdmZip giải nén theo batch — nhường event loop, không treo cửa sổ
+  onProgress?.({ percent: 0 })
+  return new Promise((resolve, reject) => {
     try {
       const zip = new AdmZip(zipPath)
       const entries = zip.getEntries()
       const total = entries.length
       let i = 0
-      const BATCH = 40 // giải nén theo batch, nhường event loop → cửa sổ không bị treo
+      const BATCH = 60
       const run = () => {
         let n = 0
         while (i < total && n < BATCH) {
@@ -389,7 +427,7 @@ function extractZip(zipPath, destDir, onProgress) {
         }
         onProgress?.({ percent: total ? Math.round((i / total) * 100) : 100 })
         if (i >= total) return resolve(destDir)
-        setImmediate(run) // yield để UI luôn phản hồi
+        setImmediate(run)
       }
       run()
     } catch (e) { reject(e) }

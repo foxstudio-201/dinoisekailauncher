@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAccounts } from '../hooks/useAccounts'
 import { useLang } from '../i18n/LangProvider'
-import { Gear, PlayCircle, Check, User, Sword, Campfire, Mountains, ArrowClockwise, FolderOpen, SlidersHorizontal, Memory, GraphicsCard, BookOpen, Gauge } from '@phosphor-icons/react'
+import { Gear, PlayCircle, Check, User, Sword, Campfire, Mountains, ArrowClockwise, FolderOpen, SlidersHorizontal, Memory, GraphicsCard, BookOpen, Gauge, Wrench } from '@phosphor-icons/react'
 import ProfileSettingsPanel from './home/ProfileSettingsPanel'
 import GamingModalWrapper from './ui/GamingModalWrapper'
 import LogPanel from './LogPanel'
 import DownloadErrorModal from './DownloadErrorModal'
 import ProfileFilesModal from './ProfileFilesModal'
+import OptionsModal from './OptionsModal'
 import AppBackground from './AppBackground'
 import SystemInfo from './SystemInfo'
 import PlayerHead from './ui/PlayerHead'
@@ -72,6 +73,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [profileSettingsOpen, setProfileSettingsOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [filesModalOpen, setFilesModalOpen] = useState(false)
+  const [optionsModalOpen, setOptionsModalOpen] = useState(false)
   const profileMenuRef = useRef(null)
   const [profileTab, setProfileTab] = useState('intro')
   const [typedIntro, setTypedIntro] = useState('')
@@ -790,6 +792,14 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                   <FolderOpen size={26} weight="duotone" />
                 </button>
                 <button
+                  onClick={() => { setOptionsModalOpen(true); setProfileMenuOpen(false); playClickSound() }}
+                  className="w-14 h-14 blur-glass rounded-2xl border border-white/15 flex items-center justify-center transition-colors text-blue-400 hover:text-white hover:bg-white/10"
+                  style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+                  data-tip="Cài đặt game (options.txt)"
+                >
+                  <Wrench size={26} weight="duotone" />
+                </button>
+                <button
                   onClick={() => { logPanelVisible ? handleCloseLogPanel() : handleReopenLog(); playClickSound(); setProfileMenuOpen(false) }}
                   className={`w-14 h-14 blur-glass rounded-2xl border flex items-center justify-center transition-colors ${
                     logPanelVisible ? 'border-violet-400/30 text-violet-300 bg-violet-500/15' : 'border-white/15 text-white/60 hover:text-white hover:bg-white/10'
@@ -959,8 +969,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         >
           <GamingModalWrapper
             onClose={() => setProfileSettingsOpen(false)}
-            className="border border-white/10 rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]"
-            style={{ background: 'rgba(14,14,14,0.98)' }}
+            className="border border-blue-500/15 rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden max-h-[90vh]"
+            style={{ background: 'linear-gradient(165deg, #0c1526 0%, #05070d 55%, #03040a 100%)' }}
           >
             <ProfileSettingsPanel
               profile={currentProfile}
@@ -975,6 +985,9 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       <DownloadErrorModal error={dlError} onClose={() => setDlError(null)} />
       {filesModalOpen && currentProfile && (
         <ProfileFilesModal profile={currentProfile} onClose={() => setFilesModalOpen(false)} />
+      )}
+      {optionsModalOpen && currentProfile && (
+        <OptionsModal profile={currentProfile} onClose={() => setOptionsModalOpen(false)} />
       )}
     </div>
   )

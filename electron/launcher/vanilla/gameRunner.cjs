@@ -156,6 +156,9 @@ function launchGame(opts) {
 
   if (!fs.existsSync(instancePath)) fs.mkdirSync(instancePath, { recursive: true })
 
+  // Dọn log cũ: chỉ giữ file log + crash log mới nhất (tránh đầy bộ nhớ)
+  cleanOldLogs(instancePath)
+
   const vars = {
     _os:              os,
     _features:        { is_demo_user: false, has_custom_resolution: false },
@@ -429,6 +432,32 @@ function setMacOsProcessAffinity(pid) {
     const { exec } = require('child_process')
     exec(`renice -n -20 -p ${pid}`, () => {})
     exec(`taskpolicy -d -p ${pid}`, () => {})
+  } catch {}
+}
+
+/**
+ * Dọn dẹp log cũ mỗi khi khởi chạy game:
+ * - logs/         → chỉ giữ file .log mới nhất, xóa phần còn lại
+ * - crash-reports/→ chỉ giữ file crash mới nhất, xóa phần còn lại
+ * - hs_err_pid*.log ở root instance → chỉ giữ bản mới nhất
+ * Lỗi đều bỏ qua (không chặn launch game).
+ */
+function cleanOldLogs(instancePath) {
+  try {
+    const keepNewest = (dir, filter) => {
+      if (!fs.existsSync(dir)) return
+      const files = fs.readdirSync(dir)
+        .filter(f => filter(f))
+        .map(f => ({ name: f, mtime: fs.statSync(path.join(dir, f)).mtimeMs }))
+        .sort((a, b) => b.mtime - a.mtime)
+      files.slice(1).forEach(f => {
+        try { fs.rmSync(path.join(dir, f.name), { recursive: true, force: true }) } catch {}
+      })
+    }
+    const isLog = f => /\.log$/i.test(f)
+    keepNewest(path.join(instancePath, 'logs'), isLog)
+    keepNewest(path.join(instancePath, 'crash-reports'), f => /\.(txt|log)$/i.test(f))
+    keepNewest(instancePath, f => /^hs_err_pid.*\.log$/i.test(f))
   } catch {}
 }
 

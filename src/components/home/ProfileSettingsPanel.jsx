@@ -32,7 +32,6 @@
 import { useState, useEffect } from 'react'
 import { Icons } from './tab/shared'
 import GeneralTab from './tab/GeneralTab'
-import FilesTab   from './tab/FilesTab'
 import { useLang } from '../../i18n/LangProvider'
 import { useModalClose } from '../ui/GamingModalWrapper'
 
@@ -42,7 +41,6 @@ export default function ProfileSettingsPanel({ profile, onClose: onCloseProp, on
 
   const tabs = [
     { id: 'general', labelKey: 'profileSettings.tabs.general', icon: Icons.settings, component: GeneralTab },
-    { id: 'files',   labelKey: 'profileSettings.tabs.files',   icon: Icons.files,    component: FilesTab   },
   ]
 
   const [activeTab, setActiveTab] = useState('general')

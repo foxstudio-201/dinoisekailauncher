@@ -1222,6 +1222,62 @@ function registerProfileContentHandlers(getTrustedWindow) {
     return { ok: true, results }
   })
 
+  // Đọc options.txt của profile (instance)
+  ipcMain.handle('profile:readOptions', (e, profileId) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const data = readProfiles()
+    const profile = data.profiles.find(p => p.id === profileId)
+    if (!profile) return { error: 'Profile not found' }
+    const gameDir = getGameDir(profile, null)
+    const optsPath = path.join(gameDir, 'options.txt')
+    if (!fs.existsSync(optsPath)) return { ok: true, options: {}, lines: [] }
+    try {
+      const raw = fs.readFileSync(optsPath, 'utf8')
+      const lines = raw.split(/\r?\n/)
+      const options = {}
+      for (const line of lines) {
+        const idx = line.indexOf(':')
+        if (idx > 0) {
+          const key = line.slice(0, idx)
+          const val = line.slice(idx + 1)
+          options[key] = val
+        }
+      }
+      return { ok: true, options, lines }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  // Ghi options.txt của profile (giữ nguyên các key không sửa, bảo toàn thứ tự)
+  ipcMain.handle('profile:writeOptions', (e, profileId, newOptions) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const data = readProfiles()
+    const profile = data.profiles.find(p => p.id === profileId)
+    if (!profile) return { error: 'Profile not found' }
+    const gameDir = getGameDir(profile, null)
+    const optsPath = path.join(gameDir, 'options.txt')
+    try {
+      let lines = []
+      if (fs.existsSync(optsPath)) {
+        lines = fs.readFileSync(optsPath, 'utf8').split(/\r?\n/)
+      }
+      const seen = new Map()
+      for (const line of lines) {
+        const idx = line.indexOf(':')
+        if (idx > 0) seen.set(line.slice(0, idx), line)
+      }
+      for (const [key, val] of Object.entries(newOptions || {})) {
+        seen.set(key, `${key}:${val}`)
+      }
+      const out = [...seen.values()].join('\n')
+      fs.writeFileSync(optsPath, out, 'utf8')
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
   ipcMain.handle('profile:update', (e, profileId, patch) => {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
     const data = readProfiles()

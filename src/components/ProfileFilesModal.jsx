@@ -145,26 +145,49 @@ export default function ProfileFilesModal({ profile, onClose }) {
             <div className="relative">
               <button
                 onClick={() => setPresetOpen(v => !v)}
-                className="w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all"
+                className={`flex items-center gap-1.5 px-2.5 h-7 rounded-lg transition-all ${
+                  presetOpen ? 'bg-blue-500/20 border border-blue-500/30 text-blue-300' : 'bg-white/5 hover:bg-white/10 text-white/50 hover:text-white'
+                }`}
                 data-tip="Xóa nhanh theo nhóm"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V6h2v2z"/></svg>
+                <span className="text-[11px] font-bold">Xóa nhanh</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`w-3 h-3 transition-transform ${presetOpen ? 'rotate-180' : ''}`}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6"/>
+                </svg>
               </button>
               {presetOpen && (
-                <div className="absolute right-0 top-full mt-1 w-[300px] rounded-xl border border-white/10 bg-[#0c1526] shadow-2xl overflow-hidden z-[10000]">
-                  <div className="px-3 py-2 text-[10px] font-bold text-white/40 border-b border-white/5">XÓA NHANH THEO NHÓM</div>
-                  {PRESETS.map(p => (
-                    <button
-                      key={p.key}
-                      onClick={() => applyPreset(p)}
-                      className="w-full flex items-start gap-2 px-3 py-2 text-left text-[11px] text-white/75 hover:bg-white/5 transition-colors"
-                    >
-                      <span className="mt-0.5 flex-shrink-0">🗑️</span>
-                      <span className="flex-1">{p.label}</span>
-                      {preset === p.key && <span className="text-emerald-400 flex-shrink-0">✓</span>}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div className="fixed inset-0 z-[9999]" onClick={() => setPresetOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1.5 w-[320px] rounded-2xl border border-blue-500/20 bg-gradient-to-b from-[#0f1a30]/95 to-[#05070d]/98 backdrop-blur-md shadow-2xl shadow-black/60 overflow-hidden z-[10000] origin-top-right animate-[page-in-f_.18s_ease_both]">
+                    <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
+                      <span className="text-[10px] font-bold tracking-wider text-white/40">XÓA NHANH THEO NHÓM</span>
+                      <button onClick={() => setPresetOpen(false)} className="text-white/30 hover:text-white/70 transition-colors">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                      </button>
+                    </div>
+                    {PRESETS.map((p, i) => (
+                      <button
+                        key={p.key}
+                        onClick={() => applyPreset(p)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-blue-500/10 ${i > 0 ? 'border-t border-white/5' : ''}`}
+                      >
+                        <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${preset === p.key ? 'bg-blue-500/25 text-blue-300' : 'bg-red-500/15 text-red-400'}`}>
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className={`block text-[12px] font-bold ${preset === p.key ? 'text-blue-300' : 'text-white/85'}`}>{p.label}</span>
+                          <span className="block text-[10px] text-white/35 mt-0.5">Chọn &amp; xóa: {p.targets.join(', ')}</span>
+                        </span>
+                        {preset === p.key && (
+                          <span className="w-5 h-5 rounded-full bg-blue-500/25 flex items-center justify-center flex-shrink-0">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-3 h-3 text-blue-300"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
             <button onClick={onClose} className="w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all">
