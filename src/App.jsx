@@ -37,6 +37,7 @@ import HomePage from './components/HomePage'
 import MinecraftPage from './components/MinecraftPage'
 import InitialSetup from './components/InitialSetup'
 import CursorTrail from './components/CursorTrail'
+import TooltipProvider from './components/ui/TooltipProvider'
 import UpdateModal from './components/UpdateModal'
 import { AccountsProvider } from './hooks/useAccounts'
 import { loadAppSettings, applyAppSettings, isInitialSetupRequired } from './utils/appSettings'
@@ -423,6 +424,7 @@ function AppInner() {
       )}
       <UpdateModal />
       <CursorTrail />
+      <TooltipProvider />
     </div>
   )
 }

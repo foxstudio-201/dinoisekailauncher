@@ -357,6 +357,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const busyStartRef = useRef(null)
   const [pausedOp, setPausedOp] = useState(null)
   const [dlError, setDlError] = useState(null)
+  const [successToast, setSuccessToast] = useState(null)
   useEffect(() => {
     if (busyDownloading && !busyStartRef.current) busyStartRef.current = Date.now()
     if (!busyDownloading) { busyStartRef.current = null; setPausedOp(null) }
@@ -372,6 +373,12 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     || (preDl?.active && !preDl.closing ? 'preDl' : null)
   const isPaused = pausedOp && busyDownloading
   const isPausedAny = pausedOp != null
+
+  function showSuccessToast(msg) {
+    setSuccessToast(msg)
+    clearTimeout(showSuccessToast._t)
+    showSuccessToast._t = setTimeout(() => setSuccessToast(null), 3000)
+  }
 
   function togglePause() {
     if (isPaused) {
@@ -467,7 +474,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 profileTab === 'intro' ? 'border-violet-400/40 text-violet-300 bg-violet-500/15' : 'border-white/15 text-white/50 hover:text-white hover:bg-white/10'
               }`}
               style={{ backgroundColor: profileTab === 'intro' ? undefined : 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-              title="Giới thiệu"
+              data-tip="Giới thiệu"
             >
               <BookOpen size={22} weight="duotone" />
             </button>
@@ -478,7 +485,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 profileTab === 'config' ? 'border-violet-400/40 text-violet-300 bg-violet-500/15' : 'border-white/15 text-white/50 hover:text-white hover:bg-white/10'
               }`}
               style={{ backgroundColor: profileTab === 'config' ? undefined : 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-              title="Cấu hình"
+              data-tip="Cấu hình"
             >
               <Gauge size={22} weight="duotone" />
             </button>
@@ -591,28 +598,38 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
       {/* Bottom-right: username + Play + Settings */}
       <div className="absolute bottom-6 right-7 flex flex-col items-end gap-2">
+        {successToast && (
+          <p className="text-sm font-bold text-white bg-emerald-600 px-3 py-1.5 rounded-lg shadow-lg">{successToast}</p>
+        )}
         {usernameError && (
           <p className="text-sm font-bold text-white bg-red-600 px-3 py-1.5 rounded-lg">{usernameError}</p>
         )}
         <div className="flex items-center gap-3">
-          {/* Logs — bên trái nút tài khoản */}
+          {/* Kiểm tra cập nhật data — bên trái nút tài khoản */}
           <div
-            className={`rounded-2xl blur-glass overflow-hidden border transition-all active:scale-95 ${
-              logPanelVisible
-                ? 'bg-violet-500/20 border-violet-400/30'
-                : 'border-white/15'
-            }`}
-            style={{ backgroundColor: logPanelVisible ? undefined : 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+            className="rounded-2xl blur-glass overflow-hidden border border-white/15 transition-all active:scale-95"
+            style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
           >
             <button
-              onClick={() => { logPanelVisible ? handleCloseLogPanel() : handleReopenLog(); playClickSound() }}
-              className={`w-14 h-14 flex items-center justify-center transition-colors ${logPanelVisible ? 'text-violet-300' : 'text-white/60 hover:text-white'}`}
-              title="Logs"
+              onClick={() => {
+                playClickSound()
+                window.electronAPI.checkDataSync?.().then(r => {
+                  if (r?.ok && r.hasUpdate) {
+                    setDataUpdate(true)
+                    showSuccessToast(`Có bản cập nhật dữ liệu mới (${r.latest}).`)
+                  } else if (r?.ok && !r.hasUpdate) {
+                    showSuccessToast(`Dữ liệu đã mới nhất (${r.latest}).`)
+                  } else if (!r?.ok) {
+                    setDlError({ type: 'data', message: r?.error || 'Không kiểm tra được bản cập nhật' })
+                  }
+                }).catch(() => {
+                  setDlError({ type: 'data', message: 'Không kết nối được để kiểm tra cập nhật.' })
+                })
+              }}
+              className="w-14 h-14 flex items-center justify-center transition-colors text-emerald-400 hover:text-white"
+              data-tip="Kiểm tra cập nhật dữ liệu"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
-                <path d="M7 9h10v2H7zm0 3h7v2H7zm0-6h10v2H7z"/>
-              </svg>
+              <ArrowClockwise size={26} weight="duotone" />
             </button>
           </div>
 
@@ -626,10 +643,14 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             >
               <button
                 onClick={() => { setUsernameExpanded(v => !v); playClickSound() }}
-                className="w-14 h-14 flex items-center justify-center flex-shrink-0 transition-colors text-white/70 hover:text-white"
-                title="Nhập tên người chơi"
+                className="w-14 h-14 flex items-center justify-center flex-shrink-0 transition-colors text-white/70 hover:text-white rounded-l-2xl overflow-hidden"
+                data-tip="Nhập tên người chơi"
               >
-                <User size={26} weight="duotone" />
+                {usernameInput.trim().length >= 3 ? (
+                  <PlayerHead uuid={offlineUUID(usernameInput.trim())} username={usernameInput.trim()} size={56} />
+                ) : (
+                  <User size={26} weight="duotone" />
+                )}
               </button>
 
               {/* Phần nhập mở rộng ra từ nút */}
@@ -656,14 +677,14 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 <button
                   onClick={() => { playClickSound(); saveAccountAndLaunch() }}
                   className="w-11 h-11 rounded-xl bg-violet-400 text-black flex items-center justify-center hover:bg-violet-300 transition-all active:scale-95 flex-shrink-0"
-                  title="Xác nhận"
+                  data-tip="Xác nhận"
                 >
                   <Check size={22} weight="bold" />
                 </button>
                 <button
                   onClick={() => { setUsernameExpanded(false); setUsernameError(''); playClickSound() }}
                   className="w-11 h-11 rounded-xl text-white/40 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all flex-shrink-0"
-                  title="Đóng"
+                  data-tip="Đóng"
                 >
                   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
                 </button>
@@ -758,15 +779,28 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                   onClick={() => { window.electronAPI.openProfileFolder?.(currentProfile.id); setProfileMenuOpen(false); playClickSound() }}
                   className="w-14 h-14 blur-glass rounded-2xl border border-white/15 flex items-center justify-center transition-colors text-cyan-400 hover:text-white hover:bg-white/10"
                   style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-                  title="Mở thư mục profile"
+                  data-tip="Mở thư mục profile"
                 >
                   <FolderOpen size={26} weight="duotone" />
+                </button>
+                <button
+                  onClick={() => { logPanelVisible ? handleCloseLogPanel() : handleReopenLog(); playClickSound(); setProfileMenuOpen(false) }}
+                  className={`w-14 h-14 blur-glass rounded-2xl border flex items-center justify-center transition-colors ${
+                    logPanelVisible ? 'border-violet-400/30 text-violet-300 bg-violet-500/15' : 'border-white/15 text-white/60 hover:text-white hover:bg-white/10'
+                  }`}
+                  style={{ backgroundColor: logPanelVisible ? undefined : 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+                  data-tip="Mở log"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
+                    <path d="M7 9h10v2H7zm0 3h7v2H7zm0-6h10v2H7z"/>
+                  </svg>
                 </button>
                 <button
                   onClick={() => { setProfileSettingsOpen(true); setProfileMenuOpen(false); playClickSound() }}
                   className="w-14 h-14 blur-glass rounded-2xl border border-white/15 flex items-center justify-center transition-colors text-violet-400 hover:text-white hover:bg-white/10"
                   style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-                  title="Mở profile settings"
+                  data-tip="Mở profile settings"
                 >
                   <Gear size={26} weight="duotone" />
                 </button>
@@ -780,7 +814,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 <button
                   onClick={() => { setProfileMenuOpen(v => !v); playClickSound() }}
                   className="w-14 h-14 flex items-center justify-center transition-colors text-white/70 hover:text-white"
-                  title="Menu profile"
+                  data-tip="Menu profile"
                 >
                   <SlidersHorizontal size={26} weight="duotone" />
                 </button>
@@ -807,7 +841,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               <button
                 onClick={() => { window.electronAPI.dataControl?.({ op: 'preDl', action: 'cancel' }); setPausedOp(null); setPreDl(prev => prev ? { ...prev, active: false } : prev) }}
                 className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
-                title="Đóng"
+                data-tip="Đóng"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                   <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -859,7 +893,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               <button
                 onClick={() => { window.electronAPI.dataControl?.({ op: 'dSync', action: 'cancel' }); setPausedOp(null); setDSync(prev => prev ? { ...prev, active: false } : prev) }}
                 className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
-                title="Đóng"
+                data-tip="Đóng"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                   <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>

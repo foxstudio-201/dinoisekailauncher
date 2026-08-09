@@ -14,7 +14,7 @@ export default function NavBar({ activePage, onNavigate, onOpenSettings, hidden 
       {/* Home — trên cùng, ngay dưới TitleBar */}
       <button
         onClick={() => onNavigate('home')}
-        title={t('sidebar.home')}
+        data-tip={t('sidebar.home')}
         className="mt-6 w-16 h-16 rounded-2xl flex items-center justify-center transition-all hover:scale-105"
       >
         <img
@@ -47,7 +47,7 @@ export default function NavBar({ activePage, onNavigate, onOpenSettings, hidden 
         <div className="w-10 h-px bg-white/25" />
         <button
           onClick={onOpenSettings}
-          title={t('sidebar.settings')}
+          data-tip={t('sidebar.settings')}
           className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all hover:scale-105"
         >
           <Gear size={32} weight="duotone" />
