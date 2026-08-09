@@ -912,6 +912,17 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
             {/* Current phase */}
             <div className="mt-3">
+              {dSync.phase === 'extract' ? (
+                <div className="flex items-center gap-2 text-xs">
+                  <svg className="animate-spin w-3.5 h-3.5 text-violet-400 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  <span className="font-bold text-white">{dSync.item || 'Giải nén'}</span>
+                  <span className="text-white/60">— Xin vui lòng chờ...</span>
+                </div>
+              ) : (
+              <>
               <div className="flex items-center justify-between text-xs">
                 <span className={`font-bold ${dSync.phase === 'done' ? 'text-emerald-300' : 'text-white'}`}>
                   {dSync.item || '...'}
@@ -933,6 +944,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                     <span className="text-emerald-300"> · {fmtSpeed(dSync.speed)}/s</span>
                   )}
                 </p>
+              )}
+              </>
               )}
             </div>
           </div>

@@ -31,6 +31,37 @@ export default function ProfileFilesModal({ profile, onClose }) {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState({})
   const [dragging, setDragging] = useState(false)
+  const [dropToast, setDropToast] = useState('')
+  const [presetOpen, setPresetOpen] = useState(false)
+  const [preset, setPreset] = useState(null)
+
+  const PRESETS = [
+    { key: 'mc', label: 'mods + config', targets: ['config', 'mods'] },
+    { key: 'cmk', label: 'config + mods + kubejs', targets: ['config', 'mods', 'kubejs'] },
+    { key: 'all', label: 'toàn bộ (config, mods, kubejs, .dinobase_version, .dinosync_version)', targets: ['config', 'mods', 'kubejs', '.dinobase_version', '.dinosync_version'] },
+  ]
+
+  async function applyPreset(p) {
+    setPresetOpen(false)
+    setPreset(p.key)
+    setLoading(true)
+    setSelected({})
+    try {
+      const r = await window.electronAPI.profileListDirFull(profile.id, '')
+      const list = r?.ok ? (r.entries || []) : []
+      setEntries(list)
+      setCurrentPath('')
+      const targetNames = new Set(p.targets.map(t => t.toLowerCase()))
+      const next = {}
+      list.forEach(e => { if (targetNames.has(e.name.toLowerCase())) next[e.path] = true })
+      setSelected(next)
+      const count = Object.keys(next).length
+      setDropToast(count ? `Đã chọn ${count} mục theo preset: ${p.label}` : `Không tìm thấy mục nào của preset: ${p.label}`)
+      setTimeout(() => setDropToast(''), 3000)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadDir = useCallback(async (subPath = '') => {
     if (!isElectron || !profile?.id) return
@@ -68,10 +99,28 @@ export default function ProfileFilesModal({ profile, onClose }) {
     e.preventDefault()
     setDragging(false)
     const files = Array.from(e.dataTransfer?.files || [])
-      .map(f => f.path)
+      .map(f => (window.electronAPI?.getFilePath ? window.electronAPI.getFilePath(f) : f.path))
       .filter(Boolean)
-    if (!files.length || !profile?.id) return
-    window.electronAPI.profileUploadTo(profile.id, currentPath, files).then(() => loadDir(currentPath))
+    if (!files.length || !profile?.id) {
+      setDropToast('Không đọc được file. Thử kéo từ thư mục khác.')
+      setTimeout(() => setDropToast(''), 3000)
+      return
+    }
+    setDropToast(`Đang tải ${files.length} file lên...`)
+    window.electronAPI.profileUploadTo(profile.id, currentPath, files).then(r => {
+      const okCount = (r?.results || []).filter(x => x.ok).length
+      const failCount = (r?.results || []).length - okCount
+      if (okCount) {
+        setDropToast(`Đã tải ${okCount} file thành công.`)
+      } else {
+        setDropToast('Không tải được file nào.')
+      }
+      setTimeout(() => setDropToast(''), 3000)
+      loadDir(currentPath)
+    }).catch(() => {
+      setDropToast('Tải file thất bại.')
+      setTimeout(() => setDropToast(''), 3000)
+    })
   }
 
   return (
@@ -91,9 +140,37 @@ export default function ProfileFilesModal({ profile, onClose }) {
             <h3 className="text-sm font-bold text-white/90">Quản lý file profile</h3>
             <p className="text-[11px] text-white/40 mt-0.5">{profile?.name}</p>
           </div>
-          <button onClick={onClose} className="ml-auto w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {/* Menu xóa nhanh theo preset */}
+            <div className="relative">
+              <button
+                onClick={() => setPresetOpen(v => !v)}
+                className="w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all"
+                data-tip="Xóa nhanh theo nhóm"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              </button>
+              {presetOpen && (
+                <div className="absolute right-0 top-full mt-1 w-[300px] rounded-xl border border-white/10 bg-[#0c1526] shadow-2xl overflow-hidden z-[10000]">
+                  <div className="px-3 py-2 text-[10px] font-bold text-white/40 border-b border-white/5">XÓA NHANH THEO NHÓM</div>
+                  {PRESETS.map(p => (
+                    <button
+                      key={p.key}
+                      onClick={() => applyPreset(p)}
+                      className="w-full flex items-start gap-2 px-3 py-2 text-left text-[11px] text-white/75 hover:bg-white/5 transition-colors"
+                    >
+                      <span className="mt-0.5 flex-shrink-0">🗑️</span>
+                      <span className="flex-1">{p.label}</span>
+                      {preset === p.key && <span className="text-emerald-400 flex-shrink-0">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button onClick={onClose} className="w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          </div>
         </div>
 
         {/* Toolbar: search + delete */}
@@ -182,6 +259,9 @@ export default function ProfileFilesModal({ profile, onClose }) {
         }`}>
           {dragging ? 'Thả để tải file vào thư mục này' : 'Kéo & thả file vào đây để tải lên thư mục hiện tại'}
         </div>
+        {dropToast && (
+          <div className="px-5 py-2 text-[11px] text-center bg-emerald-500/15 text-emerald-300 border-t border-white/5 flex-shrink-0">{dropToast}</div>
+        )}
       </div>
     </div>
   )

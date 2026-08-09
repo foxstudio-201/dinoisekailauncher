@@ -339,7 +339,7 @@ function downloadFileSmart(url, destPath, onProgress, signal) {
   return downloadFileSmartInner(url, destPath, onProgress, signal)
 }
 
-function extractZip(zipPath, destDir) {
+function extractZip(zipPath, destDir, onProgress) {
   return new Promise((resolve, reject) => {
     // .rar → dùng tool ngoài; .zip → AdmZip
     if (/\.rar$/i.test(zipPath)) {
@@ -371,8 +371,27 @@ function extractZip(zipPath, destDir) {
     }
     try {
       const zip = new AdmZip(zipPath)
-      zip.extractAllTo(destDir, true)
-      resolve(destDir)
+      const entries = zip.getEntries()
+      const total = entries.length
+      let i = 0
+      const BATCH = 40 // giải nén theo batch, nhường event loop → cửa sổ không bị treo
+      const run = () => {
+        let n = 0
+        while (i < total && n < BATCH) {
+          const entry = entries[i]
+          try {
+            zip.extractEntryTo(entry, destDir, true, true)
+          } catch (e) {
+            return reject(new Error(`Lỗi giải nén ${entry.entryName}: ${e.message}`))
+          }
+          i++
+          n++
+        }
+        onProgress?.({ percent: total ? Math.round((i / total) * 100) : 100 })
+        if (i >= total) return resolve(destDir)
+        setImmediate(run) // yield để UI luôn phản hồi
+      }
+      run()
     } catch (e) { reject(e) }
   })
 }
@@ -506,8 +525,8 @@ async function runDataSync(profile, onProgress) {
 
     // 3. Giải nén (thư mục tạm riêng)
     extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dinosync-ext-'))
-    onProgress({ phase: 'extract', item: 'Giải nén', percent: 0, log: 'Đang giải nén...' })
-    await extractZip(zipPath, extractDir)
+    onProgress({ phase: 'extract', item: 'Giải nén', percent: 0, log: 'Đang giải nén... Xin vui lòng chờ' })
+    await extractZip(zipPath, extractDir, (p) => onProgress({ phase: 'extract', item: 'Giải nén', percent: p.percent, log: 'Đang giải nén... Xin vui lòng chờ' }))
     const root = findRoot(extractDir)
     onProgress({ phase: 'extract', item: 'Giải nén', percent: 100, log: 'Đã giải nén' })
     checkAbort()
@@ -592,8 +611,8 @@ async function runBaseDataSync(profile, onProgress) {
     checkAbort()
 
     extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dinobase-ext-'))
-    onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: 0, log: 'Đang giải nén...' })
-    await extractZip(zipPath, extractDir)
+    onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: 0, log: 'Đang giải nén... Xin vui lòng chờ' })
+    await extractZip(zipPath, extractDir, (p) => onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: p.percent, log: 'Đang giải nén... Xin vui lòng chờ' }))
     const root = findRoot(extractDir)
     onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: 100, log: 'Đã giải nén' })
     checkAbort()
