@@ -1181,6 +1181,47 @@ function registerProfileContentHandlers(getTrustedWindow) {
     return { ok: true, entries }
   })
 
+  // Xóa file/thư mục theo đường dẫn tương đối trong profile
+  ipcMain.handle('profile:deletePath', (e, profileId, subPath) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const data = readProfiles()
+    const profile = data.profiles.find(p => p.id === profileId)
+    if (!profile) return { error: 'Profile not found' }
+    const gameDir = getGameDir(profile, null)
+    if (!subPath) return { error: 'Thiếu đường dẫn' }
+    const target = path.join(gameDir, String(subPath).replace(/^[/\\]+/, ''))
+    if (!fs.existsSync(target)) return { ok: true }
+    try {
+      fs.rmSync(target, { recursive: true, force: true })
+      return { ok: true }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  // Sao chép các file (đường dẫn nguồn) vào thư mục hiện tại của profile
+  ipcMain.handle('profile:uploadTo', async (e, profileId, subPath, srcPaths) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const data = readProfiles()
+    const profile = data.profiles.find(p => p.id === profileId)
+    if (!profile) return { error: 'Profile not found' }
+    const gameDir = getGameDir(profile, null)
+    const targetDir = subPath ? path.join(gameDir, String(subPath).replace(/^[/\\]+/, '')) : gameDir
+    if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true })
+    const results = []
+    for (const src of (srcPaths || [])) {
+      const name = path.basename(src)
+      const dest = path.join(targetDir, name)
+      try {
+        fs.copyFileSync(src, dest)
+        results.push({ name, ok: true })
+      } catch (err) {
+        results.push({ name, ok: false, error: err.message })
+      }
+    }
+    return { ok: true, results }
+  })
+
   ipcMain.handle('profile:update', (e, profileId, patch) => {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
     const data = readProfiles()

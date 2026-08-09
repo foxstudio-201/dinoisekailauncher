@@ -341,8 +341,7 @@
 .update-in { animation: update-slide-in .4s cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes update-slide-in {
   from { opacity: 0; transform: translateX(48px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
+  to   { opacity: 1; transform: translateX(0); }}
 
 .blur-glass { transform: translateZ(0); will-change: transform; }
 
@@ -355,4 +354,11 @@
 @keyframes progress-shine-move {
   from { background-position: 200% 0; }
   to   { background-position: -200% 0; }
+}
+
+.spin-pulse { animation: spin-pulse 3.5s ease-in-out infinite; }
+@keyframes spin-pulse {
+  0% { transform: rotate(0deg); }
+  12% { transform: rotate(360deg); }
+  100% { transform: rotate(360deg); }
 }

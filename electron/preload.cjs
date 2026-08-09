@@ -197,6 +197,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   profileListWorlds:        (profileId, accountId)            => ipcRenderer.invoke('profile:listWorlds', profileId, accountId),
   profileDeleteWorld:       (profileId, folder, accountId)    => ipcRenderer.invoke('profile:deleteWorld', profileId, folder, accountId),
   profileListDirFull:       (profileId, subPath, accountId)   => ipcRenderer.invoke('profile:listDirFull', profileId, subPath, accountId),
+  profileDeletePath:        (profileId, subPath)              => ipcRenderer.invoke('profile:deletePath', profileId, subPath),
+  profileUploadTo:          (profileId, subPath, srcPaths)    => ipcRenderer.invoke('profile:uploadTo', profileId, subPath, srcPaths),
   profileUpdate:            (profileId, patch)     => ipcRenderer.invoke('profile:update', profileId, patch),
   profileListJavas:         ()                     => ipcRenderer.invoke('profile:listJavas'),
 

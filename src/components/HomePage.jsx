@@ -6,6 +6,7 @@ import ProfileSettingsPanel from './home/ProfileSettingsPanel'
 import GamingModalWrapper from './ui/GamingModalWrapper'
 import LogPanel from './LogPanel'
 import DownloadErrorModal from './DownloadErrorModal'
+import ProfileFilesModal from './ProfileFilesModal'
 import AppBackground from './AppBackground'
 import SystemInfo from './SystemInfo'
 import PlayerHead from './ui/PlayerHead'
@@ -70,6 +71,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [profiles, setProfiles] = useState([])
   const [profileSettingsOpen, setProfileSettingsOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [filesModalOpen, setFilesModalOpen] = useState(false)
   const profileMenuRef = useRef(null)
   const [profileTab, setProfileTab] = useState('intro')
   const [typedIntro, setTypedIntro] = useState('')
@@ -110,6 +112,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [dSync, setDSync] = useState(null)
   const dSyncChecked = useRef(false)
   const [dataUpdate, setDataUpdate] = useState(false)
+  const [dataUpdateVer, setDataUpdateVer] = useState('')
   const [usernameInput, setUsernameInput] = useState('')
   const [usernameError, setUsernameError] = useState('')
   const [usernameExpanded, setUsernameExpanded] = useState(false)
@@ -213,7 +216,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     dSyncChecked.current = true
     const t = setTimeout(() => {
       window.electronAPI.checkDataSync().then(r => {
-        if (r?.ok) setDataUpdate(!!r.hasUpdate)
+        if (r?.ok) { setDataUpdate(!!r.hasUpdate); setDataUpdateVer(r.hasUpdate ? r.latest : '') }
       }).catch(() => {})
     }, 6000)
     return () => clearTimeout(t)
@@ -616,8 +619,11 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 window.electronAPI.checkDataSync?.().then(r => {
                   if (r?.ok && r.hasUpdate) {
                     setDataUpdate(true)
+                    setDataUpdateVer(r.latest || '')
                     showSuccessToast(`Có bản cập nhật dữ liệu mới (${r.latest}).`)
                   } else if (r?.ok && !r.hasUpdate) {
+                    setDataUpdate(false)
+                    setDataUpdateVer('')
                     showSuccessToast(`Dữ liệu đã mới nhất (${r.latest}).`)
                   } else if (!r?.ok) {
                     setDlError({ type: 'data', message: r?.error || 'Không kiểm tra được bản cập nhật' })
@@ -752,8 +758,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                     )
                   ) : dataUpdate ? (
                     <>
-                      <ArrowClockwise size={26} weight="duotone" className="text-violet-400" />
-                      <span className="text-violet-200">Update</span>
+                      <ArrowClockwise size={26} weight="duotone" className="text-violet-400 spin-pulse" />
+                      <span className="text-violet-200">Update {dataUpdateVer}</span>
                     </>
                   ) : (
                     <>
@@ -776,10 +782,10 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 }`}
               >
                 <button
-                  onClick={() => { window.electronAPI.openProfileFolder?.(currentProfile.id); setProfileMenuOpen(false); playClickSound() }}
+                  onClick={() => { setFilesModalOpen(true); setProfileMenuOpen(false); playClickSound() }}
                   className="w-14 h-14 blur-glass rounded-2xl border border-white/15 flex items-center justify-center transition-colors text-cyan-400 hover:text-white hover:bg-white/10"
                   style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
-                  data-tip="Mở thư mục profile"
+                  data-tip="Quản lý file profile"
                 >
                   <FolderOpen size={26} weight="duotone" />
                 </button>
@@ -954,6 +960,9 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       )}
 
       <DownloadErrorModal error={dlError} onClose={() => setDlError(null)} />
+      {filesModalOpen && currentProfile && (
+        <ProfileFilesModal profile={currentProfile} onClose={() => setFilesModalOpen(false)} />
+      )}
     </div>
   )
 }
