@@ -134,8 +134,8 @@ export default function LauncherTab({ settings, onChange }) {
           />
         </SettingRow>
         <SettingRow
-          label="Bỏ qua tải/kiểm tra assets"
-          description="BẬT switch = bỏ qua (không tải/kiểm tra assets khi mở launcher, chạy ngay). TẮT switch = launcher tải/kiểm tra assets (mặc định)"
+          label={t('settings.launcher.skipAssets')}
+          description={t('settings.launcher.skipAssetsDesc')}
         >
           <Toggle
             checked={settings.loadAssetsOnStart !== true}
@@ -143,13 +143,36 @@ export default function LauncherTab({ settings, onChange }) {
           />
         </SettingRow>
         <SettingRow
-          label="Đồng bộ dữ liệu server"
-          description="Tự động tải mods/config/data từ server khi mở launcher và trước khi chơi"
+          label={t('settings.launcher.dataSync')}
+          description={t('settings.launcher.dataSyncDesc')}
         >
           <Toggle
             checked={settings.dataSyncEnabled !== false}
             onChange={v => onChange({ dataSyncEnabled: v })}
           />
+        </SettingRow>
+        <SettingRow
+          label={t('settings.launcher.downloadMode')}
+          description={t('settings.launcher.downloadModeDesc')}
+        >
+          <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
+            {[
+              { value: 'auto',  label: t('settings.launcher.downloadModeAuto') },
+              { value: 'single', label: t('settings.launcher.downloadModeSingle') },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => onChange({ downloadMode: opt.value })}
+                className={`px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                  (settings.downloadMode ?? 'auto') === opt.value
+                    ? 'bg-violet-500/90 text-white shadow'
+                    : 'text-white/50 hover:text-white/80'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </SettingRow>
         <SettingRow
           label={t('settings.launcher.discordRPC')}

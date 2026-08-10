@@ -115,6 +115,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const dSyncChecked = useRef(false)
   const [dataUpdate, setDataUpdate] = useState(false)
   const [dataUpdateVer, setDataUpdateVer] = useState('')
+  const [baseUpdate, setBaseUpdate] = useState(false)
+  const [baseUpdateVer, setBaseUpdateVer] = useState('')
   const [usernameInput, setUsernameInput] = useState('')
   const [usernameError, setUsernameError] = useState('')
   const [usernameExpanded, setUsernameExpanded] = useState(false)
@@ -182,11 +184,17 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               setDlError({ type: 'resource', message: res.error || 'Lỗi tải tài nguyên' })
               return
             }
-            // Tài nguyên xong → nếu chưa có dữ liệu gốc (dinostatedata) thì tự tải luôn
+            // Tài nguyên xong → tự động cập nhật dữ liệu gốc (lần đầu cài hoặc khi có phiên bản mới)
             window.electronAPI.checkBaseData?.().then(r => {
-              if (r?.ok && !r.installed) {
-                setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: 'Tự động tải dữ liệu gốc lần đầu...' })
-                window.electronAPI.runBaseDataSync?.().catch(() => {})
+              if (r?.ok && (!r.installed || r.hasUpdate)) {
+                setBaseUpdate(!!(r.installed && r.hasUpdate))
+                setBaseUpdateVer(r.latest || '')
+                setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: r.installed ? `Có bản dữ liệu gốc mới: ${r.latest}` : 'Tự động tải dữ liệu gốc lần đầu...' })
+                window.electronAPI.runBaseDataSync?.().then(r2 => {
+                  if (r2 && r2.ok === false && !r2.paused && !r2.cancelled) {
+                    setDlError({ type: 'base', message: r2.error || 'Lỗi tải dữ liệu gốc', stack: r2.stack })
+                  }
+                }).catch(() => {})
               }
             }).catch(() => {})
           })
@@ -219,6 +227,19 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     const t = setTimeout(() => {
       window.electronAPI.checkDataSync().then(r => {
         if (r?.ok) { setDataUpdate(!!r.hasUpdate); setDataUpdateVer(r.hasUpdate ? r.latest : '') }
+      }).catch(() => {})
+      // Dữ liệu gốc: có bản mới → tự động cập nhật (không cần bấm gì)
+      window.electronAPI.checkBaseData?.().then(r => {
+        if (r?.ok && r.installed && r.hasUpdate) {
+          setBaseUpdate(true)
+          setBaseUpdateVer(r.latest || '')
+          setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: `Có bản dữ liệu gốc mới: ${r.latest} — tự động cập nhật...` })
+          window.electronAPI.runBaseDataSync?.().then(r2 => {
+            if (r2 && r2.ok === false && !r2.paused && !r2.cancelled) {
+              setDlError({ type: 'base', message: r2.error || 'Lỗi tải dữ liệu gốc', stack: r2.stack })
+            }
+          }).catch(() => {})
+        }
       }).catch(() => {})
     }, 6000)
     return () => clearTimeout(t)
@@ -334,7 +355,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       if (res && res.ok === false) {
         if (res.paused) return // tạm dừng — không launch, người dùng bấm Play để tiếp tục
         setDataUpdate(false)
-        setDlError({ type: 'data', message: res.error || 'Lỗi tải dữ liệu server' })
+        setDlError({ type: 'data', message: res.error || 'Lỗi tải dữ liệu server', stack: res.stack })
         return // LỖI → không tự động khởi động game
       }
       setDataUpdate(false)
@@ -344,6 +365,18 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         const more = res.skippedFiles.length > 20 ? `\n... còn ${res.skippedFiles.length - 20} file nữa` : ''
         setDlError({ type: 'data', message: `Một số file bị lỗi quyền và đã được bỏ qua (${res.skippedFiles.length}):\n${list}${more}` })
       }
+    }
+    // Dữ liệu gốc: còn bản đang chờ cập nhật → chạy base sync trước khi vào game
+    if (isElectron && window.electronAPI.runBaseDataSync && baseUpdate) {
+      setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: 'Có bản dữ liệu gốc mới — đang cập nhật...' })
+      const res = await window.electronAPI.runBaseDataSync().catch(() => null)
+      if (res && res.ok === false) {
+        if (res.paused) return
+        setBaseUpdate(false)
+        setDlError({ type: 'base', message: res.error || 'Lỗi cập nhật dữ liệu gốc', stack: res.stack })
+        return
+      }
+      setBaseUpdate(false)
     }
     handleLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId)
   }

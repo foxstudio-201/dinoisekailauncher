@@ -86,7 +86,15 @@
       "colorAccent": "Màu nhấn (Accent)",
       "colorHover": "Màu hover",
       "colorActive": "Màu active / click",
-      "animatedBg": "= có hiệu ứng động"
+      "animatedBg": "= có hiệu ứng động",
+      "skipAssets": "Bỏ qua tải/kiểm tra assets",
+      "skipAssetsDesc": "BẬT switch = bỏ qua (không tải/kiểm tra assets khi mở launcher, chạy ngay). TẮT switch = launcher tải/kiểm tra assets (mặc định)",
+      "dataSync": "Đồng bộ dữ liệu server",
+      "dataSyncDesc": "Tự động tải mods/config/data từ server khi mở launcher và trước khi chơi",
+      "downloadMode": "Chế độ tải luồng dữ liệu",
+      "downloadModeDesc": "Tự động = chia nhiều luồng tải song song (nhanh). 1 luồng = tải tuần tự (ổn định, hợp mạng yếu)",
+      "downloadModeAuto": "Tự động",
+      "downloadModeSingle": "1 luồng"
     },
     "privacy": {
       "tos": "Điều khoản sử dụng",

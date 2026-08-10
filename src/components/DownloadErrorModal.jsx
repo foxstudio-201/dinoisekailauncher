@@ -1,12 +1,39 @@
-import { Check } from '@phosphor-icons/react'
+import { useState } from 'react'
+import { Check, Copy } from '@phosphor-icons/react'
 
 export default function DownloadErrorModal({ error, onClose }) {
+  const [copied, setCopied] = useState(false)
   if (!error) return null
   const isResource = error.type === 'resource'
+  const isBase = error.type === 'base'
+  const title = isResource ? 'Lỗi tải tài nguyên' : isBase ? 'Lỗi tải dữ liệu gốc' : 'Lỗi tải dữ liệu server'
+  const subtitle = isResource ? 'Tải tài nguyên không thành công' : isBase ? 'Cập nhật dữ liệu gốc không thành công' : 'Đồng bộ dữ liệu không thành công'
+  const fullText = [
+    error.message || 'Lỗi không xác định',
+    error.stack ? `\n\n${error.stack}` : '',
+  ].join('')
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullText)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = fullText
+      document.body.appendChild(ta)
+      ta.select()
+      try { document.execCommand('copy') } catch {}
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] p-4">
       <div
-        className="border border-violet-500/15 rounded-2xl shadow-2xl w-full max-w-lg flex flex-col"
+        className="border border-violet-500/15 rounded-2xl shadow-2xl w-full max-w-xl flex flex-col"
         style={{ background: 'rgba(23,16,36,0.98)' }}
       >
         {/* Header */}
@@ -18,10 +45,10 @@ export default function DownloadErrorModal({ error, onClose }) {
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-bold text-white/90">
-              {isResource ? 'Lỗi tải tài nguyên' : 'Lỗi tải dữ liệu server'}
+              {title}
             </h3>
             <p className="text-[11px] text-white/40 mt-0.5">
-              {isResource ? 'Tải tài nguyên không thành công' : 'Đồng bộ dữ liệu không thành công'}
+              {subtitle}
             </p>
           </div>
           <button
@@ -38,15 +65,31 @@ export default function DownloadErrorModal({ error, onClose }) {
         {/* Body */}
         <div className="p-5 flex flex-col gap-4">
           <p className="text-sm text-white/75 leading-relaxed">
-            Không thể {isResource ? 'tải tài nguyên' : 'tải dữ liệu server'}. Vui lòng kiểm tra kết nối mạng và thử lại.
+            Không thể {isResource ? 'tải tài nguyên' : 'tải dữ liệu'}. Vui lòng kiểm tra kết nối mạng và thử lại.
           </p>
-          <div className="rounded-xl bg-[#14101f] border border-violet-500/10 p-3 font-mono text-[11px] leading-relaxed text-red-300 overflow-y-auto max-h-40">
-            {error.message || 'Lỗi không xác định'}
+          <div className="rounded-xl bg-[#14101f] border border-violet-500/10 p-3 font-mono text-[11px] leading-relaxed text-red-300 overflow-y-auto max-h-64 whitespace-pre-wrap break-all select-text">
+            {fullText}
           </div>
         </div>
 
         {/* Footer */}
         <div className="px-5 py-4 border-t border-white/5 flex justify-end gap-2 flex-shrink-0">
+          <button
+            onClick={handleCopy}
+            className="px-5 py-2 rounded-lg bg-white/10 text-white/90 text-sm font-bold hover:bg-white/20 transition-all"
+          >
+            {copied ? (
+              <>
+                <Check size={16} weight="bold" className="inline-block mr-1 -mt-0.5 text-emerald-400" />
+                Đã copy
+              </>
+            ) : (
+              <>
+                <Copy size={16} className="inline-block mr-1 -mt-0.5" />
+                Copy lỗi
+              </>
+            )}
+          </button>
           <button
             onClick={onClose}
             className="px-5 py-2 rounded-lg bg-violet-500 text-white text-sm font-bold hover:bg-violet-400 transition-all"

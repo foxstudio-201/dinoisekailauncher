@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   hideLauncherOnLaunch: true,
   showLogWindow:        true,
   dataSyncEnabled:      true,
+  downloadMode:         'auto',
   loadAssetsOnStart:     true,
   discordRPC:           false,
   boostMode:            false,

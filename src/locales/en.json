@@ -86,7 +86,15 @@
       "colorAccent": "Accent color",
       "colorHover": "Hover color",
       "colorActive": "Active / click color",
-      "animatedBg": "= animated effect"
+      "animatedBg": "= animated effect",
+      "skipAssets": "Skip assets download/check",
+      "skipAssetsDesc": "ON = skip (don't download/check assets on launcher start, launch immediately). OFF = launcher downloads/checks assets (default)",
+      "dataSync": "Server data sync",
+      "dataSyncDesc": "Auto download mods/config/data from server on launcher start and before playing",
+      "downloadMode": "Data download threads",
+      "downloadModeDesc": "Auto = split into multiple parallel download threads (fast). 1 thread = sequential download (stable, good for weak networks)",
+      "downloadModeAuto": "Auto",
+      "downloadModeSingle": "1 thread"
     },
     "privacy": {
       "tos": "Terms of Service",

@@ -40,7 +40,7 @@ const { resolveVersion }      = require('./vanilla/versionResolver.cjs')
 const { ensureJava }          = require('./java/javaManager.cjs')
 const { downloadAssets }      = require('./vanilla/assetManager.cjs')
 const { setupForge }          = require('./forge/forgeLoader.cjs')
-const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData } = require('./dataSync.cjs')
+const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData, setDownloadMode } = require('./dataSync.cjs')
 const { searchProjects, getProject, getProjectVersions, installVersion, getGameVersions, getCategories } = require('./modrinth/modrinthSearch.cjs')
 const cfSearch = require('./curseforge/curseForgeSearch.cjs')
 const { launchGame }          = require('./vanilla/gameRunner.cjs')
@@ -619,10 +619,13 @@ function registerLauncherHandlers(getTrustedWindow) {
       if (!win.isDestroyed()) win.webContents.send('dinosync:progress', data)
     }
     try {
+      const settings = readSettings()
+      setDownloadMode(settings.downloadMode)
       return await runBaseDataSync(profile, send)
     } catch (err) {
+      console.error('[dinosync] Lỗi tải dữ liệu gốc:', err)
       send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi tải dữ liệu gốc: ${err.message}` })
-      return { ok: false, error: err.message }
+      return { ok: false, error: err.message, stack: err.stack || '' }
     }
   })
 
@@ -634,14 +637,16 @@ function registerLauncherHandlers(getTrustedWindow) {
     if (!profile) return { error: 'Profile not found' }
     const settings = readSettings()
     if (settings.dataSyncEnabled === false) return { ok: false, skipped: true, error: 'disabled' }
+    setDownloadMode(settings.downloadMode)
     function send(data) {
       if (!win.isDestroyed()) win.webContents.send('dinosync:progress', data)
     }
     try {
       return await runDataSync(profile, send)
     } catch (err) {
+      console.error('[dinosync] Lỗi đồng bộ:', err)
       send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi đồng bộ: ${err.message}` })
-      return { ok: false, error: err.message }
+      return { ok: false, error: err.message, stack: err.stack || '' }
     }
   })
 
