@@ -110,7 +110,6 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [persistedLauncherLogs, setPersistedLauncherLogs] = useState([])
   const [predownload, setPredownload] = useState(null)
   const [preDl, setPreDl] = useState(null)
-  const preDlStarted = useRef(false)
   const [dSync, setDSync] = useState(null)
   const dSyncChecked = useRef(false)
   const [dataUpdate, setDataUpdate] = useState(false)
@@ -170,41 +169,6 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   }, [])
 
   useEffect(() => {
-    if (!isElectron || !window.electronAPI.preDownload) return
-    if (preDlStarted.current) return
-    const pid = profiles[0]?.id
-    if (!pid) return
-    preDlStarted.current = true
-    const t = setTimeout(() => {
-      setPreDl({ active: true, phase: 'waiting', item: 'Đang chuẩn bị', percent: 0, eta: null, log: 'Bắt đầu tải tài nguyên trong 3 giây...', phases: {}, closing: false })
-      setTimeout(() => {
-        window.electronAPI.preDownload({ profileId: pid })
-          .then(res => {
-            if (res && res.ok === false && !res.paused) {
-              setDlError({ type: 'resource', message: res.error || 'Lỗi tải tài nguyên' })
-              return
-            }
-            // Tài nguyên xong → tự động cập nhật dữ liệu gốc (lần đầu cài hoặc khi có phiên bản mới)
-            window.electronAPI.checkBaseData?.().then(r => {
-              if (r?.ok && (!r.installed || r.hasUpdate)) {
-                setBaseUpdate(!!(r.installed && r.hasUpdate))
-                setBaseUpdateVer(r.latest || '')
-                setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: r.installed ? `Có bản dữ liệu gốc mới: ${r.latest}` : 'Tự động tải dữ liệu gốc lần đầu...' })
-                window.electronAPI.runBaseDataSync?.().then(r2 => {
-                  if (r2 && r2.ok === false && !r2.paused && !r2.cancelled) {
-                    setDlError({ type: 'base', message: r2.error || 'Lỗi tải dữ liệu gốc', stack: r2.stack })
-                  }
-                }).catch(() => {})
-              }
-            }).catch(() => {})
-          })
-          .catch(() => {})
-      }, 3000)
-    }, 2000)
-    return () => clearTimeout(t)
-  }, [profiles])
-
-  useEffect(() => {
     if (!isElectron || !window.electronAPI.onDataSyncProgress) return
     return window.electronAPI.onDataSyncProgress(data => {
       if (data.phase === 'paused') setPausedOp('dSync')
@@ -219,28 +183,38 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     })
   }, [])
 
-  // Kiểm tra cập nhật dữ liệu mỗi lần mở launcher → cập nhật trạng thái nút Play
+  // Kiểm tra cập nhật dữ liệu mỗi lần mở launcher → modal "đang kiểm tra phiên bản";
+  // có bản dữ liệu gốc mới / chưa cài lần đầu → tự cập nhật; data update xử lý lúc bấm Play
   useEffect(() => {
     if (!isElectron || !window.electronAPI.checkDataSync) return
     if (dSyncChecked.current || profiles.length === 0) return
     dSyncChecked.current = true
     const t = setTimeout(() => {
-      window.electronAPI.checkDataSync().then(r => {
-        if (r?.ok) { setDataUpdate(!!r.hasUpdate); setDataUpdateVer(r.hasUpdate ? r.latest : '') }
-      }).catch(() => {})
-      // Dữ liệu gốc: có bản mới → tự động cập nhật (không cần bấm gì)
-      window.electronAPI.checkBaseData?.().then(r => {
-        if (r?.ok && r.installed && r.hasUpdate) {
-          setBaseUpdate(true)
-          setBaseUpdateVer(r.latest || '')
-          setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: `Có bản dữ liệu gốc mới: ${r.latest} — tự động cập nhật...` })
-          window.electronAPI.runBaseDataSync?.().then(r2 => {
+      setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu...' })
+      const closeModal = () => {
+        setDSync(prev => {
+          if (!prev?.active || prev.closing) return prev
+          return { ...prev, phase: 'done', item: 'Dữ liệu', percent: 100, log: 'Đã kiểm tra phiên bản dữ liệu' }
+        })
+        setTimeout(() => setDSync(prev => prev && !prev.closing ? { ...prev, closing: true } : prev), 1500)
+        setTimeout(() => setDSync(prev => prev ? { ...prev, active: false, closing: false } : prev), 2000)
+      }
+      Promise.all([
+        window.electronAPI.checkDataSync().then(r => {
+          if (r?.ok) { setDataUpdate(!!r.hasUpdate); setDataUpdateVer(r.hasUpdate ? r.latest : '') }
+        }).catch(() => {}),
+        (window.electronAPI.checkBaseData?.() || Promise.resolve()).then(r => {
+          if (!r?.ok || (r.installed && !r.hasUpdate)) return
+          if (r.installed) setBaseUpdateVer(r.latest || '')
+          setBaseUpdate(!!r.installed)
+          setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: r.installed ? `Có bản dữ liệu gốc mới: ${r.latest} — tự động cập nhật...` : 'Đang cài dữ liệu gốc lần đầu...' })
+          return window.electronAPI.runBaseDataSync?.().then(r2 => {
             if (r2 && r2.ok === false && !r2.paused && !r2.cancelled) {
               setDlError({ type: 'base', message: r2.error || 'Lỗi tải dữ liệu gốc', stack: r2.stack })
             }
           }).catch(() => {})
-        }
-      }).catch(() => {})
+        }).catch(() => {}),
+      ]).then(closeModal)
     }, 6000)
     return () => clearTimeout(t)
   }, [profiles])

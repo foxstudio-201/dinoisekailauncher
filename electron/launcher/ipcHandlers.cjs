@@ -40,7 +40,7 @@ const { resolveVersion }      = require('./vanilla/versionResolver.cjs')
 const { ensureJava }          = require('./java/javaManager.cjs')
 const { downloadAssets }      = require('./vanilla/assetManager.cjs')
 const { setupForge }          = require('./forge/forgeLoader.cjs')
-const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData, setDownloadMode } = require('./dataSync.cjs')
+const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData } = require('./dataSync.cjs')
 const { searchProjects, getProject, getProjectVersions, installVersion, getGameVersions, getCategories } = require('./modrinth/modrinthSearch.cjs')
 const cfSearch = require('./curseforge/curseForgeSearch.cjs')
 const { launchGame }          = require('./vanilla/gameRunner.cjs')
@@ -221,9 +221,9 @@ function registerLauncherHandlers(getTrustedWindow) {
         }, versionJson)
       }
 
-      // Assets: toggle tắt → bỏ qua sha1, chỉ kiểm tra nhanh (không tải lại file đã có)
-      const settingsNow2 = readSettings()
-      const fastVerify = settingsNow2.loadAssetsOnStart !== true
+      // Assets: đã tải xong là không kiểm tra lại — Mojang không sửa assets của phiên bản đã phát hành;
+      // chỉ kiểm tra nhanh tồn tại + kích thước, file thiếu mới tải
+      const fastVerify = true
       sendProgressAndLog({ phase: 'assets', log: fastVerify ? 'Using cached assets...' : 'Checking game assets...', percent: 30 })
       let lastAssetPhase = ''
       const assets = await downloadAssets(versionJson, launcherDir, (p) => {
@@ -550,21 +550,10 @@ function registerLauncherHandlers(getTrustedWindow) {
       }, versionJson)
       checkAbort()
 
-      // Assets: mặc định bỏ qua (async) — chỉ tải nếu bật "Tải assets khi khởi động"
-      const settingsNow = readSettings()
-      let assets
-      if (settingsNow.loadAssetsOnStart === true) {
-        nextPhase('assets', 'Game assets')
-        assets = await downloadAssets(versionJson, launcherDir, (p) => {
-          const pc = p.percent != null ? p.percent : (p.totalFiles ? Math.round(p.doneFiles / p.totalFiles * 100) : 0)
-          emit('assets', 'Game assets', pc, { log: `Assets: ${p.doneFiles}/${p.totalFiles}`, done: p.doneFiles, total: p.totalFiles })
-        })
-      } else {
-        // Bỏ qua — assets sẽ tự xử lý lúc khởi động game (async)
-        emit('assets', 'Game assets', 100, { log: 'Assets: async (bỏ qua kiểm tra)', async: true })
-        assets = { clientJar: getClientJarFromCache(versionJson, launcherDir) }
-      }
-      checkAbort()
+      // Assets: đã tải là không kiểm tra lại (Mojang không sửa assets của bản đã phát hành);
+      // phần này chỉ chạy khi gọi preDownload thủ công — không còn tự chạy khi mở launcher
+      emit('assets', 'Game assets', 100, { log: 'Assets: async (bỏ qua kiểm tra)', async: true })
+      let assets = { clientJar: getClientJarFromCache(versionJson, launcherDir) }
 
       if (profile.loader === 'forge' && profile.loaderVersion) {
         const forgeLabel = `Forge ${profile.gameVersion}-${profile.loaderVersion}`
@@ -620,7 +609,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     }
     try {
       const settings = readSettings()
-      setDownloadMode(settings.downloadMode)
       return await runBaseDataSync(profile, send)
     } catch (err) {
       console.error('[dinosync] Lỗi tải dữ liệu gốc:', err)
@@ -637,7 +625,7 @@ function registerLauncherHandlers(getTrustedWindow) {
     if (!profile) return { error: 'Profile not found' }
     const settings = readSettings()
     if (settings.dataSyncEnabled === false) return { ok: false, skipped: true, error: 'disabled' }
-    setDownloadMode(settings.downloadMode)
+
     function send(data) {
       if (!win.isDestroyed()) win.webContents.send('dinosync:progress', data)
     }
