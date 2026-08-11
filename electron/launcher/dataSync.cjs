@@ -111,21 +111,71 @@ function httpGetJson(url) {
   })
 }
 
+function httpHeadRedirect(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, { method: 'HEAD', headers: { 'User-Agent': 'Dino-Isekai-Launcher' } }, (res) => {
+      res.resume()
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return resolve(res.headers.location)
+      }
+      if (res.statusCode === 200 || res.statusCode === 404) return resolve(null)
+      reject(new Error(`HTTP ${res.statusCode}`))
+    })
+    req.on('error', reject)
+    req.end()
+  })
+}
+
+function httpGetText(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'Dino-Isekai-Launcher' } }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume()
+        return httpGetText(res.headers.location).then(resolve).catch(reject)
+      }
+      let data = ''
+      res.on('data', c => { data += c })
+      res.on('end', () => {
+        if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`))
+        resolve(data)
+      })
+    })
+    req.on('error', reject)
+  })
+}
+
+// Lấy release mới nhất KHÔNG qua GitHub API — tránh rate-limit 403 (60 req/h/IP ẩn danh).
+// Dùng redirect của /releases/latest → tag, và trang expanded_assets → tên file .zip/.rar
+async function getWebRelease(repo) {
+  const latestUrl = `https://github.com/${repo}/releases/latest`
+  let redirect = await httpHeadRedirect(latestUrl)
+  if (!redirect) redirect = await httpHeadRedirect(latestUrl + '/') // vài trường hợp thiếu trailing slash
+  const m = redirect?.match(/\/releases\/tag\/([^/?#]+)/)
+  if (!m) throw new Error('Không tìm thấy release mới nhất')
+  const tag = decodeURIComponent(m[1])
+  const html = await httpGetText(`https://github.com/${repo}/releases/expanded_assets/${encodeURIComponent(tag)}`)
+  // Trong trang HTML, mỗi asset có href="/owner/repo/releases/download/{tag}/{file}"
+  const names = []
+  const re = /releases\/download\/[^"'#?]+?\/([^"'#?]+)/g
+  let mm
+  while ((mm = re.exec(html)) !== null) {
+    try { names.push(decodeURIComponent(mm[1])) } catch {}
+  }
+  const name = names.find(n => /\.(zip|rar)$/i.test(n))
+  if (!name) throw new Error('Không tìm thấy file dữ liệu (.zip/.rar) trong release của tag này')
+  return {
+    version: tag,
+    name,
+    asset: {
+      name,
+      size: 0,
+      browser_download_url: `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${encodeURIComponent(name)}`,
+    },
+  }
+}
+
 async function getLatestRelease() {
-  // Lấy TAG mới nhất trước (repo chỉ dùng tag — không có release "latest")
-  const tags = await httpGetJson(`https://api.github.com/repos/${REPO}/tags?per_page=1`)
-  const tag = tags?.[0]?.name
-  if (!tag) throw new Error('Không tìm thấy tag nào')
-
-  // Lấy release theo tag để có asset (.zip); nếu không có release thì báo lỗi tải
-  let release = null
-  try {
-    release = await httpGetJson(`https://api.github.com/repos/${REPO}/releases/tags/${encodeURIComponent(tag)}`)
-  } catch {}
-  const asset = (release?.assets || []).find(a => /\.(zip|rar)$/i.test(a.name))
-  if (!asset) throw new Error('Không tìm thấy file dữ liệu (.zip/.rar) trong release của tag này')
-
-  return { version: tag, name: release?.name || tag, asset }
+  return getWebRelease(REPO)
 }
 
 function downloadFile(url, destPath, onProgress, signal) {
@@ -705,21 +755,11 @@ async function checkDataSync(profile) {
 }
 
 // ── Dữ liệu gốc (dinostatedata) — tự động cập nhật theo phiên bản ──────────
-// Giống data update: lấy TAG mới nhất, so với .dinobase-version trong instance,
-// nếu khác → tải zip mới, giải nén, đọc update.txt (delete + skip) rồi đồng bộ.
+// Giống data update: lấy TAG mới nhất (không qua GitHub API — tránh 403 rate-limit),
+// so với .dinobase-version trong instance, nếu khác → tải zip mới, giải nén,
+// đọc update.txt (delete + skip) rồi đồng bộ.
 async function getBaseRelease() {
-  const tags = await httpGetJson(`https://api.github.com/repos/${BASE_REPO}/tags?per_page=1`)
-  const tag = tags?.[0]?.name
-  if (!tag) throw new Error('Không tìm thấy tag nào (data gốc)')
-
-  let release = null
-  try {
-    release = await httpGetJson(`https://api.github.com/repos/${BASE_REPO}/releases/tags/${encodeURIComponent(tag)}`)
-  } catch {}
-  const asset = (release?.assets || []).find(a => /\.(zip|rar)$/i.test(a.name))
-  if (!asset) throw new Error('Không tìm thấy file data gốc (.zip/.rar) trong release của tag này')
-
-  return { version: tag, name: release?.name || tag, asset }
+  return getWebRelease(BASE_REPO)
 }
 
 async function runBaseDataSync(profile, onProgress) {

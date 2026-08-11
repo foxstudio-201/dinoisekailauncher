@@ -1,7 +1,7 @@
 pkgbase = dino-isekai-local
 	pkgdesc = Dino Isekai - Minecraft Launcher by FoxStudio (local build)
-	pkgver = 0.2.6
-	pkgrel = 159
+	pkgver = 0.2.10
+	pkgrel = 161
 	url = https://github.com/foxstudio-201/VoxelXClient
 	arch = x86_64
 	license = MIT
