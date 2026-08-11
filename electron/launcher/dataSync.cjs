@@ -593,6 +593,24 @@ function dlCacheDir(url) {
   return path.join(os.tmpdir(), 'dinosync-cache', hash)
 }
 
+// Xóa thư mục an toàn: Windows giữ file vừa ghi (ghi đệm/AV quét) → retry vài lần,
+// vẫn lỗi thì bỏ qua (rác temp không đáng để làm hỏng kết quả sync đã thành công)
+async function safeRm(dir) {
+  if (!dir) return
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true })
+      return
+    } catch (err) {
+      if (attempt === 4) {
+        console.error(`[dinosync] Không dọn được ${dir}: ${err.message}`)
+        return
+      }
+      await new Promise(r => setTimeout(r, 400))
+    }
+  }
+}
+
 async function runDataSync(profile, onProgress) {
   const instancePath = profile?.instancePath
   if (!instancePath) throw new Error('Profile không có instancePath')
@@ -604,6 +622,7 @@ async function runDataSync(profile, onProgress) {
 
   let dlDir = null
   let extractDir = null
+  let synced = false
   try {
     // 1. Kiểm tra cập nhật
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu mới...' })
@@ -649,6 +668,7 @@ async function runDataSync(profile, onProgress) {
     checkAbort()
 
     fs.writeFileSync(versionFilePath(instancePath), release.version, 'utf8')
+    synced = true
     onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: `Đã cập nhật dữ liệu ${release.version}` })
     return { ok: true, version: release.version, skippedFiles, deletedCount }
   } catch (err) {
@@ -665,11 +685,9 @@ async function runDataSync(profile, onProgress) {
   } finally {
     endOp('dSync')
     // Xóa extractDir (luôn); giữ dlDir (part files) nếu chưa hoàn tất để resume lần sau
-    if (extractDir) fs.rmSync(extractDir, { recursive: true, force: true })
-    // Nếu đã đồng bộ xong (có version file) → dọn dlDir
-    if (dlDir && fs.existsSync(versionFilePath(instancePath))) {
-      fs.rmSync(dlDir, { recursive: true, force: true })
-    }
+    await safeRm(extractDir)
+    // Chỉ dọn dlDir khi lần chạy này đã đồng bộ xong (không dọn khi lỗi/pause → còn phần để resume)
+    if (dlDir && synced) await safeRm(dlDir)
   }
 }
 
@@ -714,6 +732,7 @@ async function runBaseDataSync(profile, onProgress) {
 
   let dlDir = null
   let extractDir = null
+  let synced = false
   try {
     onProgress({ phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu gốc...' })
     const base = await getBaseRelease()
@@ -755,6 +774,7 @@ async function runBaseDataSync(profile, onProgress) {
     checkAbort()
 
     fs.writeFileSync(baseVersionFilePath(instancePath), base.version, 'utf8')
+    synced = true
     onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: `Đã cập nhật dữ liệu gốc ${base.version}` })
     return { ok: true, version: base.version, skippedFiles, deletedCount }
   } catch (err) {
@@ -770,11 +790,9 @@ async function runBaseDataSync(profile, onProgress) {
     throw err
   } finally {
     endOp('dSync')
-    if (extractDir) fs.rmSync(extractDir, { recursive: true, force: true })
-    // Nếu đã cập nhật xong (có marker base mới) → dọn dlDir
-    if (dlDir && fs.existsSync(baseVersionFilePath(instancePath))) {
-      fs.rmSync(dlDir, { recursive: true, force: true })
-    }
+    await safeRm(extractDir)
+    // Chỉ dọn dlDir khi lần chạy này đã cập nhật xong (có marker base mới)
+    if (dlDir && synced) await safeRm(dlDir)
   }
 }
 
