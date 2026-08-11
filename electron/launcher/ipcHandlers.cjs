@@ -221,9 +221,10 @@ function registerLauncherHandlers(getTrustedWindow) {
         }, versionJson)
       }
 
-      // Assets: đã tải xong là không kiểm tra lại — Mojang không sửa assets của phiên bản đã phát hành;
-      // chỉ kiểm tra nhanh tồn tại + kích thước, file thiếu mới tải
+      // Assets: đã tải xong 1 lần là bỏ qua toàn bộ kiểm tra (Mojang không sửa assets của bản
+      // đã phát hành) — chỉ kiểm tra nhanh tồn tại + kích thước; file thiếu mới tải
       const fastVerify = true
+      const skipIfReady = true
       sendProgressAndLog({ phase: 'assets', log: fastVerify ? 'Using cached assets...' : 'Checking game assets...', percent: 30 })
       let lastAssetPhase = ''
       const assets = await downloadAssets(versionJson, launcherDir, (p) => {
@@ -256,7 +257,7 @@ function registerLauncherHandlers(getTrustedWindow) {
             speed: p.speed,
           })
         }
-      }, { fastVerify })
+      }, { fastVerify, skipIfReady })
 
       sendProgressAndLog({ phase: 'launching', log: `Launching as ${account.username}...`, percent: 98 })
 

@@ -112,6 +112,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [preDl, setPreDl] = useState(null)
   const [dSync, setDSync] = useState(null)
   const dSyncChecked = useRef(false)
+  const [checkingUpdates, setCheckingUpdates] = useState(false)
+  const checkingUpdatesRef = useRef(false)
   const [dataUpdate, setDataUpdate] = useState(false)
   const [dataUpdateVer, setDataUpdateVer] = useState('')
   const [baseUpdate, setBaseUpdate] = useState(false)
@@ -183,39 +185,77 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     })
   }, [])
 
-  // Kiểm tra cập nhật dữ liệu mỗi lần mở launcher → modal "đang kiểm tra phiên bản";
-  // có bản dữ liệu gốc mới / chưa cài lần đầu → tự cập nhật; data update xử lý lúc bấm Play
+  // Kiểm tra CẢ 2 loại dữ liệu: data update (update.zip) + data gốc (base) cùng lúc.
+  // Chạy khi mở launcher (sau 6s) và khi bấm nút kiểm tra cập nhật — khỏi phải đóng/mở lại launcher.
+  async function checkDataVersions({ toast = false } = {}) {
+    if (!isElectron || !window.electronAPI.checkDataSync) return
+    if (checkingUpdatesRef.current) return
+    checkingUpdatesRef.current = true
+    setCheckingUpdates(true)
+    const result = { dataUpdate: false, dataLatest: '', baseSynced: false, baseLatest: '', dataError: null, baseError: null }
+    setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu...' })
+    const closeModal = () => {
+      setDSync(prev => {
+        if (!prev?.active || prev.closing) return prev
+        return { ...prev, phase: 'done', item: 'Dữ liệu', percent: 100, log: 'Đã kiểm tra phiên bản dữ liệu' }
+      })
+      setTimeout(() => setDSync(prev => prev && !prev.closing ? { ...prev, closing: true } : prev), 1500)
+      setTimeout(() => setDSync(prev => prev ? { ...prev, active: false, closing: false } : prev), 2000)
+    }
+    try {
+      await Promise.all([
+        window.electronAPI.checkDataSync().then(r => {
+        if (r?.ok) {
+          result.dataUpdate = !!r.hasUpdate
+          result.dataLatest = r.hasUpdate ? r.latest : r.latest || ''
+          setDataUpdate(!!r.hasUpdate)
+          setDataUpdateVer(r.hasUpdate ? r.latest : '')
+        } else {
+          result.dataError = r?.error || 'Không kiểm tra được bản cập nhật dữ liệu'
+        }
+      }).catch(() => { result.dataError = 'Không kết nối được để kiểm tra cập nhật.' }),
+      (window.electronAPI.checkBaseData?.() || Promise.resolve()).then(r => {
+        if (!r?.ok) { result.baseError = r?.error || 'Không kiểm tra được dữ liệu gốc'; return }
+        if (r.installed && r.hasUpdate) setBaseUpdateVer(r.latest || '')
+        if (r.installed && !r.hasUpdate) return
+        result.baseLatest = r.latest || ''
+        setBaseUpdate(!!r.installed)
+        setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: r.installed ? `Có bản dữ liệu gốc mới: ${r.latest} — tự động cập nhật...` : 'Đang cài dữ liệu gốc lần đầu...' })
+        return window.electronAPI.runBaseDataSync?.().then(r2 => {
+          if (r2 && r2.ok === true) result.baseSynced = true
+          else if (r2 && r2.ok === false && !r2.paused && !r2.cancelled) {
+            setDlError({ type: 'base', message: r2.error || 'Lỗi tải dữ liệu gốc', stack: r2.stack })
+          }
+        }).catch(() => {})
+      }).catch(() => {}),
+      ]).then(closeModal)
+      if (toast) {
+        if (result.dataError && result.baseError) {
+          setDlError({ type: 'data', message: `${result.dataError} — ${result.baseError}` })
+        } else if (result.dataError) {
+          setDlError({ type: 'data', message: result.dataError })
+        } else if (result.baseError) {
+          setDlError({ type: 'base', message: result.baseError })
+        } else {
+          const parts = []
+          if (result.dataUpdate) parts.push(`Có bản cập nhật dữ liệu mới (${result.dataLatest}) — bấm Play để cập nhật`)
+          if (result.baseSynced) parts.push(`Đã cập nhật dữ liệu gốc (${result.baseLatest})`)
+          if (!parts.length) parts.push(`Dữ liệu đã mới nhất (${result.dataLatest || result.baseLatest || 'đã kiểm tra'})`)
+          showSuccessToast(parts.join('. '))
+        }
+      }
+    } finally {
+      checkingUpdatesRef.current = false
+      setCheckingUpdates(false)
+    }
+  }
+
+  // Chạy kiểm tra cập nhật mỗi lần mở launcher (modal "đang kiểm tra phiên bản")
   useEffect(() => {
     if (!isElectron || !window.electronAPI.checkDataSync) return
     if (dSyncChecked.current || profiles.length === 0) return
     dSyncChecked.current = true
-    const t = setTimeout(() => {
-      setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu...' })
-      const closeModal = () => {
-        setDSync(prev => {
-          if (!prev?.active || prev.closing) return prev
-          return { ...prev, phase: 'done', item: 'Dữ liệu', percent: 100, log: 'Đã kiểm tra phiên bản dữ liệu' }
-        })
-        setTimeout(() => setDSync(prev => prev && !prev.closing ? { ...prev, closing: true } : prev), 1500)
-        setTimeout(() => setDSync(prev => prev ? { ...prev, active: false, closing: false } : prev), 2000)
-      }
-      Promise.all([
-        window.electronAPI.checkDataSync().then(r => {
-          if (r?.ok) { setDataUpdate(!!r.hasUpdate); setDataUpdateVer(r.hasUpdate ? r.latest : '') }
-        }).catch(() => {}),
-        (window.electronAPI.checkBaseData?.() || Promise.resolve()).then(r => {
-          if (!r?.ok || (r.installed && !r.hasUpdate)) return
-          if (r.installed) setBaseUpdateVer(r.latest || '')
-          setBaseUpdate(!!r.installed)
-          setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: r.installed ? `Có bản dữ liệu gốc mới: ${r.latest} — tự động cập nhật...` : 'Đang cài dữ liệu gốc lần đầu...' })
-          return window.electronAPI.runBaseDataSync?.().then(r2 => {
-            if (r2 && r2.ok === false && !r2.paused && !r2.cancelled) {
-              setDlError({ type: 'base', message: r2.error || 'Lỗi tải dữ liệu gốc', stack: r2.stack })
-            }
-          }).catch(() => {})
-        }).catch(() => {}),
-      ]).then(closeModal)
-    }, 6000)
+    const t = setTimeout(() => { checkDataVersions() }, 6000)
     return () => clearTimeout(t)
   }, [profiles])
 
@@ -625,26 +665,12 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             <button
               onClick={() => {
                 playClickSound()
-                window.electronAPI.checkDataSync?.().then(r => {
-                  if (r?.ok && r.hasUpdate) {
-                    setDataUpdate(true)
-                    setDataUpdateVer(r.latest || '')
-                    showSuccessToast(`Có bản cập nhật dữ liệu mới (${r.latest}).`)
-                  } else if (r?.ok && !r.hasUpdate) {
-                    setDataUpdate(false)
-                    setDataUpdateVer('')
-                    showSuccessToast(`Dữ liệu đã mới nhất (${r.latest}).`)
-                  } else if (!r?.ok) {
-                    setDlError({ type: 'data', message: r?.error || 'Không kiểm tra được bản cập nhật' })
-                  }
-                }).catch(() => {
-                  setDlError({ type: 'data', message: 'Không kết nối được để kiểm tra cập nhật.' })
-                })
+                checkDataVersions({ toast: true })
               }}
               className="w-14 h-14 flex items-center justify-center transition-colors text-emerald-400 hover:text-white"
-              data-tip="Kiểm tra cập nhật dữ liệu"
+              data-tip="Kiểm tra cập nhật dữ liệu & dữ liệu gốc"
             >
-              <ArrowClockwise size={26} weight="duotone" />
+              <ArrowClockwise size={26} weight="duotone" className={checkingUpdates ? 'animate-spin' : ''} />
             </button>
           </div>
 

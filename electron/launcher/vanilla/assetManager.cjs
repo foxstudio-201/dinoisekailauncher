@@ -187,6 +187,30 @@ async function downloadAssets(versionJson, launcherDir, onProgress, opts) {
   const librariesDir = path.join(launcherDir, 'libraries')
   const assetsDir    = path.join(launcherDir, 'assets')
   const nativesDir   = path.join(versionsDir, 'natives')
+  const markerPath   = path.join(versionsDir, '.assets.ready')
+
+  // Đã tải xong 1 lần rồi → bỏ qua toàn bộ kiểm tra (Mojang không sửa assets của bản đã phát hành),
+  // chỉ cần client.jar + natives còn tồn tại là chạy game được ngay
+  if (opts?.skipIfReady !== false && fs.existsSync(markerPath)) {
+    const clientJar = path.join(versionsDir, `${versionJson.id}.jar`)
+    const nativesOk = fs.existsSync(nativesDir) && fs.readdirSync(nativesDir).length > 0
+    if (fs.existsSync(clientJar) && nativesOk) {
+      // Dựng nhanh danh sách library paths từ version.json (không chạm đĩa) để không thiếu lib
+      const libPaths = []
+      for (const lib of (versionJson.libraries || [])) {
+        if (!libraryApplies(lib)) continue
+        const artifact = lib.downloads?.artifact
+        if (artifact && !artifact.path.includes('natives-')) libPaths.push(path.join(librariesDir, artifact.path))
+        else if (lib.name) {
+          const rel = mavenNameToPath(lib.name)
+          if (rel) libPaths.push(path.join(librariesDir, rel))
+        }
+      }
+      _fastVerify = false
+      onProgress?.({ phase: 'done', doneFiles: 1, totalFiles: 1, log: 'Assets đã sẵn sàng (bỏ qua kiểm tra)' })
+      return { clientJar, libraries: libPaths, nativesDir, assetsDir, assetIndex: versionJson.assetIndex?.id || null, skipped: true }
+    }
+  }
 
   if (!fs.existsSync(versionsDir))  fs.mkdirSync(versionsDir,  { recursive: true })
   if (!fs.existsSync(librariesDir)) fs.mkdirSync(librariesDir, { recursive: true })
@@ -372,6 +396,9 @@ async function downloadAssets(versionJson, launcherDir, onProgress, opts) {
   })
 
   emit('done', { log: 'All resources downloaded.' })
+
+  // Đánh dấu đã tải xong → lần sau Play bỏ qua kiểm tra, khởi động game ngay
+  try { fs.writeFileSync(markerPath, String(Date.now())) } catch {}
 
   _fastVerify = false
   return {
