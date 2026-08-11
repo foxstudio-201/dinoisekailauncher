@@ -458,7 +458,7 @@ function runTool(tool, args) {
 // Nếu tải lỗi/thiếu → xóa sạch part hỏng rồi tự tải lại từ đầu 1 lần.
 async function ensureDownloaded(url, destPath, onProgress, signal) {
   const dir = path.dirname(destPath)
-  const lastErr = new Error('Không tải được file dữ liệu — vui lòng thử lại')
+  let lastErr = new Error('Không tải được file dữ liệu — vui lòng thử lại')
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
       await downloadFileSmart(url, destPath, onProgress, signal)
