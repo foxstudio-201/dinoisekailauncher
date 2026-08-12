@@ -112,6 +112,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [preDl, setPreDl] = useState(null)
   const [dSync, setDSync] = useState(null)
   const dSyncChecked = useRef(false)
+  const preDlStarted = useRef(false)
   const [checkingUpdates, setCheckingUpdates] = useState(false)
   const checkingUpdatesRef = useRef(false)
   const [dataUpdate, setDataUpdate] = useState(false)
@@ -256,6 +257,32 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     if (dSyncChecked.current || profiles.length === 0) return
     dSyncChecked.current = true
     const t = setTimeout(() => { checkDataVersions() }, 6000)
+    return () => clearTimeout(t)
+  }, [profiles])
+
+  // Lần đầu mở launcher: chưa có tài nguyên game (marker .assets.ready) thì tự tải
+  // + hiện modal tiến trình 1 lần; đã có rồi thì bỏ qua hoàn toàn, không hiện gì.
+  // Các lần mở sau cũng không tải lại (marker đã tồn tại).
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI.preDownload) return
+    if (preDlStarted.current || profiles.length === 0) return
+    preDlStarted.current = true
+    const pid = profiles[0]?.id
+    if (!pid) return
+    const t = setTimeout(() => {
+      window.electronAPI.hasGameResources?.({ profileId: pid })
+        .then(st => {
+          if (st?.ready) return
+          setPreDl({ active: true, phase: 'waiting', item: 'Đang chuẩn bị', percent: 0, eta: null, log: 'Bắt đầu tải tài nguyên...', phases: {}, closing: false })
+          return window.electronAPI.preDownload({ profileId: pid })
+        })
+        .then(res => {
+          if (res && res.ok === false && !res.paused && !res.cancelled) {
+            setDlError({ type: 'resource', message: res.error || 'Lỗi tải tài nguyên' })
+          }
+        })
+        .catch(() => {})
+    }, 3000)
     return () => clearTimeout(t)
   }, [profiles])
 
@@ -899,7 +926,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
 
             {/* Message */}
-            <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed">{preDl.log}</p>
+            <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed break-words max-h-[60px] overflow-hidden">{preDl.log}</p>
 
             {/* Single progress bar — mỗi giai đoạn về 0 rồi chạy lên 100% */}
             <div className="mt-3">
@@ -951,7 +978,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
 
             {/* Message */}
-            <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed">{dSync.log}</p>
+            <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed break-words max-h-[60px] overflow-hidden">{dSync.log}</p>
 
             {/* Current phase */}
             <div className="mt-3">

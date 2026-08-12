@@ -72,6 +72,10 @@ function getClientJarFromCache(versionJson, launcherDir) {
 
 const runningGames = new Map()
 
+// Bản tải tài nguyên nền (tự chạy khi mở launcher, lần đầu). Play bấm trong lúc
+// này sẽ đợi bản tải xong thay vì tải lại 2 lần.
+const preDlInFlight = { profileId: null, promise: null }
+
 function makeKey(profileId, accountId) {
   return `${profileId}::${accountId}`
 }
@@ -104,6 +108,11 @@ function registerLauncherHandlers(getTrustedWindow) {
     const profile = profilesData.profiles[0]
     if (!profile) return { error: 'Profile not found' }
     profileId = profile.id
+
+    // Đang có bản tự tải tài nguyên nền (lần đầu mở launcher) → đợi xong, tránh tải trùng
+    if (preDlInFlight.profileId === profile.id && preDlInFlight.promise) {
+      await preDlInFlight.promise
+    }
 
     let accountsData
     try {
@@ -532,6 +541,9 @@ function registerLauncherHandlers(getTrustedWindow) {
     const abortedErr = Object.assign(new Error('aborted'), { aborted: true })
     function checkAbort() { if (isAborted('preDl')) throw abortedErr }
 
+    // Nếu đã có bản tải nền cho profile này đang chạy → trả về cùng promise
+    if (preDlInFlight.profileId === profileId && preDlInFlight.promise) return preDlInFlight.promise
+    const run = (async () => {
     try {
       nextPhase('version', `Phiên bản ${profile.gameVersion}`)
       const versionJson = await resolveVersion(profile.gameVersion, launcherDir)
@@ -551,10 +563,18 @@ function registerLauncherHandlers(getTrustedWindow) {
       }, versionJson)
       checkAbort()
 
-      // Assets: đã tải là không kiểm tra lại (Mojang không sửa assets của bản đã phát hành);
-      // phần này chỉ chạy khi gọi preDownload thủ công — không còn tự chạy khi mở launcher
-      emit('assets', 'Game assets', 100, { log: 'Assets: async (bỏ qua kiểm tra)', async: true })
-      let assets = { clientJar: getClientJarFromCache(versionJson, launcherDir) }
+      // Assets: tải lần đầu (chỉ khi chưa có); sau khi xong sẽ ghi marker .assets.ready
+      // → các lần mở launcher sau gặp marker là bỏ qua ngay, không tải lại gì
+      nextPhase('assets', 'Game assets')
+      let lastAssetPhase = ''
+      const assets = await downloadAssets(versionJson, launcherDir, (p) => {
+        const pc = p.totalFiles > 0 ? Math.round((p.doneFiles / p.totalFiles) * 100) : (p.phase === 'done' ? 100 : 0)
+        if (p.phase === 'asset_error') return
+        const phaseChanged = p.phase !== lastAssetPhase || p.phase === 'done'
+        if (phaseChanged) lastAssetPhase = p.phase
+        emit(p.phase, 'Game assets', pc, { log: p.log || `Assets: ${p.doneFiles}/${p.totalFiles}`, done: p.doneFiles, total: p.totalFiles })
+      }, { fastVerify: true, skipIfReady: true })
+      checkAbort()
 
       if (profile.loader === 'forge' && profile.loaderVersion) {
         const forgeLabel = `Forge ${profile.gameVersion}-${profile.loaderVersion}`
@@ -584,6 +604,25 @@ function registerLauncherHandlers(getTrustedWindow) {
     } finally {
       endOp('preDl')
     }
+    })()
+    preDlInFlight.profileId = profileId
+    preDlInFlight.promise = run
+    try { return await run } finally {
+      if (preDlInFlight.promise === run) { preDlInFlight.profileId = null; preDlInFlight.promise = null }
+    }
+  })
+
+  // Tài nguyên game đã tải sẵn chưa? (marker .assets.ready + client.jar) — quyết định
+  // khi mở launcher: có rồi thì bỏ qua luôn, chưa có mới tự tải + hiện modal
+  ipcMain.handle('launcher:hasGameResources', (e, { profileId }) => {
+    if (!getTrustedWindow(e)) return { ready: true }
+    const profilesData = readProfiles()
+    const profile = profilesData.profiles.find(p => p.id === profileId)
+    if (!profile) return { ready: true }
+    const versionsDir = path.join(LAUNCHER_DIR, 'versions', profile.gameVersion)
+    const marker = path.join(versionsDir, '.assets.ready')
+    const clientJar = path.join(versionsDir, `${profile.gameVersion}.jar`)
+    return { ready: fs.existsSync(marker) && fs.existsSync(clientJar) }
   })
 
   // ── Đồng bộ dữ liệu server (datadinoisekaiserver) ─────────────────────────

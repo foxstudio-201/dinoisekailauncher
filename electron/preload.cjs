@@ -124,6 +124,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   launchGame:      (opts)       => ipcRenderer.invoke('launcher:launch', opts),
   stopGame:        (opts)       => ipcRenderer.invoke('launcher:stop', opts),
   preDownload:     (opts)       => ipcRenderer.invoke('launcher:preDownload', opts),
+  hasGameResources:(opts)       => ipcRenderer.invoke('launcher:hasGameResources', opts),
   onPreDownloadProgress: (cb) => {
     const handler = (_e, data) => cb(data)
     ipcRenderer.on('launcher:predownload:progress', handler)

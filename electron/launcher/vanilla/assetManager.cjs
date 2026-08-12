@@ -200,8 +200,11 @@ async function downloadAssets(versionJson, launcherDir, onProgress, opts) {
       for (const lib of (versionJson.libraries || [])) {
         if (!libraryApplies(lib)) continue
         const artifact = lib.downloads?.artifact
-        if (artifact && !artifact.path.includes('natives-')) libPaths.push(path.join(librariesDir, artifact.path))
-        else if (lib.name) {
+        if (artifact) {
+          // Entry natives (classifier) có artifact riêng — KHÔNG được rơi xuống
+          // mavenNameToPath vì nó bỏ classifier → push trùng jar chính (Duplicate key crash)
+          if (!artifact.path.includes('natives-')) libPaths.push(path.join(librariesDir, artifact.path))
+        } else if (lib.name) {
           const rel = mavenNameToPath(lib.name)
           if (rel) libPaths.push(path.join(librariesDir, rel))
         }

@@ -133,7 +133,16 @@ function buildClasspath(libraries, clientJar) {
   const normalize = p => p.replace(/\\/g, '/').toLowerCase()
   const clientNorm = normalize(clientJar)
 
-  const libs = libraries.filter(l => fs.existsSync(l))
+  // BootstrapLauncher (Forge 1.20+) dựng union filesystem từ java.class.path:
+  // cùng 1 path xuất hiện 2 lần → "Duplicate key … (attempted merging values …)".
+  const seen = new Set()
+  const libs = libraries.filter(l => {
+    if (!fs.existsSync(l)) return false
+    const n = normalize(l)
+    if (seen.has(n)) return false
+    seen.add(n)
+    return true
+  })
   const alreadyIncluded = libs.some(l => normalize(l) === clientNorm)
   const all = alreadyIncluded ? libs : [...libs, clientJar]
   return all.join(sep)
