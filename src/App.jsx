@@ -42,7 +42,6 @@ import UpdateModal from './components/UpdateModal'
 import { AccountsProvider } from './hooks/useAccounts'
 import { loadAppSettings, applyAppSettings, isInitialSetupRequired } from './utils/appSettings'
 import { LangProvider, useLang } from './i18n/LangProvider'
-import { ModpackInstallProvider } from './components/mods/shared/ModpackInstallContext'
 
 import vanillaBg from './assets/vanilla-mc.png'
 
@@ -451,7 +450,6 @@ export default function App() {
   return (
     <LangProvider>
       <AccountsProvider>
-        <ModpackInstallProvider>
           <AppInner />
           {initialSetupChecked && initialSetupOpen && (
             <InitialSetup
@@ -462,7 +460,6 @@ export default function App() {
               }}
             />
           )}
-        </ModpackInstallProvider>
       </AccountsProvider>
     </LangProvider>
   )

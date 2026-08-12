@@ -1,7 +1,7 @@
 {
   "name": "dino-isekai",
   "private": true,
-  "version": "0.2.15",
+  "version": "0.2.17",
   "description": "Dino Isekai - Minecraft Launcher by FoxStudios",
   "author": {
     "name": "FoxStudio",
@@ -22,20 +22,8 @@
     "postinstall": "node scripts/gen-app-secret.cjs & node scripts/generate-icon.cjs & node scripts/patch-electron-icon.cjs"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
-    "@phosphor-icons/react": "^2.1.10",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
-    "@tailwindcss/vite": "^4.3.0",
-    "@zag-js/qr-code": "1.40.0",
     "adm-zip": "^0.5.17",
-    "discord-rpc": "^4.0.1",
-    "pidusage": "^4.0.1",
-    "qrcode": "1.5.4",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "tailwindcss": "^4.3.0",
-    "three": "^0.184.0"
+    "discord-rpc": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -52,7 +40,13 @@
     "globals": "^17.5.0",
     "rcedit": "^5.0.2",
     "vite": "^8.0.10",
-    "wait-on": "^9.0.5"
+    "wait-on": "^9.0.5",
+    "@heroicons/react": "^2.2.0",
+    "@phosphor-icons/react": "^2.1.10",
+    "@tailwindcss/vite": "^4.3.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwindcss": "^4.3.0"
   },
   "build": {
     "appId": "com.dinoisekai.launcher",
@@ -63,6 +57,11 @@
       "output": "dist-electron",
       "buildResources": "build-resources"
     },
+    "electronLanguages": [
+      "vi",
+      "en-US"
+    ],
+    "compression": "maximum",
     "files": [
       "dist/**/*",
       "electron/**/*",
@@ -77,13 +76,6 @@
       {
         "from": "public/icon.png",
         "to": "icon.png"
-      },
-      {
-        "from": "mod-skin",
-        "to": "mod-skin",
-        "filter": [
-          "**/*.jar"
-        ]
       }
     ],
     "win": {

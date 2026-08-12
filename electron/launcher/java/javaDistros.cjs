@@ -326,12 +326,10 @@ function getProfileJreInfo(instancePath) {
 }
 
 function getAllInstalledJavas(baseDir) {
-  // baseDir có thể là global runtimes dir hoặc per-profile jre dir
   if (!fs.existsSync(baseDir)) return []
 
   const results = []
 
-  // Quét tất cả subfolder — mỗi subfolder là 1 java installation (vd: adoptium-21, graalvm-25)
   try {
     const entries = fs.readdirSync(baseDir, { withFileTypes: true })
     for (const entry of entries) {
@@ -346,7 +344,6 @@ function getAllInstalledJavas(baseDir) {
     }
   } catch {}
 
-  // Cũng check chính baseDir (trường hợp java được extract thẳng vào baseDir)
   const baseExe = getJavaExe(baseDir)
   if (fs.existsSync(baseExe)) {
     const metaPath = path.join(baseDir, '.vxc-java-meta.json')

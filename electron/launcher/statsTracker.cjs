@@ -186,7 +186,6 @@ function getDirSize(dirPath) {
 function getProfileStats(profile) {
   const instancePath = profile.instancePath
 
-  // Không còn thư mục account riêng trong profile — dùng chính instancePath
   const gameDirs = [instancePath]
 
   const worldMap = new Map()

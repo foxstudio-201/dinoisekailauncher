@@ -37,7 +37,7 @@ const fs     = require('fs')
 const path   = require('path')
 const { spawnSync } = require('child_process')
 
-const { buildLoaderConfig, readVersionJsonFromInstance, readInstallProfileFromInstance } = require('../forge/forgeVersionJson.cjs')
+const { buildLoaderConfig } = require('../forge/forgeVersionJson.cjs')
 
 const NEOFORGE_MAVEN = 'https://maven.neoforged.net/releases'
 
@@ -132,34 +132,6 @@ function resolveJvmArgs(rawArgs, librariesDir, versionName) {
 }
 
 async function setupNeoForge(mcVersion, neoVersion, librariesDir, clientJar, javaPath, instanceRoot, onProgress) {
-  // For CurseForge instances the complete version.json is stored in
-  // minecraftinstance.json — no installer download/run needed at all.
-  let providedVersionJson = null
-  let providedInstallProfile = null
-  try {
-    const instJsonPath = path.join(instanceRoot, 'minecraftinstance.json')
-    if (fs.existsSync(instJsonPath)) {
-      providedVersionJson = readVersionJsonFromInstance(instJsonPath)
-      providedInstallProfile = readInstallProfileFromInstance(instJsonPath)
-    }
-  } catch {}
-
-  if (providedVersionJson) {
-    const config = await buildLoaderConfig({ mcVersion, loaderName: 'neoforge', versionSuffix: neoVersion, librariesDir, instanceRoot, onProgress, javaPath, versionJson: providedVersionJson, installProfile: providedInstallProfile })
-    if (config) {
-      onProgress?.({ phase: 'neoforge_ready', log: `NeoForge ${config.versionId} ready. Main: ${config.mainClass}`, done: 1, total: 1 })
-      return {
-        mainClass:           config.mainClass,
-        extraLibraries:      config.libraryPaths,
-        jvmArgs:             config.jvmArgs,
-        gameArgs:            config.gameArgs,
-        shimJar:             null,
-        customClientJar:     config.customClientJar || null,
-        needsVanillaClasspath: true,
-      }
-    }
-  }
-
   // NeoForge 47.x (MC 1.20.1) uses the "1.20.1-47.x.x" naming and is hosted in
   // the net/neoforged/forge group with a "forge-...-installer.jar" artifact.
   // Newer versions (20.4.x, 21.1.x, ...) live in net/neoforged/neoforge.

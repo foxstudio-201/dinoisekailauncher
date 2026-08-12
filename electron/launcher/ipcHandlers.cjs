@@ -41,8 +41,6 @@ const { ensureJava }          = require('./java/javaManager.cjs')
 const { downloadAssets }      = require('./vanilla/assetManager.cjs')
 const { setupForge }          = require('./forge/forgeLoader.cjs')
 const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData } = require('./dataSync.cjs')
-const { searchProjects, getProject, getProjectVersions, installVersion, getGameVersions, getCategories } = require('./modrinth/modrinthSearch.cjs')
-const cfSearch = require('./curseforge/curseForgeSearch.cjs')
 const { launchGame }          = require('./vanilla/gameRunner.cjs')
 const { startPlaytimeTracker, getProfileStats, getProfileAnalytics } = require('./statsTracker.cjs')
 const { normalizeSingleForgeProfile, FIXED_LOADER } = require('../profileManager.cjs')
@@ -72,8 +70,6 @@ function getClientJarFromCache(versionJson, launcherDir) {
 
 const runningGames = new Map()
 
-// Bản tải tài nguyên nền (tự chạy khi mở launcher, lần đầu). Play bấm trong lúc
-// này sẽ đợi bản tải xong thay vì tải lại 2 lần.
 const preDlInFlight = { profileId: null, promise: null }
 
 function makeKey(profileId, accountId) {
@@ -109,7 +105,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     if (!profile) return { error: 'Profile not found' }
     profileId = profile.id
 
-    // Đang có bản tự tải tài nguyên nền (lần đầu mở launcher) → đợi xong, tránh tải trùng
     if (preDlInFlight.profileId === profile.id && preDlInFlight.promise) {
       await preDlInFlight.promise
     }
@@ -155,8 +150,6 @@ function registerLauncherHandlers(getTrustedWindow) {
       }, null, 2))
     }
 
-    // Java runtime dùng chung cho tất cả profiles — lưu ở DATA_DIR/runtimes/
-    // tránh mỗi profile tải Java riêng gây tốn disk và RAM
     const runtimesDir = path.join(DATA_DIR, 'runtimes')
 
 
@@ -230,8 +223,6 @@ function registerLauncherHandlers(getTrustedWindow) {
         }, versionJson)
       }
 
-      // Assets: đã tải xong 1 lần là bỏ qua toàn bộ kiểm tra (Mojang không sửa assets của bản
-      // đã phát hành) — chỉ kiểm tra nhanh tồn tại + kích thước; file thiếu mới tải
       const fastVerify = true
       const skipIfReady = true
       sendProgressAndLog({ phase: 'assets', log: fastVerify ? 'Using cached assets...' : 'Checking game assets...', percent: 30 })
@@ -328,23 +319,8 @@ function registerLauncherHandlers(getTrustedWindow) {
         sendProgressAndLog({ phase: 'forge', log: `Forge ready. Main: ${mainClassOverride}`, percent: 97 })
       }
 
-      // CustomSkinLoader (forge/neoforge): ignore non-critical skin-manager patch
-      // failures instead of crashing the game at boot.
-      if (profile.loader === 'forge') {
-        try {
-          const cslCoreDir = path.join(instancePath, 'CustomSkinLoader', 'Core')
-          const modsDir = path.join(instancePath, 'mods')
-          const hasCsl = (fs.existsSync(cslCoreDir) && fs.readdirSync(cslCoreDir).some(f => f.endsWith('.jar'))) ||
-            (fs.existsSync(modsDir) && fs.readdirSync(modsDir).some(f => /^CustomSkinLoader_Universal/i.test(f)))
-          if (hasCsl) {
-            extraJvmArgs = [...extraJvmArgs, '-Dcustomskinloader.ignorePatchFailure=true']
-          }
-        } catch {}
-      }
-
       sendProgressAndLog({ phase: 'launching', log: `Launching as ${account.username}...`, percent: 98 })
 
-      // Boost Mode: tắt tiến trình nền trước khi khởi động game
       if (boostMode && process.platform === 'win32') {
         try {
           const { exec } = require('child_process')
@@ -370,7 +346,6 @@ function registerLauncherHandlers(getTrustedWindow) {
         }
       }
 
-      // Force GPU: set Windows GPU preference cho java process dùng discrete GPU
       if (process.platform === 'win32') {
         try {
           const { exec } = require('child_process')
@@ -390,8 +365,6 @@ function registerLauncherHandlers(getTrustedWindow) {
           writeLog(`[WARN] GPU preference error: ${gpuErr.message}`)
         }
       }
-
-      // ── Offline account: không cần skin server ──
 
       const proc = launchGame({
         javaPath,
@@ -443,11 +416,9 @@ function registerLauncherHandlers(getTrustedWindow) {
       if (proc.pid) {
         try {
           if (boostMode) {
-            // Boost Mode: game priority cao, launcher nhường tài nguyên
             process.setProcessPriority(proc.pid, 'above normal')
             process.setProcessPriority(process.pid, 'below normal')
           } else {
-            // Normal mode: game chạy normal priority — không kéo xuống below normal
             process.setProcessPriority(proc.pid, 'normal')
             process.setProcessPriority(process.pid, 'below normal')
           }
@@ -488,10 +459,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     return stopped > 0 ? { ok: true, stopped } : { error: 'Game is not running' }
   })
 
-  // Pre-download a profile's game resources (version JSON, Java, assets and
-  // loader libraries) into the shared LAUNCHER_DIR cache so the first launch
-  // is fast — assets already cached are skipped, only what's missing is fetched.
-  // Tiến trình chia theo từng giai đoạn, mỗi giai đoạn chạy 0% → 100%.
   ipcMain.handle('launcher:preDownload', async (e, { profileId }) => {
     const win = getTrustedWindow(e)
     if (!win) return { error: 'Unauthorized' }
@@ -541,7 +508,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     const abortedErr = Object.assign(new Error('aborted'), { aborted: true })
     function checkAbort() { if (isAborted('preDl')) throw abortedErr }
 
-    // Nếu đã có bản tải nền cho profile này đang chạy → trả về cùng promise
     if (preDlInFlight.profileId === profileId && preDlInFlight.promise) return preDlInFlight.promise
     const run = (async () => {
     try {
@@ -563,8 +529,6 @@ function registerLauncherHandlers(getTrustedWindow) {
       }, versionJson)
       checkAbort()
 
-      // Assets: tải lần đầu (chỉ khi chưa có); sau khi xong sẽ ghi marker .assets.ready
-      // → các lần mở launcher sau gặp marker là bỏ qua ngay, không tải lại gì
       nextPhase('assets', 'Game assets')
       let lastAssetPhase = ''
       const assets = await downloadAssets(versionJson, launcherDir, (p) => {
@@ -612,8 +576,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     }
   })
 
-  // Tài nguyên game đã tải sẵn chưa? (marker .assets.ready + client.jar) — quyết định
-  // khi mở launcher: có rồi thì bỏ qua luôn, chưa có mới tự tải + hiện modal
   ipcMain.handle('launcher:hasGameResources', (e, { profileId }) => {
     if (!getTrustedWindow(e)) return { ready: true }
     const profilesData = readProfiles()
@@ -625,7 +587,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     return { ready: fs.existsSync(marker) && fs.existsSync(clientJar) }
   })
 
-  // ── Đồng bộ dữ liệu server (datadinoisekaiserver) ─────────────────────────
   ipcMain.handle('dataSync:check', async (e) => {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
     const profiles = readProfiles().profiles
@@ -678,7 +639,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     }
   })
 
-  // Điều khiển tạm dừng / hủy tải (preDl hoặc dSync)
   ipcMain.handle('data:control', (e, { op, action }) => {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
     const { abortOp, setAction } = require('./abortControl.cjs')
@@ -773,44 +733,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     }
   })
 
-  ipcMain.handle('curseforge:search', async (e, opts) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await cfSearch.searchProjects(opts)
-  })
-  ipcMain.handle('curseforge:getProject', async (e, id) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await cfSearch.getProject(id)
-  })
-  ipcMain.handle('curseforge:getVersions', async (e, id, filters) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await cfSearch.getProjectVersions(id, filters)
-  })
-  ipcMain.handle('curseforge:getCategories', async (e, projectType) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    return await cfSearch.getCategories(projectType)
-  })
-  ipcMain.handle('curseforge:install', async (e, opts) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    const { gameVersion, loaders, deleteOldVersions } = opts
-    return await cfSearch.installVersion({
-      ...opts,
-      gameVersion: gameVersion || '',
-      loaders: loaders || [],
-      deleteOldVersions: deleteOldVersions === true,
-    }, (p) => {
-      const wins = require('electron').BrowserWindow.getAllWindows()
-      wins.forEach(w => {
-        if (!w.isDestroyed()) w.webContents.send('curseforge:installProgress', p)
-      })
-    })
-  })
-
-  ipcMain.handle('modrinth:search', async (e, opts) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    try { return await searchProjects(opts) }
-    catch (err) { return { error: err.message } }
-  })
-
   ipcMain.handle('spiget:search', async (e, opts) => {
     if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
     const { query = '', size = 20, page = 1 } = opts || {}
@@ -845,52 +767,6 @@ function registerLauncherHandlers(getTrustedWindow) {
     } catch (err) {
       return { error: err.message }
     }
-  })
-
-  ipcMain.handle('modrinth:getProject', async (e, idOrSlug) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    try { return await getProject(idOrSlug) }
-    catch (err) { return { error: err.message } }
-  })
-
-  ipcMain.handle('modrinth:getVersions', async (e, idOrSlug, filters) => {
-    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-    try { return await getProjectVersions(idOrSlug, filters) }
-    catch (err) { return { error: err.message } }
-  })
-
-  ipcMain.handle('modrinth:install', async (e, opts) => {
-    const win = getTrustedWindow(e)
-    if (!win) return { error: 'Unauthorized' }
-
-    const { versionId, projectId, projectType, instancePath, gameVersion, loaders, deleteOldVersions } = opts
-
-    try {
-      return await installVersion({
-        versionId,
-        projectId,
-        projectType,
-        instancePath,
-        gameVersion: gameVersion || '',
-        loaders: loaders || [],
-        deleteOldVersions: deleteOldVersions === true,
-        onProgress: (p) => {
-          if (!win.isDestroyed()) win.webContents.send('modrinth:installProgress', p)
-        },
-      })
-    } catch (err) { return { error: err.message } }
-  })
-
-  ipcMain.handle('modrinth:getGameVersions', async (e) => {
-    if (!getTrustedWindow(e)) return []
-    try { return await getGameVersions() }
-    catch { return [] }
-  })
-
-  ipcMain.handle('modrinth:getCategories', async (e) => {
-    if (!getTrustedWindow(e)) return []
-    try { return await getCategories() }
-    catch { return [] }
   })
 }
 

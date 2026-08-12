@@ -72,20 +72,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   minecraftListVersions: () => ipcRenderer.invoke('minecraft:listVersions'),
 
-  importModpack: (opts) => ipcRenderer.invoke('profiles:importModpack', opts),
-  onImportProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('import:progress', handler)
-    return () => ipcRenderer.removeListener('import:progress', handler)
-  },
-  saveTempFile: (opts) => ipcRenderer.invoke('profiles:saveTempFile', opts),
-
-  downloadAndImportModpack: (opts) => ipcRenderer.invoke('modpack:downloadAndImport', opts),
-  cancelModpackDownload: () => ipcRenderer.invoke('modpack:cancel'),
-
-  browseModpack: ()         => ipcRenderer.invoke('modpack:browse'),
-  readModpackMeta: (path)   => ipcRenderer.invoke('modpack:readMeta', path),
-
   getFilePath: (file) => {
     try {
       const { webUtils } = require('electron')
@@ -97,29 +83,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
 
-  modrinthSearch:          (opts)           => ipcRenderer.invoke('modrinth:search', opts),
   spigetSearch:            (opts)           => ipcRenderer.invoke('spiget:search', opts),
-  modrinthGetProject:      (idOrSlug)       => ipcRenderer.invoke('modrinth:getProject', idOrSlug),
-  modrinthGetVersions:     (idOrSlug, f)    => ipcRenderer.invoke('modrinth:getVersions', idOrSlug, f),
-  modrinthInstall:         (opts)           => ipcRenderer.invoke('modrinth:install', opts),
-  modrinthGetGameVersions: ()               => ipcRenderer.invoke('modrinth:getGameVersions'),
-  modrinthGetCategories:   ()               => ipcRenderer.invoke('modrinth:getCategories'),
-  onModrinthInstallProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('modrinth:installProgress', handler)
-    return () => ipcRenderer.removeListener('modrinth:installProgress', handler)
-  },
-
-  curseforgeSearch:          (opts)           => ipcRenderer.invoke('curseforge:search', opts),
-  curseforgeGetProject:      (id)             => ipcRenderer.invoke('curseforge:getProject', id),
-  curseforgeGetVersions:     (id, f)          => ipcRenderer.invoke('curseforge:getVersions', id, f),
-  curseforgeGetCategories:   (type)           => ipcRenderer.invoke('curseforge:getCategories', type),
-  curseforgeInstall:         (opts)           => ipcRenderer.invoke('curseforge:install', opts),
-  onCurseForgeInstallProgress: (cb) => {
-    const handler = (_e, data) => cb(data)
-    ipcRenderer.on('curseforge:installProgress', handler)
-    return () => ipcRenderer.removeListener('curseforge:installProgress', handler)
-  },
 
   launchGame:      (opts)       => ipcRenderer.invoke('launcher:launch', opts),
   stopGame:        (opts)       => ipcRenderer.invoke('launcher:stop', opts),
@@ -179,7 +143,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   profileListMods:          (profileId, accountId)            => ipcRenderer.invoke('profile:listMods', profileId, accountId),
   profileGetInstalledContent: (profileId)                     => ipcRenderer.invoke('profile:getInstalledContent', profileId),
-  profileMatchInstalledContent: (profileId)                   => ipcRenderer.invoke('profile:matchInstalledContent', profileId),
   onContentScanDone:          (cb)                            => {
     const listener = (_e, profileId) => cb(profileId)
     ipcRenderer.on('content:scanDone', listener)
@@ -187,9 +150,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   profileToggleMod:         (profileId, fileName, accountId)  => ipcRenderer.invoke('profile:toggleMod', profileId, fileName, accountId),
   profileDeleteMod:         (profileId, fileName, accountId)  => ipcRenderer.invoke('profile:deleteMod', profileId, fileName, accountId),
-  profileGetModMeta:        (profileId, fileName, accountId)  => ipcRenderer.invoke('profile:getModMeta', profileId, fileName, accountId),
-  profileGetShaderMeta:     (profileId, fileName, accountId)  => ipcRenderer.invoke('profile:getShaderMeta', profileId, fileName, accountId),
-  profileGetResourcePackMeta: (profileId, fileName, accountId) => ipcRenderer.invoke('profile:getResourcePackMeta', profileId, fileName, accountId),
   profileListShaders:       (profileId, accountId)            => ipcRenderer.invoke('profile:listShaders', profileId, accountId),
   profileDeleteShader:      (profileId, f, sub, accountId)    => ipcRenderer.invoke('profile:deleteShader', profileId, f, sub, accountId),
   profileListResourcePacks: (profileId, accountId)            => ipcRenderer.invoke('profile:listResourcePacks', profileId, accountId),

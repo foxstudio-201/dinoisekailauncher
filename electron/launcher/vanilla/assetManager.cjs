@@ -112,7 +112,6 @@ async function needsDownload(filePath, expectedSha1, expectedSize) {
   if (!fs.existsSync(filePath)) return true
   const stat = fs.statSync(filePath)
   if (expectedSize && stat.size !== expectedSize) return true
-  // fastVerify: bỏ qua kiểm tra sha1 (tin cache, không tải lại) — nhanh hơn nhiều
   if (!_fastVerify && expectedSha1) {
     const actual = await sha1File(filePath)
     if (actual !== expectedSha1) return true
@@ -189,20 +188,15 @@ async function downloadAssets(versionJson, launcherDir, onProgress, opts) {
   const nativesDir   = path.join(versionsDir, 'natives')
   const markerPath   = path.join(versionsDir, '.assets.ready')
 
-  // Đã tải xong 1 lần rồi → bỏ qua toàn bộ kiểm tra (Mojang không sửa assets của bản đã phát hành),
-  // chỉ cần client.jar + natives còn tồn tại là chạy game được ngay
   if (opts?.skipIfReady !== false && fs.existsSync(markerPath)) {
     const clientJar = path.join(versionsDir, `${versionJson.id}.jar`)
     const nativesOk = fs.existsSync(nativesDir) && fs.readdirSync(nativesDir).length > 0
     if (fs.existsSync(clientJar) && nativesOk) {
-      // Dựng nhanh danh sách library paths từ version.json (không chạm đĩa) để không thiếu lib
       const libPaths = []
       for (const lib of (versionJson.libraries || [])) {
         if (!libraryApplies(lib)) continue
         const artifact = lib.downloads?.artifact
         if (artifact) {
-          // Entry natives (classifier) có artifact riêng — KHÔNG được rơi xuống
-          // mavenNameToPath vì nó bỏ classifier → push trùng jar chính (Duplicate key crash)
           if (!artifact.path.includes('natives-')) libPaths.push(path.join(librariesDir, artifact.path))
         } else if (lib.name) {
           const rel = mavenNameToPath(lib.name)
@@ -400,7 +394,6 @@ async function downloadAssets(versionJson, launcherDir, onProgress, opts) {
 
   emit('done', { log: 'All resources downloaded.' })
 
-  // Đánh dấu đã tải xong → lần sau Play bỏ qua kiểm tra, khởi động game ngay
   try { fs.writeFileSync(markerPath, String(Date.now())) } catch {}
 
   _fastVerify = false

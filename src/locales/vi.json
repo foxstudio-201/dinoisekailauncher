@@ -572,9 +572,7 @@
     "plugins": {
       "labelPlugin": "Plugin",
       "labelMod": "Mod",
-      "searchPlaceholderModrinth": "Tìm plugin trên Modrinth (EssentialsX, LuckPerms...)",
       "searchPlaceholderSpigot": "Tìm plugin trên Spigot (EssentialsX, WorldEdit...)",
-      "searchPlaceholderMod": "Tìm mod trên Modrinth (JEI, Sodium, Iris...)",
       "sourceLabel": "Nguồn: {{source}}",
       "forVersion": "Cho",
       "noResults": "Không có {{type}} nào",
@@ -585,7 +583,6 @@
         "allVersions": "Tất cả",
         "versions": "{{count}} phiên bản",
         "noVersions": "Không có phiên bản nào cho {{version}}",
-        "noVersionsHint": "Thử tìm phiên bản khác trên Modrinth",
         "loadingVersions": "Đang tải phiên bản...",
         "installBtn": "Tải {{type}}",
         "installing": "Đang tải...",
@@ -616,136 +613,6 @@
       "processing": "Đang xử lý...",
       "addBtn": "Thêm tài khoản",
       "noNameYet": "Chưa đặt tên"
-    }
-  },
-  "playpage": {
-    "tabs": {
-      "allProfiles": "Tất cả Profiles",
-      "groups": "Nhóm"
-    },
-    "buttons": {
-      "newGroup": "Nhóm mới",
-      "create": "Tạo",
-      "newProfile": "Profile mới",
-      "importProfile": "Nhập Profile"
-    },
-    "filters": {
-      "all": "Tất cả",
-      "vanilla": "Vanilla",
-      "fabric": "Fabric",
-      "forge": "Forge",
-      "neoforge": "NeoForge",
-      "modpack": "Modpack"
-    },
-    "loading": {
-      "loading": "Đang tải...",
-      "loadingProfile": "Đang tải profile..."
-    },
-    "empty": {
-      "noGroups": "Chưa có nhóm nào",
-      "noGroupsHint": "Tạo nhóm để tổ chức profiles của bạn",
-      "createFirstGroup": "+ Tạo nhóm đầu tiên",
-      "noProfiles": "Chưa có profile nào",
-      "noProfilesHint": "Tạo profile để bắt đầu chơi Minecraft",
-      "noProfilesMatch": "Không có profile nào khớp",
-      "noProfilesMatchHint": "Thử chọn bộ lọc khác",
-      "createFirstProfile": "+ Tạo profile đầu tiên",
-      "noProfilesInGroup": "Nhóm này chưa có profile nào"
-    },
-    "toast": {
-      "profileSelected": "Đã chọn profile",
-      "profileDeleted": "Đã xóa profile",
-      "groupCreated": "Đã tạo nhóm",
-      "groupDeleted": "Đã xóa nhóm",
-      "profileCreated": "Đã tạo profile",
-      "errorSelecting": "Lỗi",
-      "errorDeleting": "Lỗi xóa profile",
-      "errorCreatingGroup": "Lỗi tạo nhóm",
-      "errorDeletingGroup": "Lỗi xóa nhóm"
-    },
-    "group": {
-      "allGroups": "Tất cả nhóm",
-      "profiles": "profiles",
-      "removeFromGroup": "Xóa khỏi nhóm"
-    },
-    "modal": {
-      "createGroupTitle": "Tạo nhóm mới",
-      "groupName": "Tên nhóm",
-      "groupNamePlaceholder": "Nhập tên nhóm...",
-      "cancel": "Hủy",
-      "creating": "Đang tạo...",
-      "createGroup": "Tạo nhóm"
-    },
-    "card": {
-      "deleteGroup": "Xóa nhóm",
-      "selected": "Đã chọn",
-      "select": "Chọn",
-      "modpack": "Modpack",
-      "deleteConfirm": "Xóa profile này?",
-      "delete": "Xóa",
-      "cancel": "Hủy",
-      "openFolder": "Mở thư mục: {{path}}",
-      "deleteProfile": "Xóa profile"
-    },
-    "createProfile": {
-      "title": "Tạo Profile",
-      "loader": "Loader",
-      "selectMinecraftVersion": "Chọn phiên bản Minecraft",
-      "selectLoaderVersion": "Chọn phiên bản {{loader}}",
-      "profileName": "Tên profile",
-      "profileNamePlaceholder": "Để trống = tự động",
-      "gameFolder": "Thư mục game",
-      "gameFolderPlaceholder": "Mặc định trong instances",
-      "browse": "Chọn thư mục",
-      "group": "Group (tuỳ chọn)",
-      "backToMinecraft": "Minecraft {{version}}",
-      "loadingLoaderVersions": "Đang tải {{loader}} loader cho {{version}}...",
-      "retry": "Thử lại",
-      "noLoaderVersions": "Không có phiên bản nào",
-      "recommended": "Recommended",
-      "stable": "Stable",
-      "beta": "Beta",
-      "old": "Old",
-      "latest": "Latest",
-      "all": "All",
-      "neoforgeHint": "NeoForge hỗ trợ từ Minecraft 1.20.2 trở lên",
-      "createBtn": "Tạo Profile {{loader}}",
-      "creating": "Đang tải...",
-      "cancel": "Hủy"
-    },
-    "importProfile": {
-      "title": "Nhập Profile",
-      "subtitle": "Nhập từ modpack .zip / .mrpack",
-      "minimize": "Thu gọn",
-      "close": "Đóng",
-      "group": "Nhóm (tuỳ chọn)",
-      "dropHere": "Thả file vào đây",
-      "dragDrop": "Kéo & thả hoặc click để chọn file",
-      "supportedFormats": "Hỗ trợ {{source}}",
-      "readingFile": "Đang đọc file...",
-      "readyToImport": "Sẵn sàng nhập",
-      "selectFile": "Chọn file để nhập",
-      "minimizedTitle": "Click để mở lại",
-      "huy": "Hủy",
-      "import": "Nhập",
-      "creatingProfile": "Đang tạo profile...",
-      "startImport": "Bắt đầu nhập...",
-      "downloadMods": "Tải mods {{current}}/{{total}}",
-      "extracting": "Đang giải nén...",
-      "importDone": "Nhập hoàn tất!",
-      "importing": "Đang nhập...",
-      "errorCreatingProfile": "Lỗi tạo profile: {{error}}",
-      "errorImport": "Lỗi: {{error}}",
-      "errorNetwork": "Kiểm tra kết nối mạng. Một số mod có thể cần CurseForge API key.",
-      "unnamed": "Không tên",
-      "mods": "mods"
-    },
-    "profileCard": {
-      "delete": "Xóa",
-      "settings": "Cài đặt",
-      "lastPlayed": "Chơi lần cuối",
-      "never": "Chưa chơi",
-      "hours": "Giờ"
     }
   },
   "profileSettings": {
@@ -795,66 +662,6 @@
       "autoPerformanceModsDesc": "Khi bật: tự động tải Fabric API, Mod Menu, VoxelXSkins và các mod tối ưu khi khởi động. Khi tắt: chạy Fabric thuần, không cài bất kỳ mod nào.",
       "autoPerformanceModsOn": "Đang bật",
       "autoPerformanceModsOff": "Đang tắt"
-    },
-    "mods": {
-      "loading": "Đang tải mods...",
-      "search": "Tìm mod...",
-      "noResults": "Không tìm thấy mod nào",
-      "emptyTitle": "Chưa có mod nào",
-      "emptyDesc": "Kéo thả file .jar vào đây hoặc cài từ Modrinth / CurseForge",
-      "installing": "Đang cài {{count}} file...",
-      "disabled": "Đã tắt",
-      "deleteConfirm": "Xóa?",
-      "delete": "Xóa",
-      "cancel": "Hủy",
-      "enableMod": "Bật mod",
-      "disableMod": "Tắt mod",
-      "deleteMod": "Xóa mod",
-      "enable": "Bật",
-      "disable": "Tắt"
-    },
-    "shaders": {
-      "loading": "Đang tải shaders...",
-      "search": "Tìm shader...",
-      "noResults": "Không tìm thấy shader nào",
-      "emptyTitle": "Chưa có shader nào",
-      "emptyDesc": "Kéo thả file .zip / .rar vào đây hoặc cài vào thư mục shaderpacks",
-      "installing": "Đang cài {{count}} file...",
-      "deleteConfirm": "Xóa?",
-      "delete": "Xóa",
-      "cancel": "Hủy",
-      "deleteShader": "Xóa shader"
-    },
-    "resourcepacks": {
-      "loading": "Đang tải resource packs...",
-      "search": "Tìm resource pack...",
-      "noResults": "Không tìm thấy resource pack nào",
-      "emptyTitle": "Chưa có resource pack nào",
-      "emptyDesc": "Kéo thả file .zip / .rar vào đây hoặc cài vào thư mục resourcepacks",
-      "installing": "Đang cài {{count}} file...",
-      "deleteConfirm": "Xóa?",
-      "delete": "Xóa",
-      "cancel": "Hủy",
-      "deletePack": "Xóa resource pack"
-    },
-    "worlds": {
-      "loading": "Đang tải thế giới...",
-      "search": "Tìm thế giới...",
-      "noResults": "Không tìm thấy thế giới nào",
-      "emptyTitle": "Chưa có thế giới nào",
-      "emptyDesc": "Tạo thế giới mới trong game để xem ở đây",
-      "deleteConfirm": "Xóa?",
-      "delete": "Xóa",
-      "cancel": "Hủy",
-      "deleteWorld": "Xóa thế giới"
-    },
-    "files": {
-      "loading": "Đang tải thư mục...",
-      "emptyTitle": "Thư mục trống",
-      "emptyDesc": "Không có file hoặc thư mục nào trong vị trí này.",
-      "refresh": "Tải lại",
-      "folder": "Thư mục",
-      "file": "Tệp"
     }
   },
   "gaming": {
@@ -883,18 +690,9 @@
     "conflictingMods": "Mod xung đột",
     "unknownCrash": "Crash không xác định",
     "unknownCrashDesc": "Không phát hiện được nguyên nhân cụ thể từ Fabric. Xem log bên dưới để biết thêm chi tiết.",
-    "modsToInstall": "Mod cần cài đặt / cập nhật ({{count}})",
     "errorLog": "Log lỗi",
-    "allFixed": "Đã cài xong — khởi động lại game để áp dụng",
-    "installedCount": "Đã cài {{done}}/{{total}} mod",
-    "installHint": "Cài đặt mod bên trên để sửa lỗi crash",
     "viewLog": "Xem log để tìm nguyên nhân",
     "close": "Đóng",
-    "requires": "Yêu cầu:",
-    "neededBy": "Cần bởi:",
-    "searching": "Đang tìm...",
-    "download": "Tải xuống",
-    "installed": "Đã cài",
     "notFound": "Không tìm thấy",
     "retry": "Thử lại",
     "downloading": "Đang tải..."

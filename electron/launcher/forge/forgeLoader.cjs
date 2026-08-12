@@ -36,8 +36,6 @@ const fs     = require('fs')
 const path   = require('path')
 const { spawn } = require('child_process')
 
-// Chạy tiến trình con bất đồng bộ — không block main process (tránh window "not responding")
-// và stream log theo dòng để UI cập nhật tiến trình.
 function runProcess(cmd, args, opts = {}, onLine) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, {
@@ -73,7 +71,7 @@ function runProcess(cmd, args, opts = {}, onLine) {
   })
 }
 
-const { buildLoaderConfig, readVersionJsonFromInstaller, readVersionJsonFromInstance, readInstallProfileFromInstance } = require('./forgeVersionJson.cjs')
+const { buildLoaderConfig, readVersionJsonFromInstaller } = require('./forgeVersionJson.cjs')
 
 const BMCLAPI      = 'https://bmclapi2.bangbang93.com'
 const FORGE_MAVEN  = 'https://files.minecraftforge.net/maven'
@@ -129,13 +127,7 @@ function resolveJvmArgs(rawArgs, librariesDir, versionName) {
       .replace(/\$\{classpath_separator\}/g, sep)
       .replace(/\$\{version_name\}/g,        versionName)
   }
-  // CurseForge's generated ignoreList also ends with the bare forge version
-  // (e.g. "...,forge-47.4.4.jar,forge-47.4.4"). Match it exactly.
   const forgeToken = /^forge-[\d.]+$/.test(versionName) ? `,${versionName}` : ''
-  // CustomSkinLoader's runtime Common jar exports net.minecraft.client.renderer
-  // (the same package the client srg jar exports). If it's left on the module
-  // path, bootstraplauncher fails to build the layer with a split-package
-  // error. Adding it to the ignoreList keeps it on the classpath instead.
   const cslToken = ',CustomSkinLoader'
   const result = []
   for (const arg of rawArgs) {
@@ -170,52 +162,12 @@ function resolveJvmArgs(rawArgs, librariesDir, versionName) {
 }
 
 async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, javaPath, instanceRoot, onProgress) {
-  // forgeVersion có thể là "40.3.0" hoặc "1.18.2-40.3.0" (đã có mcVersion prefix)
   const fullVersion = forgeVersion.startsWith(`${mcVersion}-`)
     ? forgeVersion
     : `${mcVersion}-${forgeVersion}`
-  // buildOnlyVersion = phần sau mcVersion prefix, ví dụ "40.3.0"
   const buildOnlyVersion = fullVersion.startsWith(`${mcVersion}-`)
     ? fullVersion.slice(mcVersion.length + 1)
     : forgeVersion
-
-  // For CurseForge instances the complete version.json is stored in
-  // minecraftinstance.json — no installer download/run needed at all.
-  let providedVersionJson = null
-  let providedInstallProfile = null
-  try {
-    const instJsonPath = path.join(instanceRoot, 'minecraftinstance.json')
-    if (fs.existsSync(instJsonPath)) {
-      providedVersionJson = readVersionJsonFromInstance(instJsonPath)
-      providedInstallProfile = readInstallProfileFromInstance(instJsonPath)
-    }
-  } catch {}
-
-  if (providedVersionJson) {
-    const config = await buildLoaderConfig({
-      mcVersion,
-      loaderName: 'forge',
-      versionSuffix: buildOnlyVersion,
-      librariesDir,
-      instanceRoot,
-      onProgress,
-      javaPath,
-      versionJson: providedVersionJson,
-      installProfile: providedInstallProfile,
-    })
-    if (config) {
-      onProgress?.({ phase: 'forge_ready', log: `Forge ${config.versionId} ready. Main: ${config.mainClass}`, done: 1, total: 1 })
-      return {
-        mainClass:           config.mainClass,
-        extraLibraries:      config.libraryPaths,
-        jvmArgs:             config.jvmArgs,
-        gameArgs:            config.gameArgs,
-        shimJar:             null,
-        customClientJar:     config.customClientJar || null,
-        needsVanillaClasspath: true,
-      }
-    }
-  }
 
   const installerName = `forge-${fullVersion}-installer.jar`
   const installerDir  = path.join(librariesDir, 'net', 'minecraftforge', 'forge', fullVersion)
@@ -248,9 +200,6 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
   const versionId       = `${mcVersion}-forge-${buildOnlyVersion}`
   const versionDir      = path.join(instanceRoot, 'versions', versionId)
   const versionJsonPath = path.join(versionDir, `${versionId}.json`)
-
-  // ── Preferred path: build config from the installer's embedded version.json ──
-  // No `--installClient` run, no Linux SHA1 processor dance.
   const config = await buildLoaderConfig({
     installerPath,
     mcVersion,
@@ -283,9 +232,6 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
     fs.copyFileSync(clientJar, vanillaJarDest)
     onProgress?.({ phase: 'forge_install', log: 'Placed vanilla client.jar for installer.' })
   }
-  // Modern Forge (1.21+) needs a launcher profile just like NeoForge. Create
-  // a minimal one if missing, otherwise the installer exits with
-  // "There is no minecraft launcher profile ... you need to run the launcher first!".
   const launcherProfilePath  = path.join(instanceRoot, 'launcher_profiles.json')
   const launcherProfileStore = path.join(instanceRoot, 'launcher_profiles_microsoft_store.json')
   if (!fs.existsSync(launcherProfilePath) && !fs.existsSync(launcherProfileStore)) {
@@ -310,24 +256,13 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
     } catch {}
   }
 
-  // instLibDir is where the installer places processed libraries
   const instLibDir = path.join(instanceRoot, 'libraries')
-
-  // ── Check if Forge post-processed JARs exist ───────────────────────────────
-  // On Linux the installer validates SHA1 of its output and deletes files if they
-  // don't match its hardcoded expected hashes (which were computed on Windows with
-  // deterministic ZIP ordering). We detect this and run each processor tool directly.
   const forgeClientJar = path.join(instLibDir, 'net', 'minecraftforge', 'forge', fullVersion, `forge-${fullVersion}-client.jar`)
   const srgJar         = path.join(instLibDir, 'net', 'minecraft', 'client', `${mcVersion}-20230612.114412`, `client-${mcVersion}-20230612.114412-srg.jar`)
   const extraJar       = path.join(instLibDir, 'net', 'minecraft', 'client', `${mcVersion}-20230612.114412`, `client-${mcVersion}-20230612.114412-extra.jar`)
 
   const jarOk = p => fs.existsSync(p) && fs.statSync(p).size > 0
   const forgeOutputsExist = () => jarOk(forgeClientJar) && jarOk(srgJar) && jarOk(extraJar)
-
-  // ── Run installer (only if versionJson is missing OR modern Forge client jars missing) ──
-  // Modern Forge (1.21+) uses --fml.neoFormVersion and FML's ProductionClientProvider
-  // which needs srg/extra/forge-client jars generated by the installer.
-  // A stale version.json must NOT make us skip the installer while those jars are missing.
   const usesNeoForm = () => {
     let vj = null
     try {
@@ -371,10 +306,6 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
     onProgress?.({ phase: 'forge_install', log: 'Đã cài xong Forge.', done: 1, total: 1 })
   }
 
-  // ── Linux fix: run processor tools directly if output JARs are missing ────
-  // The installer's SHA1 validation deletes output files when hashes don't match
-  // (common on Linux due to non-deterministic ZIP entry ordering). We bypass this
-  // by running jarsplitter, ForgeAutoRenamingTool, and binarypatcher directly.
   if (!isModernForge && !forgeOutputsExist() && process.platform !== 'win32') {
     onProgress?.({ phase: 'forge_install', log: 'Đang cài đặt Forge...', done: 0, total: 1 })
 
@@ -390,7 +321,6 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
       return r.code === 0
     }
 
-    // Step 1: jarsplitter → slim + extra
     if (!jarOk(slimJar) || !jarOk(extraJar)) {
       const cp1 = [
         path.join(instLibDir, 'net', 'minecraftforge', 'jarsplitter', '1.1.4', 'jarsplitter-1.1.4.jar'),
@@ -401,7 +331,6 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
         '--input', vanillaJarDest, '--slim', slimJar, '--extra', extraJar, '--srg', mergedMappings])
     }
 
-    // Step 2: ForgeAutoRenamingTool → srg
     if (!jarOk(srgJar)) {
       const fart = path.join(instLibDir, 'net', 'minecraftforge', 'ForgeAutoRenamingTool', '0.1.22', 'ForgeAutoRenamingTool-0.1.22-all.jar')
       if (jarOk(fart) && jarOk(slimJar)) {
@@ -411,9 +340,7 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
       }
     }
 
-    // Step 3: binarypatcher → forge client jar
     if (!jarOk(forgeClientJar) && jarOk(srgJar)) {
-      // Extract client.lzma from installer JAR
       const lzmaPath = path.join(installerDir, 'client.lzma')
       if (!jarOk(lzmaPath)) {
         const fd = require('fs').openSync(lzmaPath, 'w')
@@ -469,8 +396,6 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
   }
 
   const effectiveLibDir = fs.existsSync(instLibDir) ? instLibDir : librariesDir
-  // ${version_name} must be "forge-{build}" (e.g. "forge-47.4.4") to match what
-  // bootstraplauncher expects — NOT profile.id which may be "1.20.1-forge-47.4.4".
   const versionName     = `forge-${buildOnlyVersion}`
   const jvmArgs         = resolveJvmArgs(profile.arguments?.jvm || [], effectiveLibDir, versionName)
 

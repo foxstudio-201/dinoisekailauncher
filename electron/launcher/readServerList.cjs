@@ -2,8 +2,6 @@
 
 const fs = require('fs')
 
-// Đọc servers.dat (NBT của Minecraft) bằng cách quét trực tiếp các tag chuỗi "ip"/"name"
-// — đơn giản, chắc chắn hơn parser NBT đầy đủ (file có thể có dữ liệu đuôi).
 function readStringTags(buf, tagName) {
   const results = []
   const nameBytes = Buffer.from(tagName, 'utf8')

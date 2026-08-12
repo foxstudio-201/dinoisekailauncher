@@ -1,6 +1,5 @@
 'use strict'
 
-// Điều khiển tạm dừng / hủy tải cho các tiến trình tải dữ liệu
 const controllers = new Map()
 const actions = new Map()
 

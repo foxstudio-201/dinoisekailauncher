@@ -6,7 +6,6 @@ const https = require('https')
 const fs = require('fs')
 const os = require('os')
 
-// ── Cập nhật launcher — chỉ áp dụng trên Windows ─────────────────────────────
 const REPO = 'foxstudio-201/dinoisekailauncher'
 let BUILTIN_TOKEN = ''
 try { BUILTIN_TOKEN = require('./build-env.cjs').GITHUB_TOKEN || '' } catch {}
@@ -54,7 +53,6 @@ async function checkUpdate() {
     const release = await getLatestRelease()
     const current = app.getVersion() || '0.0.0'
     const latest = String(release.tag_name || '').replace(/^v/i, '')
-    // CHỈ dùng bản có chữ "Setup" — tuyệt đối không dùng bản khác (portable...)
     const asset = (release.assets || []).find(a => /Setup.*\.exe$/i.test(a.name))
     const hasUpdate = compareVersions(latest, current) > 0
     return {

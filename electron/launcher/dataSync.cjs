@@ -7,10 +7,6 @@ const crypto = require('crypto')
 
 const AdmZip = require('adm-zip')
 
-// ── Cấu hình: tránh rate-limit bằng token GitHub nhúng sẵn lúc build ─────────
-// GitHub API cho phép 60 req/h (ẩn danh) — có token: 5.000 req/h.
-// Token được workflow (GH_TOKEN secret) nhúng vào electron/build-env.cjs lúc build;
-// người dùng không cần nhập gì. Build local không có token → chạy ẩn danh.
 const DEFAULT_REPO = 'foxstudio-201/datadinoisekaiserver'
 const REPO = (process.env.GITHUB_DATA_REPO || DEFAULT_REPO).replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '')
 const BASE_REPO = 'foxstudio-201/dinostatedata'
@@ -26,8 +22,6 @@ function baseVersionFilePath(instancePath) {
   return path.join(instancePath, '.dinobase-version')
 }
 
-// Đọc update.txt: các dòng dạng "delete:file1.jar, text.toml, thư mục"
-// và "skip: options.txt, shaderpacks, resourcepacks" (không xóa, không ghi đè)
 function parseUpdateTxt(content) {
   const res = { delete: [], skip: [] }
   for (const line of String(content || '').split(/\r?\n/)) {
@@ -43,7 +37,6 @@ function parseUpdateTxt(content) {
   return res
 }
 
-// Kiểm tra tên/path có nằm trong danh sách bỏ qua (skip) không
 function isSkipped(name, skipNames) {
   if (!skipNames || !skipNames.length) return false
   const n = String(name).replace(/\\/g, '/')
@@ -55,14 +48,11 @@ function isSkipped(name, skipNames) {
   })
 }
 
-// Xóa file/thư mục theo tên trong baseDir (quét đệ quy tìm đúng tên)
-// skipNames: các mục nằm trong danh sách bỏ qua sẽ KHÔNG bị xóa
 function deleteByName(baseDir, names, skipNames = []) {
   let deleted = 0
   for (const raw of names) {
     const n = String(raw).trim()
     if (!n || isSkipped(n, skipNames)) continue
-    // Nếu là đường dẫn tương đối (có / hoặc \) → xóa trực tiếp
     if (n.includes('/') || n.includes('\\')) {
       const rel = n.replace(/\\/g, '/')
       const p = path.join(baseDir, rel)
@@ -71,7 +61,6 @@ function deleteByName(baseDir, names, skipNames = []) {
       }
       continue
     }
-    // Quét đệ quy tìm đúng tên file/thư mục
     ;(function walk(dir) {
       let entries = []
       try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return }
@@ -144,17 +133,14 @@ function httpGetText(url) {
   })
 }
 
-// Lấy release mới nhất KHÔNG qua GitHub API — tránh rate-limit 403 (60 req/h/IP ẩn danh).
-// Dùng redirect của /releases/latest → tag, và trang expanded_assets → tên file .zip/.rar
 async function getWebRelease(repo) {
   const latestUrl = `https://github.com/${repo}/releases/latest`
   let redirect = await httpHeadRedirect(latestUrl)
-  if (!redirect) redirect = await httpHeadRedirect(latestUrl + '/') // vài trường hợp thiếu trailing slash
+  if (!redirect) redirect = await httpHeadRedirect(latestUrl + '/')
   const m = redirect?.match(/\/releases\/tag\/([^/?#]+)/)
   if (!m) throw new Error('Không tìm thấy release mới nhất')
   const tag = decodeURIComponent(m[1])
   const html = await httpGetText(`https://github.com/${repo}/releases/expanded_assets/${encodeURIComponent(tag)}`)
-  // Trong trang HTML, mỗi asset có href="/owner/repo/releases/download/{tag}/{file}"
   const names = []
   const re = /releases\/download\/[^"'#?]+?\/([^"'#?]+)/g
   let mm
@@ -210,7 +196,6 @@ function downloadFile(url, destPath, onProgress, signal) {
       })
       res.pipe(ws)
       ws.on('finish', () => {
-        // Kiểm tra file tải đầy đủ (tránh file cụt gây lỗi EOF khi giải nén)
         if (total > 0 && downloaded !== total) {
           return reject(new Error(`File tải không đầy đủ (${downloaded}/${total} bytes) — vui lòng thử lại`))
         }
@@ -229,7 +214,6 @@ function downloadFile(url, destPath, onProgress, signal) {
   })
 }
 
-// Tải file — 1 luồng duy nhất như bản 0.1.x (ổn định, không lỗi part/multi-thread)
 function downloadFileSmart(url, destPath, onProgress, signal) {
   return downloadFile(url, destPath, onProgress, signal)
 }
@@ -241,9 +225,6 @@ function runTool(tool, args) {
   })
 }
 
-// Tải file và CHẮC CHẮN file tồn tại trước khi quay lại (tránh lỗi AdmZip "Invalid filename"
-// khi file bị xóa/biến mất giữa bước tải và giải nén — trên Windows hay gặp vì %TEMP%/AV).
-// Nếu tải lỗi/thiếu → xóa sạch part hỏng rồi tự tải lại từ đầu 1 lần.
 async function ensureDownloaded(url, destPath, onProgress, signal) {
   const dir = path.dirname(destPath)
   let lastErr = new Error('Không tải được file dữ liệu — vui lòng thử lại')
@@ -256,7 +237,6 @@ async function ensureDownloaded(url, destPath, onProgress, signal) {
       console.error(`[dinosync] Tải thất bại (lần ${attempt}/2): ${err.message}`)
       lastErr = err
     }
-    // Dọn sạch file/part hỏng để lần sau KHÔNG resume phải dữ liệu lỗi
     try {
       if (fs.existsSync(dir)) {
         for (const f of fs.readdirSync(dir)) fs.unlinkSync(path.join(dir, f))
@@ -266,11 +246,6 @@ async function ensureDownloaded(url, destPath, onProgress, signal) {
   }
   throw lastErr
 }
-
-// ── Giải nén TRỰC TIẾP vào thư mục đích (instance) ─────────────────────────────
-// Không còn bước "giải nén vào thư mục tạm rồi copy sang" — trước đây hay lỗi trên
-// Windows vì %TEMP% bị hệ thống/AV dọn giữa chừng (ENOENT) hoặc file đang khóa (EPERM).
-// skipNames (từ update.txt): các entry này KHÔNG được ghi đè → chặn trong tool (--exclude/-x).
 
 function readUpdateTxt(zipPath) {
   if (!/\.rar$/i.test(zipPath)) {
@@ -283,7 +258,6 @@ function readUpdateTxt(zipPath) {
       return null
     }
   }
-  // RAR: đọc qua 7z/unrar in ra stdout
   const { execFileSync } = require('child_process')
   for (const c of [
     { tool: '7z',     args: ['e', '-so', zipPath, 'update.txt'] },
@@ -297,7 +271,6 @@ function readUpdateTxt(zipPath) {
   return null
 }
 
-// Zip có 1 thư mục gốc duy nhất (vd. update/...) → trả tên thư mục đó để dời nội dung lên sau giải nén
 function detectZipRootDir(zipPath) {
   if (/\.rar$/i.test(zipPath)) return null
   try {
@@ -309,7 +282,6 @@ function detectZipRootDir(zipPath) {
   return null
 }
 
-// Dời nội dung của thư mục con (vừa giải nén trong instance) lên đúng chỗ — rename cùng ổ rất nhanh
 async function moveContentsUp(base, sub) {
   const srcDir = path.join(base, sub)
   if (!fs.existsSync(srcDir)) return
@@ -336,7 +308,6 @@ async function moveContentsUp(base, sub) {
   try { fs.rmSync(srcDir, { recursive: true, force: true }) } catch {}
 }
 
-// Tham số loại trừ theo tool: skipNames không được ghi đè
 function toolExcludes(tool, skipNames) {
   if (!skipNames || !skipNames.length) return []
   const patterns = []
@@ -362,7 +333,6 @@ async function extractZipDirectly(zipPath, destDir, opts = {}) {
   }
   const isRar = /\.rar$/i.test(zipPath)
   const isWin = process.platform === 'win32'
-  // Ưu tiên tool hệ thống — nhanh, chạy ngoài process nên không đóng băng cửa sổ
   const candidates = isRar
     ? (isWin
         ? [
@@ -378,7 +348,7 @@ async function extractZipDirectly(zipPath, destDir, opts = {}) {
           ])
     : (isWin
         ? [
-            { tool: 'tar',    args: ['-xf', zipPath, '-C', destDir] },  // Windows 10+ có sẵn tar (libarchive)
+            { tool: 'tar',    args: ['-xf', zipPath, '-C', destDir] }, 
             { tool: 'bsdtar', args: ['-xf', zipPath, '-C', destDir] },
             { tool: '7z',     args: ['x', '-y', `-o${destDir}`, zipPath] },
           ]
@@ -399,8 +369,6 @@ async function extractZipDirectly(zipPath, destDir, opts = {}) {
     }
   }
   if (isRar) throw new Error('Không giải nén được file dữ liệu (thiếu 7z/unrar/bsdtar)')
-  // Fallback cuối: AdmZip giải nén theo batch — nhường event loop, không treo cửa sổ;
-  // bỏ qua các entry thuộc danh sách skip
   await new Promise((resolve, reject) => {
     try {
       const zip = new AdmZip(zipPath)
@@ -431,16 +399,11 @@ async function extractZipDirectly(zipPath, destDir, opts = {}) {
   return destDir
 }
 
-
-// Cache tải nằm TRONG instance (không phải %TEMP% — trên Windows hay bị dọn/AV quét gây EPERM/ENOENT).
-// Sau khi sync thành công sẽ xóa sạch; lỗi giữa chừng thì giữ zip để lần sau khỏi tải lại.
 function dlCacheDir(instancePath, url) {
   const hash = crypto.createHash('sha1').update(url).digest('hex').slice(0, 16)
   return path.join(instancePath, '.dinosync-cache', hash)
 }
 
-// Xóa thư mục an toàn: Windows giữ file vừa ghi (ghi đệm/AV quét) → retry vài lần,
-// vẫn lỗi thì bỏ qua (rác temp không đáng để làm hỏng kết quả sync đã thành công)
 async function safeRm(dir) {
   if (!dir) return
   for (let attempt = 1; attempt <= 4; attempt++) {
@@ -473,7 +436,6 @@ async function runDataSync(profile, onProgress) {
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu mới...' })
     const release = await getLatestRelease()
     const assetExt = path.extname(release.asset.name) || '.zip'
-    // Thư mục cache ổn định theo URL → giữ part files để resume khi pause/cancel
     dlDir = dlCacheDir(instancePath, release.asset.browser_download_url)
     fs.mkdirSync(dlDir, { recursive: true })
     const zipPath = path.join(dlDir, 'data' + assetExt)
@@ -488,7 +450,6 @@ async function runDataSync(profile, onProgress) {
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 100, log: `Có bản dữ liệu mới: ${release.version}` })
     checkAbort()
 
-    // 2. Tải về (tải tiếp nếu có part từ lần trước)
     onProgress({ phase: 'download', item: 'Tải dữ liệu', percent: 0, log: 'Đang tải dữ liệu...' })
     await ensureDownloaded(release.asset.browser_download_url, zipPath, (p) => {
       const pc = p.total ? Math.round((p.downloaded / p.total) * 100) : 0
@@ -496,13 +457,11 @@ async function runDataSync(profile, onProgress) {
     }, getSignal('dSync'))
     checkAbort()
 
-    // 3. Đọc update.txt (trong zip) → xóa file cũ theo danh sách delete, giữ nguyên skip
     const utxt = readUpdateTxt(zipPath)
     const parsed = utxt ? parseUpdateTxt(utxt) : { delete: [], skip: [] }
     const deletedCount = parsed.delete.length ? deleteByName(instancePath, parsed.delete, parsed.skip) : 0
     const rootDir = detectZipRootDir(zipPath)
 
-    // 4. Giải nén TRỰC TIẾP vào instance — không giải nén tạm rồi copy (tránh lỗi %TEMP%/EPERM trên Windows)
     onProgress({ phase: 'extract', item: 'Giải nén', percent: 0, log: 'Đang giải nén... Xin vui lòng chờ' })
     await extractZipDirectly(zipPath, instancePath, {
       skipNames: parsed.skip,
@@ -529,7 +488,6 @@ async function runDataSync(profile, onProgress) {
     throw err
   } finally {
     endOp('dSync')
-    // Giữ dlDir (zip + part) nếu chưa hoàn tất để resume lần sau; dọn khi sync xong
     if (dlDir && synced) await safeRm(dlDir)
   }
 }
@@ -547,10 +505,6 @@ async function checkDataSync(profile) {
   }
 }
 
-// ── Dữ liệu gốc (dinostatedata) — tự động cập nhật theo phiên bản ──────────
-// Giống data update: lấy TAG mới nhất (không qua GitHub API — tránh 403 rate-limit),
-// so với .dinobase-version trong instance, nếu khác → tải zip mới, giải nén,
-// đọc update.txt (delete + skip) rồi đồng bộ.
 async function getBaseRelease() {
   return getWebRelease(BASE_REPO)
 }
@@ -590,13 +544,11 @@ async function runBaseDataSync(profile, onProgress) {
     }, getSignal('dSync'))
     checkAbort()
 
-    // Đọc update.txt (trong zip) → xóa file cũ theo danh sách delete, giữ nguyên skip
     const utxt = readUpdateTxt(zipPath)
     const parsed = utxt ? parseUpdateTxt(utxt) : { delete: [], skip: [] }
     const deletedCount = parsed.delete.length ? deleteByName(instancePath, parsed.delete, parsed.skip) : 0
     const rootDir = detectZipRootDir(zipPath)
 
-    // Giải nén TRỰC TIẾP vào instance — không giải nén tạm rồi copy (tránh lỗi %TEMP%/EPERM trên Windows)
     onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: 0, log: 'Đang giải nén... Xin vui lòng chờ' })
     await extractZipDirectly(zipPath, instancePath, {
       skipNames: parsed.skip,
@@ -623,7 +575,6 @@ async function runBaseDataSync(profile, onProgress) {
     throw err
   } finally {
     endOp('dSync')
-    // Giữ dlDir (zip + part) nếu chưa hoàn tất để resume lần sau; dọn khi sync xong
     if (dlDir && synced) await safeRm(dlDir)
   }
 }

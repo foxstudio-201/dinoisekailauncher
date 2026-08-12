@@ -79,7 +79,6 @@ function resolveAddress(host, port) {
 }
 
 async function pingServer(host, port, timeoutMs = 5000) {
-  // Resolve address (DNS + SRV)
   const resolved = await resolveAddress(host, port || 25565)
   const targetHost = resolved.host
   const targetPort = resolved.port
@@ -90,7 +89,6 @@ async function pingServer(host, port, timeoutMs = 5000) {
     let buf = Buffer.alloc(0)
     let statusJson = null
     let pingSentTime = 0
-    // 0=waiting status, 1=waiting pong
     let stage = 0
 
     const timer = setTimeout(() => {
@@ -108,21 +106,18 @@ async function pingServer(host, port, timeoutMs = 5000) {
 
     function tryParse() {
       while (buf.length > 0 && !resolved_) {
-        // Read packet length VarInt
         const lenR = readVarInt(buf, 0)
         if (!lenR) return
         const packetLen = lenR.value
         const totalLen = lenR.offset + packetLen
         if (buf.length < totalLen) return
 
-        // Read packet ID VarInt
         const idR = readVarInt(buf, lenR.offset)
         if (!idR) return
         const packetId = idR.value
         let consumed = idR.offset
 
         if (packetId === 0x00 && stage === 0) {
-          // Status response
           const jsonR = readVarInt(buf, consumed)
           if (!jsonR) return
           consumed = jsonR.offset
@@ -130,7 +125,6 @@ async function pingServer(host, port, timeoutMs = 5000) {
           statusJson = buf.toString('utf8', consumed, consumed + jsonR.value)
           buf = buf.subarray(totalLen)
 
-          // Send ping request
           stage = 1
           pingSentTime = Date.now()
           const pingPayload = Buffer.alloc(8)
@@ -138,11 +132,10 @@ async function pingServer(host, port, timeoutMs = 5000) {
           const pingInner = Buffer.alloc(1)
           writeVarInt(pingInner, 0, 0x01)
           socket.write(encodePacket(Buffer.concat([pingInner, pingPayload])))
-          continue // Check for pong in remaining buffer
+          continue 
         }
 
         if (packetId === 0x01 && stage === 1) {
-          // Pong response
           buf = buf.subarray(totalLen)
           const latency = Date.now() - pingSentTime
           try {
@@ -152,26 +145,23 @@ async function pingServer(host, port, timeoutMs = 5000) {
           return
         }
 
-        // Unknown packet / state mismatch — discard and move on
         buf = buf.subarray(totalLen)
       }
     }
 
     socket.connect(targetPort, targetHost, () => {
-      // Handshake (packet ID 0x00, next state = 1 = status)
       const hostStr = targetHost
       const hostLen = Buffer.byteLength(hostStr, 'utf8')
       const hBuf = Buffer.alloc(1 + varIntLength(-1) + varIntLength(hostLen) + hostLen + 2 + 1)
       let off = 0
       off = writeVarInt(hBuf, off, 0x00)
-      off = writeVarInt(hBuf, off, -1)          // protocol -1 = auto
+      off = writeVarInt(hBuf, off, -1)          
       off = writeVarInt(hBuf, off, hostLen)
       hBuf.write(hostStr, off, 'utf8'); off += hostLen
       hBuf.writeUInt16BE(targetPort, off); off += 2
-      off = writeVarInt(hBuf, off, 1)            // next state = status
+      off = writeVarInt(hBuf, off, 1)          
       socket.write(encodePacket(hBuf.subarray(0, off)))
 
-      // Status request (empty 0x00)
       const req = Buffer.alloc(1)
       writeVarInt(req, 0, 0x00)
       socket.write(encodePacket(req))

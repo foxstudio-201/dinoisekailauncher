@@ -32,7 +32,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAccounts } from '../hooks/useAccounts'
 import PlayerHead from './ui/PlayerHead'
-import coinIcon from '../assets/item/coin.png'
 import martianIcon from '../assets/martian-icon.png'
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
@@ -140,7 +139,6 @@ export default function TitleBar({ instances = [], onKillInstance, onCloseReques
   const [showModal, setShowModal] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [pending, setPending]     = useState([])
-  const [coins, setCoins]         = useState(0)
   const notifRef = useRef(null)
   const { selectedAccount } = useAccounts()
   const myUuid = selectedAccount?.uuid

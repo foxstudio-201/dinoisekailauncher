@@ -572,9 +572,7 @@
     "plugins": {
       "labelPlugin": "Plugin",
       "labelMod": "Mod",
-      "searchPlaceholderModrinth": "Search plugins on Modrinth (EssentialsX, LuckPerms...)",
       "searchPlaceholderSpigot": "Search plugins on Spigot (EssentialsX, WorldEdit...)",
-      "searchPlaceholderMod": "Search mods on Modrinth (JEI, Sodium, Iris...)",
       "sourceLabel": "Source: {{source}}",
       "forVersion": "For",
       "noResults": "No {{type}} found",
@@ -585,7 +583,6 @@
         "allVersions": "All",
         "versions": "{{count}} versions",
         "noVersions": "No versions for {{version}}",
-        "noVersionsHint": "Try searching on Modrinth",
         "loadingVersions": "Loading versions...",
         "installBtn": "Download {{type}}",
         "installing": "Downloading...",
@@ -616,136 +613,6 @@
       "processing": "Processing...",
       "addBtn": "Add account",
       "noNameYet": "No name yet"
-    }
-  },
-  "playpage": {
-    "tabs": {
-      "allProfiles": "All Profiles",
-      "groups": "Groups"
-    },
-    "buttons": {
-      "newGroup": "New Group",
-      "create": "Create",
-      "newProfile": "New Profile",
-      "importProfile": "Import Profile"
-    },
-    "filters": {
-      "all": "All",
-      "vanilla": "Vanilla",
-      "fabric": "Fabric",
-      "forge": "Forge",
-      "neoforge": "NeoForge",
-      "modpack": "Modpack"
-    },
-    "loading": {
-      "loading": "Loading...",
-      "loadingProfile": "Loading profile..."
-    },
-    "empty": {
-      "noGroups": "No groups yet",
-      "noGroupsHint": "Create a group to organize your profiles",
-      "createFirstGroup": "+ Create first group",
-      "noProfiles": "No profiles yet",
-      "noProfilesHint": "Create a profile to start playing Minecraft",
-      "noProfilesMatch": "No matching profiles",
-      "noProfilesMatchHint": "Try selecting a different filter",
-      "createFirstProfile": "+ Create first profile",
-      "noProfilesInGroup": "This group has no profiles yet"
-    },
-    "toast": {
-      "profileSelected": "Profile selected",
-      "profileDeleted": "Profile deleted",
-      "groupCreated": "Group created",
-      "groupDeleted": "Group deleted",
-      "profileCreated": "Profile created",
-      "errorSelecting": "Error",
-      "errorDeleting": "Error deleting profile",
-      "errorCreatingGroup": "Error creating group",
-      "errorDeletingGroup": "Error deleting group"
-    },
-    "group": {
-      "allGroups": "All groups",
-      "profiles": "profiles",
-      "removeFromGroup": "Remove from group"
-    },
-    "modal": {
-      "createGroupTitle": "Create new group",
-      "groupName": "Group name",
-      "groupNamePlaceholder": "Enter group name...",
-      "cancel": "Cancel",
-      "creating": "Creating...",
-      "createGroup": "Create group"
-    },
-    "card": {
-      "deleteGroup": "Delete group",
-      "selected": "Selected",
-      "select": "Select",
-      "modpack": "Modpack",
-      "deleteConfirm": "Delete this profile?",
-      "delete": "Delete",
-      "cancel": "Cancel",
-      "openFolder": "Open folder: {{path}}",
-      "deleteProfile": "Delete profile"
-    },
-    "createProfile": {
-      "title": "Create Profile",
-      "loader": "Loader",
-      "selectMinecraftVersion": "Select Minecraft version",
-      "selectLoaderVersion": "Select {{loader}} version",
-      "profileName": "Profile name",
-      "profileNamePlaceholder": "Empty = auto",
-      "gameFolder": "Game folder",
-      "gameFolderPlaceholder": "Default in instances",
-      "browse": "Browse",
-      "group": "Group (optional)",
-      "backToMinecraft": "Minecraft {{version}}",
-      "loadingLoaderVersions": "Loading {{loader}} loader for {{version}}...",
-      "retry": "Retry",
-      "noLoaderVersions": "No versions available",
-      "recommended": "Recommended",
-      "stable": "Stable",
-      "beta": "Beta",
-      "old": "Old",
-      "latest": "Latest",
-      "all": "All",
-      "neoforgeHint": "NeoForge supports Minecraft 1.20.2 and above",
-      "createBtn": "Create {{loader}} Profile",
-      "creating": "Loading...",
-      "cancel": "Cancel"
-    },
-    "importProfile": {
-      "title": "Import Profile",
-      "subtitle": "Import from modpack .zip / .mrpack",
-      "minimize": "Minimize",
-      "close": "Close",
-      "group": "Group (optional)",
-      "dropHere": "Drop file here",
-      "dragDrop": "Drag & drop or click to select file",
-      "supportedFormats": "Supported {{source}}",
-      "readingFile": "Reading file...",
-      "readyToImport": "Ready to import",
-      "selectFile": "Select file to import",
-      "minimizedTitle": "Click to reopen",
-      "huy": "Cancel",
-      "import": "Import",
-      "creatingProfile": "Creating profile...",
-      "startImport": "Starting import...",
-      "downloadMods": "Download mods {{current}}/{{total}}",
-      "extracting": "Extracting...",
-      "importDone": "Import complete!",
-      "importing": "Importing...",
-      "errorCreatingProfile": "Error creating profile: {{error}}",
-      "errorImport": "Error: {{error}}",
-      "errorNetwork": "Check your network connection. Some mods may require CurseForge API key.",
-      "unnamed": "Unnamed",
-      "mods": "mods"
-    },
-    "profileCard": {
-      "delete": "Delete",
-      "settings": "Settings",
-      "lastPlayed": "Last played",
-      "never": "Never",
-      "hours": "Hours"
     }
   },
   "profileSettings": {
@@ -795,66 +662,6 @@
       "autoPerformanceModsDesc": "When enabled: auto-downloads Fabric API, Mod Menu, VoxelXSkins and performance mods on launch. When disabled: runs pure Fabric with no mods installed.",
       "autoPerformanceModsOn": "Enabled",
       "autoPerformanceModsOff": "Disabled"
-    },
-    "mods": {
-      "loading": "Loading mods...",
-      "search": "Search mods...",
-      "noResults": "No mods found",
-      "emptyTitle": "No mods yet",
-      "emptyDesc": "Drop .jar files here or install from Modrinth / CurseForge",
-      "installing": "Installing {{count}} file(s)...",
-      "disabled": "Disabled",
-      "deleteConfirm": "Delete?",
-      "delete": "Delete",
-      "cancel": "Cancel",
-      "enableMod": "Enable mod",
-      "disableMod": "Disable mod",
-      "deleteMod": "Delete mod",
-      "enable": "Enable",
-      "disable": "Disable"
-    },
-    "shaders": {
-      "loading": "Loading shaders...",
-      "search": "Search shaders...",
-      "noResults": "No shaders found",
-      "emptyTitle": "No shaders yet",
-      "emptyDesc": "Drop .zip / .rar files here or install into shaderpacks folder",
-      "installing": "Installing {{count}} file(s)...",
-      "deleteConfirm": "Delete?",
-      "delete": "Delete",
-      "cancel": "Cancel",
-      "deleteShader": "Delete shader"
-    },
-    "resourcepacks": {
-      "loading": "Loading resource packs...",
-      "search": "Search resource packs...",
-      "noResults": "No resource packs found",
-      "emptyTitle": "No resource packs yet",
-      "emptyDesc": "Drop .zip / .rar files here or install into resourcepacks folder",
-      "installing": "Installing {{count}} file(s)...",
-      "deleteConfirm": "Delete?",
-      "delete": "Delete",
-      "cancel": "Cancel",
-      "deletePack": "Delete resource pack"
-    },
-    "worlds": {
-      "loading": "Loading worlds...",
-      "search": "Search worlds...",
-      "noResults": "No worlds found",
-      "emptyTitle": "No worlds yet",
-      "emptyDesc": "Create a world in-game to see it here",
-      "deleteConfirm": "Delete?",
-      "delete": "Delete",
-      "cancel": "Cancel",
-      "deleteWorld": "Delete world"
-    },
-    "files": {
-      "loading": "Loading folder...",
-      "emptyTitle": "Empty folder",
-      "emptyDesc": "No files or folders in this location.",
-      "refresh": "Refresh",
-      "folder": "Folder",
-      "file": "File"
     }
   },
   "gaming": {
@@ -883,18 +690,9 @@
     "conflictingMods": "Conflicting mods",
     "unknownCrash": "Unknown crash",
     "unknownCrashDesc": "No specific cause detected from Fabric. Check the log below for details.",
-    "modsToInstall": "Mods to install / update ({{count}})",
     "errorLog": "Error log",
-    "allFixed": "All installed — restart the game to apply",
-    "installedCount": "Installed {{done}}/{{total}} mods",
-    "installHint": "Install mods above to fix the crash",
     "viewLog": "Check the log to find the cause",
     "close": "Close",
-    "requires": "Requires:",
-    "neededBy": "Needed by:",
-    "searching": "Searching...",
-    "download": "Download",
-    "installed": "Installed",
     "notFound": "Not found",
     "retry": "Retry",
     "downloading": "Downloading..."

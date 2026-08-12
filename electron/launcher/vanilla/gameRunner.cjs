@@ -133,8 +133,6 @@ function buildClasspath(libraries, clientJar) {
   const normalize = p => p.replace(/\\/g, '/').toLowerCase()
   const clientNorm = normalize(clientJar)
 
-  // BootstrapLauncher (Forge 1.20+) dựng union filesystem từ java.class.path:
-  // cùng 1 path xuất hiện 2 lần → "Duplicate key … (attempted merging values …)".
   const seen = new Set()
   const libs = libraries.filter(l => {
     if (!fs.existsSync(l)) return false
@@ -165,7 +163,6 @@ function launchGame(opts) {
 
   if (!fs.existsSync(instancePath)) fs.mkdirSync(instancePath, { recursive: true })
 
-  // Dọn log cũ: chỉ giữ file log + crash log mới nhất (tránh đầy bộ nhớ)
   cleanOldLogs(instancePath)
 
   const vars = {
@@ -196,7 +193,6 @@ function launchGame(opts) {
   const javaMajor = detectJavaMajorVersion(javaPath) ?? (versionJson?.javaVersion?.majorVersion ?? 17)
   const gcArgs    = buildGcArgs(javaMajor, ramMb)
 
-  // Big core detection — a separate toggle from boost mode
   const bigCores = bigCoreMode ? detectPerformanceCores() : []
 
   const boostJvmArgs = boostMode ? [
@@ -208,7 +204,6 @@ function launchGame(opts) {
     `-XX:ActiveProcessorCount=${bigCores.length}`,
   ] : []
 
-  // Linux: use taskset at spawn to pin to physical cores
   const useTaskset = bigCores.length > 0 && process.platform === 'linux'
   const bigCoreCmd = useTaskset ? 'taskset' : null
   const bigCoreArgs = useTaskset ? ['-c', bigCores.join(',')] : []
@@ -253,11 +248,6 @@ function launchGame(opts) {
 
   let versionJvmArgs
   if (isForge) {
-
-    // Forge still needs the full classpath on -cp (the bootstraplauncher module
-    // path is supplied by the forge jvm args). Launchers that merge the vanilla
-    // jvm args (CurseForge, Modrinth) include this -cp; omitting it changes how
-    // the JPMS module layer resolves mods and can cause split-package crashes.
     versionJvmArgs = ['-cp', classpath]
   } else if (needsVanillaCP) {
 
@@ -309,7 +299,6 @@ function launchGame(opts) {
     const host = parts[0]
     const port = parts.length > 1 ? parseInt(parts[1], 10) : 25565
 
-    // Detect if version uses new --quickPlayMultiplayer format (1.20+ / 23w14a+)
     let useQuickPlay = false
     const gameArgs = versionJson.arguments?.game
     if (Array.isArray(gameArgs)) {
@@ -367,7 +356,6 @@ function launchGame(opts) {
     env: spawnEnv,
   })
 
-  // Post-spawn affinity/priority for non-Linux platforms
   if (bigCores.length > 0 && proc.pid) {
     if (process.platform === 'win32') {
       setWindowsProcessAffinity(proc.pid, bigCores)
@@ -415,10 +403,6 @@ function launchGame(opts) {
   return proc
 }
 
-/**
- * Windows: set processor affinity and high-priority class via PowerShell.
- * Runs asynchronously; errors are silently swallowed.
- */
 function setWindowsProcessAffinity(pid, cores) {
   try {
     const mask = cores.reduce((acc, c) => acc | (1 << c), 0)
@@ -432,10 +416,6 @@ function setWindowsProcessAffinity(pid, cores) {
   } catch {}
 }
 
-/**
- * macOS: renice to highest priority and try taskpolicy demand mode.
- * Runs asynchronously; errors are silently swallowed.
- */
 function setMacOsProcessAffinity(pid) {
   try {
     const { exec } = require('child_process')
@@ -444,13 +424,6 @@ function setMacOsProcessAffinity(pid) {
   } catch {}
 }
 
-/**
- * Dọn dẹp log cũ mỗi khi khởi chạy game:
- * - logs/         → chỉ giữ file .log mới nhất, xóa phần còn lại
- * - crash-reports/→ chỉ giữ file crash mới nhất, xóa phần còn lại
- * - hs_err_pid*.log ở root instance → chỉ giữ bản mới nhất
- * Lỗi đều bỏ qua (không chặn launch game).
- */
 function cleanOldLogs(instancePath) {
   try {
     const keepNewest = (dir, filter) => {

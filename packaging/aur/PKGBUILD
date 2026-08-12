@@ -3,8 +3,8 @@
 pkgname=dino-isekai-local
 _appname="Dino Isekai"
 _binname=dino-isekai
-pkgver=0.2.15
-pkgrel=166
+pkgver=0.2.17
+pkgrel=168
 pkgdesc="Dino Isekai - Minecraft Launcher by FoxStudio (local build)"
 arch=('x86_64')
 url="https://github.com/foxstudio-201/VoxelXClient"
@@ -30,6 +30,11 @@ package() {
   install -d "${pkgdir}/opt/${_appname}"
   cp -r linux-unpacked/* "${pkgdir}/opt/${_appname}/"
   cp -r linux-unpacked/.[!.]* "${pkgdir}/opt/${_appname}/" 2>/dev/null || true
+
+  # Bỏ file không cần thiết để giảm dung lượng gói
+  rm -f "${pkgdir}/opt/${_appname}/LICENSES.chromium.html"
+  rm -f "${pkgdir}/opt/${_appname}/chrome_crashpad_handler"
+  rm -f "${pkgdir}/opt/${_appname}/libvulkan.so.1"
 
   chmod 4755 "${pkgdir}/opt/${_appname}/chrome-sandbox"
 

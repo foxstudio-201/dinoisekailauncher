@@ -43,13 +43,11 @@ const { checkUpdate, downloadUpdateToTemp, installUpdate } = require('./updater.
 
 const isDev = process.env.NODE_ENV === 'development'
 
-// ── Single instance lock: ngăn mở nhiều instance cùng lúc ─────────────────
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
 } else {
   app.on('second-instance', () => {
-    // Khi user mở app lần 2 (double-click, shortcut...), focus lại instance cũ
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()
       if (!mainWindow.isVisible()) mainWindow.show()
@@ -265,7 +263,6 @@ function createMainWindow() {
     return { action: 'deny' }
   })
 
-  // Phím tắt mở/đóng DevTools ngay cả khi đã đóng gói (F12 / Ctrl+Shift+I)
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.type !== 'keyDown') return
     const isShortcut =
@@ -343,11 +340,8 @@ function createTray() {
       },
     ])
 
-    // BẮT BUỘC cho Linux: AppIndicator/StatusNotifier chỉ hiển thị qua
-    // context menu này; các sự kiện click/right-click không hoạt động trên Linux.
     tray.setContextMenu(trayMenu)
 
-    // Windows/macOS: click trái mở app (Linux bỏ qua, dùng menu).
     tray.on('click', () => {
       openMainWindow()
     })
@@ -396,13 +390,11 @@ async function linuxGpuName() {
 }
 
 async function windowsGpuName() {
-  // PowerShell lấy tên các card đồ họa
   try {
     const out = await execOut('powershell', ['-NoProfile', '-Command', '(Get-CimInstance Win32_VideoController).Name'])
     const names = out.split('\n').map(s => s.trim()).filter(Boolean)
     if (names.length) return names[0]
   } catch {}
-  // Fallback wmic
   try {
     const out = await execOut('wmic', ['path', 'win32_VideoController', 'get', 'name'])
     const names = out.split('\n').map(s => s.trim()).filter(Boolean).filter(s => !/^name$/i.test(s))
@@ -436,7 +428,6 @@ app.whenReady().then(() => {
     }
   })
 
-  // ── Cập nhật launcher (chỉ Windows) ───────────────────────────────────────
   ipcMain.handle('update:check', async () => {
     return checkUpdate()
   })
@@ -463,7 +454,6 @@ app.whenReady().then(() => {
     return { ok: true }
   })
 
-  // ── Thông tin hệ thống (CPU / GPU) ────────────────────────────────────────
   ipcMain.handle('system:info', async (e) => {
     if (!getTrustedWindow(e)) return null
     const os = require('os')
@@ -471,11 +461,9 @@ app.whenReady().then(() => {
     let gpu = 'Unknown GPU'
 
     if (process.platform === 'linux') {
-      // Linux: ưu tiên lspci / nvidia-smi (Electron hay trả ID hex như "10de:1f82")
       const name = await linuxGpuName()
       if (name) gpu = name
     } else if (process.platform === 'win32') {
-      // Windows: ưu tiên PowerShell (lấy tên card đầy đủ)
       const name = await windowsGpuName()
       if (name) gpu = name
     }
@@ -545,7 +533,7 @@ app.whenReady().then(() => {
           "font-src 'self' data:;" +
           "img-src 'self' data: blob: https:;" +
           "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://youtube-nocookie.com https://youtube.com;" +
-          "connect-src 'self' blob: http://localhost:5173 ws://localhost:5173 https://minotar.net https://crafthead.net https://mc-heads.net https://meta.fabricmc.net https://maven.fabricmc.net https://api.modrinth.com https://cdn.modrinth.com https://files.minecraftforge.net https://repo1.maven.org https://maven.neoforged.net https://api.foxstudio.site https://api.github.com https://github.com https://raw.githubusercontent.com https://voxelx.io.vn https://www.voxelx.io.vn https://foxstudio.site;"
+          "connect-src 'self' blob: http://localhost:5173 ws://localhost:5173 https://minotar.net https://crafthead.net https://mc-heads.net https://meta.fabricmc.net https://maven.fabricmc.net https://files.minecraftforge.net https://repo1.maven.org https://maven.neoforged.net https://api.foxstudio.site https://api.github.com https://github.com https://raw.githubusercontent.com https://voxelx.io.vn https://www.voxelx.io.vn https://foxstudio.site;"
         ],
       },
     })
@@ -743,9 +731,6 @@ ipcMain.handle('neoforge:getVersions', async (e, gameVersion) => {
         })
       }).on('error', reject)
     })
-    // NeoForge versions are split across two maven groups:
-    //  - net/neoforged/neoforge  → "20.4.x" (MC 1.20.4+), "21.1.x" (MC 1.21.1)...
-    //  - net/neoforged/forge     → "1.20.1-47.x.x" (MC 1.20.1)
     const urls = [
       'https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml',
       'https://maven.neoforged.net/releases/net/neoforged/forge/maven-metadata.xml',
@@ -760,9 +745,8 @@ ipcMain.handle('neoforge:getVersions', async (e, gameVersion) => {
       }
     }
     const mcKey = gameVersion.startsWith('1.')
-      ? gameVersion.replace(/^1\./, '')   // "1.21.1" → "21.1"
-      : gameVersion                        // "26" → "26"
-    // Match both naming styles: "1.20.1-47.x.x" (prefixed) and "20.4.x".
+      ? gameVersion.replace(/^1\./, '')  
+      : gameVersion
     const matched = versions.filter(v =>
       v.startsWith(gameVersion + '-') || v.startsWith(mcKey + '.')
     )
@@ -791,510 +775,6 @@ ipcMain.handle('minecraft:listVersions', async (e) => {
     const versions = await listVersions()
     return { ok: true, data: versions }
   } catch (err) {
-    return { error: err.message }
-  }
-})
-
-ipcMain.handle('modpack:browse', async (e) => {
-  const win = getTrustedWindow(e)
-  if (!win) return { error: 'Unauthorized' }
-
-  const { dialog } = require('electron')
-  const result = await dialog.showOpenDialog(win, {
-    title:       'Chọn file modpack',    buttonLabel: 'Chọn',
-    filters: [
-      { name: 'Modpack', extensions: ['zip', 'mrpack'] },
-      { name: 'All Files', extensions: ['*'] },
-    ],
-    properties: ['openFile'],
-  })
-
-  if (result.canceled || !result.filePaths.length) return { canceled: true }
-  const filePath = result.filePaths[0]
-  const name = require('path').basename(filePath)
-  return { ok: true, filePath, name }
-})
-
-ipcMain.handle('modpack:readMeta', async (e, filePath) => {
-  if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
-  if (typeof filePath !== 'string') return { error: 'Invalid path' }
-
-  const fs   = require('fs')
-  const path = require('path')
-  const zlib = require('zlib')
-
-  if (!fs.existsSync(filePath)) return { error: 'File không tồn tại' }
-
-  try {
-    const buf = fs.readFileSync(filePath)
-    function readZipEntry(name) {
-      let eocdOffset = -1
-      for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65558); i--) {
-        if (buf.readUInt32LE(i) === 0x06054b50) { eocdOffset = i; break }
-      }
-      if (eocdOffset < 0) return null
-      const cdOffset = buf.readUInt32LE(eocdOffset + 16)
-      const cdCount  = buf.readUInt16LE(eocdOffset + 10)
-      let pos = cdOffset
-      for (let i = 0; i < cdCount; i++) {
-        if (buf.readUInt32LE(pos) !== 0x02014b50) break
-        const compMethod  = buf.readUInt16LE(pos + 10)
-        const compSize    = buf.readUInt32LE(pos + 20)
-        const fnLen       = buf.readUInt16LE(pos + 28)
-        const extraLen    = buf.readUInt16LE(pos + 30)
-        const commentLen  = buf.readUInt16LE(pos + 32)
-        const localOffset = buf.readUInt32LE(pos + 42)
-        const fileName    = buf.slice(pos + 46, pos + 46 + fnLen).toString('utf8')
-        if (fileName === name) {
-          const lfnLen  = buf.readUInt16LE(localOffset + 26)
-          const lexLen  = buf.readUInt16LE(localOffset + 28)
-          const dataOff = localOffset + 30 + lfnLen + lexLen
-          const comp    = buf.slice(dataOff, dataOff + compSize)
-          if (compMethod === 0) return comp
-          if (compMethod === 8) return zlib.inflateRawSync(comp)
-          return null
-        }
-        pos += 46 + fnLen + extraLen + commentLen
-      }
-      return null
-    }
-
-    const baseName = path.basename(filePath).replace(/\.(zip|mrpack)$/i, '')
-    let name = baseName, gameVersion = '', loader = '', loaderVersion = ''
-    let iconBase64 = null
-    let iconUrl    = null
-
-    const manifestData = readZipEntry('manifest.json')
-    if (manifestData) {
-      const manifest = JSON.parse(manifestData.toString('utf8'))
-      name        = manifest.name || baseName
-      gameVersion = manifest.minecraft?.version || ''
-      const loaderRaw = (manifest.minecraft?.modLoaders || [])[0]?.id || ''
-      if (loaderRaw.startsWith('neoforge-'))    { loader = 'neoforge'; loaderVersion = loaderRaw.replace('neoforge-', '') }
-      else if (loaderRaw.startsWith('forge-'))  { loader = 'forge';    loaderVersion = loaderRaw.replace('forge-', '') }
-      else if (loaderRaw.startsWith('fabric-')) { loader = 'fabric';   loaderVersion = loaderRaw.replace('fabric-', '') }
-      else { loader = 'forge'; loaderVersion = loaderRaw }
-      if (manifest.image) iconUrl = manifest.image    }
-
-    const mrData = readZipEntry('modrinth.index.json')
-    if (mrData) {
-      const mr = JSON.parse(mrData.toString('utf8'))
-      name        = mr.name || baseName
-      gameVersion = mr.dependencies?.minecraft || ''
-      if (mr.dependencies?.['fabric-loader'])   { loader = 'fabric';   loaderVersion = mr.dependencies['fabric-loader'] }
-      else if (mr.dependencies?.['neoforge'])   { loader = 'neoforge'; loaderVersion = mr.dependencies['neoforge'] }
-      else if (mr.dependencies?.['forge'])      { loader = 'forge';    loaderVersion = mr.dependencies['forge'] }
-      else if (mr.dependencies?.['quilt-loader']){ loader = 'quilt';   loaderVersion = mr.dependencies['quilt-loader'] }
-    }
-    for (const iconName of ['icon.png', 'pack.png']) {
-      const iconData = readZipEntry(iconName)
-      if (iconData) {
-        iconBase64 = 'data:image/png;base64,' + iconData.toString('base64')
-        break
-      }
-    }
-
-    return { ok: true, name, gameVersion, loader, loaderVersion, iconBase64, iconUrl, filePath }
-  } catch (err) {
-    return { error: err.message }
-  }
-})
-
-ipcMain.handle('profiles:importModpack', async (e, { filePath, source, profileId }) => {
-  const win = getTrustedWindow(e)
-  if (!win) return { error: 'Unauthorized' }
-
-  const path = require('path')
-  const fs   = require('fs')
-  const { fork } = require('child_process')
-
-  if (!filePath || !fs.existsSync(filePath)) return { error: 'File không tồn tại' }
-  if (!['curseforge', 'modrinth'].includes(source)) return { error: 'Source không hợp lệ' }
-
-  const DATA_DIR_IMPORT = path.join(require('electron').app.getPath('appData'), '.DinoIsekai')
-  const PROFILES_FILE_IMPORT = path.join(DATA_DIR_IMPORT, 'profiles.json')
-  let profilesData
-  try { profilesData = JSON.parse(fs.readFileSync(PROFILES_FILE_IMPORT, 'utf-8')) }
-  catch { profilesData = { profiles: [] } }
-  const profile = profilesData.profiles.find(p => p.id === profileId)
-  if (!profile) return { error: 'Profile không tồn tại' }
-
-  const instancePath = profile.instancePath
-  if (!fs.existsSync(instancePath)) fs.mkdirSync(instancePath, { recursive: true })
-
-  const worker = fork(path.join(__dirname, 'launcher', 'importWorker.cjs'), [], { stdio: 'pipe' })
-
-  let settled = false
-  const result = await new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      settled = true
-      try { worker.kill() } catch {}
-      reject(new Error('Import timeout'))
-    }, 600000)
-
-    worker.on('message', (msg) => {
-      if (msg.type === 'progress') {
-        if (!win.isDestroyed()) win.webContents.send('import:progress', msg.data)
-      } else if (msg.type === 'done') {
-        settled = true; clearTimeout(timeout); resolve({ ok: true })
-      } else if (msg.type === 'error') {
-        settled = true; clearTimeout(timeout); reject(new Error(msg.message))
-      }
-    })
-
-    worker.on('exit', (code) => {
-      clearTimeout(timeout)
-      if (!settled) reject(new Error(`Worker exited with code ${code}`))
-    })
-
-    worker.on('error', (err) => {
-      settled = true; clearTimeout(timeout); reject(err)
-    })
-
-    worker.send({ type: 'start', filePath, source, instancePath })
-  })
-
-  try { worker.kill() } catch {}
-
-  try {
-    const latestData = JSON.parse(fs.readFileSync(PROFILES_FILE_IMPORT, 'utf-8'))
-    const idx = latestData.profiles.findIndex(p => p.id === profileId)
-    if (idx >= 0) {
-      latestData.profiles[idx].importSource = source
-      const tmp = PROFILES_FILE_IMPORT + '.tmp'
-      fs.writeFileSync(tmp, JSON.stringify(latestData, null, 2), { mode: 0o600 })
-      fs.renameSync(tmp, PROFILES_FILE_IMPORT)
-    }
-  } catch {}
-
-  return result
-})
-
-ipcMain.handle('profiles:saveTempFile', async (e, { name, buffer }) => {
-  if (!getTrustedWindow(e)) return null
-  try {
-    const os   = require('os')
-    const path = require('path')
-    const fs   = require('fs')
-    const tmpPath = path.join(os.tmpdir(), `vxc-import-${Date.now()}-${name}`)
-    fs.writeFileSync(tmpPath, Buffer.from(buffer))
-    return tmpPath
-  } catch {
-    return null
-  }
-})
-
-// Map lưu AbortController cho từng download đang chạy (key = webContents id)
-const activeModpackDownloads = new Map()
-
-ipcMain.handle('modpack:cancel', (e) => {
-  const win = getTrustedWindow(e)
-  if (!win) return { error: 'Unauthorized' }
-  const controller = activeModpackDownloads.get(win.webContents.id)
-  if (controller) {
-    controller.abort()
-    activeModpackDownloads.delete(win.webContents.id)
-    return { ok: true }
-  }
-  return { ok: true, noop: true }
-})
-
-ipcMain.handle('modpack:downloadAndImport', async (e, { downloadUrl, filename, source, profileMeta }) => {
-  const win = getTrustedWindow(e)
-  if (!win) return { error: 'Unauthorized' }
-
-  const os   = require('os')
-  const path = require('path')
-  const fs   = require('fs')
-  const https = require('https')
-  const http  = require('http')
-
-  // Tạo AbortController cho lần download này
-  const controller = new AbortController()
-  const { signal } = controller
-  activeModpackDownloads.set(win.webContents.id, controller)
-
-  function sendProgress(data) {
-    if (!win.isDestroyed()) win.webContents.send('import:progress', data)
-  }
-
-  // Dọn dẹp khi xong (dù thành công hay lỗi)
-  function cleanup(tmpPath) {
-    activeModpackDownloads.delete(win.webContents.id)
-    if (tmpPath) try { fs.unlinkSync(tmpPath) } catch {}
-  }
-
-  const tmpPath = path.join(os.tmpdir(), `vxc-modpack-${Date.now()}-${filename}`)
-  sendProgress({ phase: 'download', log: `Đang tải ${filename}...`, percent: 2 })
-
-  try {
-    await new Promise((resolve, reject) => {
-      // Nếu đã bị hủy trước khi bắt đầu
-      if (signal.aborted) return reject(new Error('Cancelled'))
-      signal.addEventListener('abort', () => reject(new Error('Cancelled')), { once: true })
-
-      let settled = false
-      let activeReq = null
-      function done(err) {
-        if (settled) return
-        settled = true
-        if (err) reject(err); else resolve()
-      }
-
-      // Theo dõi redirect và chỉ tạo WriteStream một lần duy nhất sau khi có URL thực
-      const MAX_REDIRECTS = 10
-      function doGet(url, redirectCount) {
-        if (signal.aborted) return done(new Error('Cancelled'))
-        if (redirectCount > MAX_REDIRECTS) return done(new Error('Too many redirects'))
-        const client = url.startsWith('https') ? https : http
-        const req = client.get(url, { headers: { 'User-Agent': 'DinoIsekai/1.0' } }, (res) => {
-          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-            res.resume()
-            return doGet(res.headers.location, redirectCount + 1)
-          }
-          if (res.statusCode !== 200) {
-            res.resume()
-            return done(new Error(`HTTP ${res.statusCode}: ${url}`))
-          }
-          // Chỉ tạo WriteStream sau khi đã resolve hết redirect
-          const tmpFile = fs.createWriteStream(tmpPath)
-          const total = parseInt(res.headers['content-length'] || '0', 10)
-          let received = 0
-
-          // Hủy stream khi signal abort
-          signal.addEventListener('abort', () => {
-            res.destroy()
-            tmpFile.destroy()
-            try { fs.unlinkSync(tmpPath) } catch {}
-            done(new Error('Cancelled'))
-          }, { once: true })
-
-          res.on('data', chunk => {
-            received += chunk.length
-            if (total > 0) {
-              const pct = 2 + Math.round((received / total) * 18)
-              sendProgress({ phase: 'download', log: `Đang tải ${filename}: ${pct}%`, percent: pct })
-            }
-          })
-          res.pipe(tmpFile)
-          tmpFile.on('finish', () => done())
-          tmpFile.on('error', err => { try { fs.unlinkSync(tmpPath) } catch {} done(err) })
-          res.on('error',     err => { try { fs.unlinkSync(tmpPath) } catch {} done(err) })
-        })
-        activeReq = req
-        req.on('error', err => done(err))
-      }
-      doGet(downloadUrl, 0)
-    })
-  } catch (err) {
-    const isCancelled = err.message === 'Cancelled'
-    if (isCancelled) {
-      cleanup(tmpPath)
-      sendProgress({ phase: 'cancelled', log: 'Đã hủy tải xuống.', percent: 0 })
-      return { cancelled: true }
-    }
-    cleanup(null)
-    sendProgress({ phase: 'error', log: `Lỗi tải file: ${err.message}`, percent: 0 })
-    return { error: err.message }
-  }
-
-  sendProgress({ phase: 'read', log: 'Đọc metadata modpack...', percent: 20 })
-
-  let meta = {}
-  try {
-    const { ipcMain: _ipc, BrowserWindow } = require('electron')
-
-    const zlib = require('zlib')
-    const buf = fs.readFileSync(tmpPath)
-
-    function readZipEntry(name) {
-      let eocdOffset = -1
-      for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65558); i--) {
-        if (buf.readUInt32LE(i) === 0x06054b50) { eocdOffset = i; break }
-      }
-      if (eocdOffset < 0) return null
-      const cdOffset = buf.readUInt32LE(eocdOffset + 16)
-      const cdCount  = buf.readUInt16LE(eocdOffset + 10)
-      let pos = cdOffset
-      for (let i = 0; i < cdCount; i++) {
-        if (buf.readUInt32LE(pos) !== 0x02014b50) break
-        const compMethod  = buf.readUInt16LE(pos + 10)
-        const compSize    = buf.readUInt32LE(pos + 20)
-        const fnLen       = buf.readUInt16LE(pos + 28)
-        const extraLen    = buf.readUInt16LE(pos + 30)
-        const commentLen  = buf.readUInt16LE(pos + 32)
-        const localOffset = buf.readUInt32LE(pos + 42)
-        const fileName    = buf.slice(pos + 46, pos + 46 + fnLen).toString('utf8')
-        if (fileName === name) {
-          const lfnLen  = buf.readUInt16LE(localOffset + 26)
-          const lexLen  = buf.readUInt16LE(localOffset + 28)
-          const dataOff = localOffset + 30 + lfnLen + lexLen
-          const comp    = buf.slice(dataOff, dataOff + compSize)
-          if (compMethod === 0) return comp
-          if (compMethod === 8) return zlib.inflateRawSync(comp)
-          return null
-        }
-        pos += 46 + fnLen + extraLen + commentLen
-      }
-      return null
-    }
-
-    const baseName = path.basename(filename).replace(/\.(zip|mrpack)$/i, '')
-    let name = profileMeta?.name || baseName
-    let gameVersion = profileMeta?.gameVersion || ''
-    let loader = profileMeta?.loader || 'forge'
-    let loaderVersion = profileMeta?.loaderVersion || ''
-
-    const manifestData = readZipEntry('manifest.json')
-    if (manifestData) {
-      const manifest = JSON.parse(manifestData.toString('utf8'))
-      name        = manifest.name || name
-      gameVersion = manifest.minecraft?.version || gameVersion
-      const loaderRaw = (manifest.minecraft?.modLoaders || [])[0]?.id || ''
-      if (loaderRaw.startsWith('neoforge-'))    { loader = 'neoforge'; loaderVersion = loaderRaw.replace('neoforge-', '') }
-      else if (loaderRaw.startsWith('forge-'))  { loader = 'forge';    loaderVersion = loaderRaw.replace('forge-', '') }
-      else if (loaderRaw.startsWith('fabric-')) { loader = 'fabric';   loaderVersion = loaderRaw.replace('fabric-', '') }
-    }
-    const mrData = readZipEntry('modrinth.index.json')
-    if (mrData) {
-      const mr = JSON.parse(mrData.toString('utf8'))
-      name        = mr.name || name
-      gameVersion = mr.dependencies?.minecraft || gameVersion
-      if (mr.dependencies?.['fabric-loader'])    { loader = 'fabric';   loaderVersion = mr.dependencies['fabric-loader'] }
-      else if (mr.dependencies?.['neoforge'])    { loader = 'neoforge'; loaderVersion = mr.dependencies['neoforge'] }
-      else if (mr.dependencies?.['forge'])       { loader = 'forge';    loaderVersion = mr.dependencies['forge'] }
-      else if (mr.dependencies?.['quilt-loader']){ loader = 'quilt';    loaderVersion = mr.dependencies['quilt-loader'] }
-    }
-    meta = { name, gameVersion, loader, loaderVersion }
-  } catch (err) {
-    meta = {
-      name:          profileMeta?.name || path.basename(filename, path.extname(filename)),
-      gameVersion:   profileMeta?.gameVersion || '',
-      loader:        profileMeta?.loader || 'forge',
-      loaderVersion: profileMeta?.loaderVersion || '',
-    }
-  }
-
-  sendProgress({ phase: 'create', log: 'Tạo profile...', percent: 22 })
-
-  const DATA_DIR_DL = path.join(require('electron').app.getPath('appData'), '.DinoIsekai')
-  const PROFILES_FILE_DL = path.join(DATA_DIR_DL, 'profiles.json')
-
-  const profileId = require('crypto').randomUUID()
-  const now = new Date().toISOString()
-  const INSTANCES_DIR_DL = path.join(DATA_DIR_DL, 'instances')
-
-  function slugifyName(name) {
-    return String(name || 'profile')
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 64) || 'profile'
-  }
-
-  function uniqueInstanceDir(baseName) {
-    const slug = slugifyName(baseName)
-    let folder = slug
-    let n = 2
-    const taken = new Set()
-    try {
-      const PROFILES_FILE_DL_TMP = path.join(DATA_DIR_DL, 'profiles.json')
-      const existing = JSON.parse(fs.readFileSync(PROFILES_FILE_DL_TMP, 'utf-8'))
-      ;(existing.profiles || []).forEach(p => { if (p.instancePath) taken.add(path.resolve(p.instancePath)) })
-    } catch {}
-    const isTaken = p => {
-      const resolved = path.resolve(p)
-      return taken.has(resolved) || fs.existsSync(resolved)
-    }
-    while (isTaken(path.join(INSTANCES_DIR_DL, folder))) {
-      folder = `${slug}-${n}`
-      n++
-    }
-    return path.join(INSTANCES_DIR_DL, folder)
-  }
-
-  const instancePath = uniqueInstanceDir(meta.name || 'Modpack')
-  try { fs.mkdirSync(instancePath, { recursive: true }) } catch {}
-
-  const profile = {
-    id:            profileId,
-    name:          meta.name || 'Modpack',
-    loader:        meta.loader,
-    gameVersion:   meta.gameVersion,
-    loaderVersion: meta.loaderVersion,
-    instancePath,
-    isCustomPath:  false,
-    createdAt:     now,
-    lastPlayed:    null,
-    sizeBytes:     0,
-    importSource:  source,
-    importIconUrl: profileMeta?.iconUrl || null,
-    importBgUrl:   profileMeta?.iconUrl || null,
-  }
-
-  try {
-    let profilesData
-    try { profilesData = JSON.parse(fs.readFileSync(PROFILES_FILE_DL, 'utf-8')) }
-    catch { profilesData = { profiles: [], selectedProfileId: null } }
-    profilesData.profiles.push(profile)
-    if (!profilesData.selectedProfileId) profilesData.selectedProfileId = profileId
-    const tmp = PROFILES_FILE_DL + '.tmp'
-    fs.writeFileSync(tmp, JSON.stringify(profilesData, null, 2), { mode: 0o600 })
-    fs.renameSync(tmp, PROFILES_FILE_DL)
-  } catch (err) {
-    try { fs.unlinkSync(tmpPath) } catch {}
-    sendProgress({ phase: 'error', log: `Lỗi tạo profile: ${err.message}`, percent: 0 })
-    return { error: err.message }
-  }
-
-  sendProgress({ phase: 'start', log: 'Bắt đầu import modpack...', percent: 25 })
-
-  try {
-    let result
-    if (source === 'modrinth') {
-      const { importModrinthPack } = require('./launcher/modrinth/modrinthImporter.cjs')
-      result = await importModrinthPack(tmpPath, instancePath, sendProgress)
-    } else if (source === 'curseforge') {
-      const { importCurseForgePack } = require('./launcher/curseforge/curseforgeImporter.cjs')
-      result = await importCurseForgePack(tmpPath, instancePath, sendProgress)
-    } else {
-
-      result = { name: meta.name, gameVersion: meta.gameVersion, loader: meta.loader, loaderVersion: meta.loaderVersion }
-    }
-
-    try {
-      const latestData = JSON.parse(fs.readFileSync(PROFILES_FILE_DL, 'utf-8'))
-      const idx = latestData.profiles.findIndex(p => p.id === profileId)
-      if (idx >= 0) {
-        if (result.gameVersion)   latestData.profiles[idx].gameVersion   = result.gameVersion
-        if (result.loader)        latestData.profiles[idx].loader        = result.loader
-        if (result.loaderVersion) latestData.profiles[idx].loaderVersion = result.loaderVersion
-        if (result.name)          latestData.profiles[idx].name          = result.name
-        if (result.iconUrl) {
-          latestData.profiles[idx].importIconUrl = result.iconUrl
-          latestData.profiles[idx].importBgUrl   = result.iconUrl
-        }
-        const tmp2 = PROFILES_FILE_DL + '.tmp'
-        fs.writeFileSync(tmp2, JSON.stringify(latestData, null, 2), { mode: 0o600 })
-        fs.renameSync(tmp2, PROFILES_FILE_DL)
-      }
-    } catch {}
-
-    try { fs.unlinkSync(tmpPath) } catch {}
-
-    sendProgress({ phase: 'done', log: `Đã tạo profile "${meta.name}" thành công!`, percent: 100 })
-    activeModpackDownloads.delete(win.webContents.id)
-    return { ok: true, profileId, profileName: meta.name }
-  } catch (err) {
-    try { fs.unlinkSync(tmpPath) } catch {}
-    activeModpackDownloads.delete(win.webContents.id)
-    const isCancelled = err.message === 'Cancelled'
-    if (isCancelled) {
-      sendProgress({ phase: 'cancelled', log: 'Đã hủy tải xuống.', percent: 0 })
-      return { cancelled: true }
-    }
-    sendProgress({ phase: 'error', log: `Lỗi import: ${err.message}`, percent: 0 })
     return { error: err.message }
   }
 })
