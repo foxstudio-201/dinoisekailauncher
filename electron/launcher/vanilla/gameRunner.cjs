@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -29,16 +28,46 @@
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 'use strict'
 
 const { spawn, execFileSync } = require('child_process')
 const path  = require('path')
 const fs    = require('fs')
 
-/**
- * Linux: detect high-performance (big) CPU cores by reading max frequency.
- * Returns an array of core indices with the highest frequency, or empty array on error.
- */
+
+
+
+
 function detectPerformanceCores() {
   try {
     const cores = []

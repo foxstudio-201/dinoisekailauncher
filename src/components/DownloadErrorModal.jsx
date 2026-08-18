@@ -1,3 +1,32 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 import { useState } from 'react'
 import { Check, Copy } from '@phosphor-icons/react'
 
@@ -36,7 +65,7 @@ export default function DownloadErrorModal({ error, onClose }) {
         className="border border-violet-500/15 rounded-2xl shadow-2xl w-full max-w-xl flex flex-col"
         style={{ background: 'rgba(23,16,36,0.98)' }}
       >
-        {/* Header */}
+        {}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 flex-shrink-0">
           <div className="w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center flex-shrink-0">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-400">
@@ -62,7 +91,7 @@ export default function DownloadErrorModal({ error, onClose }) {
           </button>
         </div>
 
-        {/* Body */}
+        {}
         <div className="p-5 flex flex-col gap-4">
           <p className="text-sm text-white/75 leading-relaxed">
             Không thể {isResource ? 'tải tài nguyên' : 'tải dữ liệu'}. Vui lòng kiểm tra kết nối mạng và thử lại.
@@ -72,7 +101,7 @@ export default function DownloadErrorModal({ error, onClose }) {
           </div>
         </div>
 
-        {/* Footer */}
+        {}
         <div className="px-5 py-4 border-t border-white/5 flex justify-end gap-2 flex-shrink-0">
           <button
             onClick={handleCopy}

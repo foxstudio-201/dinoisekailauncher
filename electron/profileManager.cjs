@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -29,6 +28,36 @@
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const { ipcMain, dialog, shell } = require('electron')
 const path  = require('path')
 const fs    = require('fs')
@@ -42,6 +71,7 @@ const FIXED_GAME_VERSION = '1.20.1'
 const FIXED_FORGE_VERSION = '47.4.22'
 const FIXED_LOADER = 'forge'
 const FIXED_PROFILE_NAME = 'Dino Isekai'
+const NIGHTFALL_PROFILE_NAME = 'NightfallCraft - The Casket of Reveries'
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -119,13 +149,13 @@ function validateProfile(profile) {
   return null
 }
 
-function createDefaultProfile() {
+function createDefaultProfile(name = FIXED_PROFILE_NAME) {
   const existing = readProfiles().profiles.map(p => p.instancePath).filter(Boolean)
-  const instancePath = uniqueInstanceDir(FIXED_PROFILE_NAME, existing)
+  const instancePath = uniqueInstanceDir(name, existing)
   ensureDir(instancePath)
   return {
     id:           generateUUID(),
-    name:         FIXED_PROFILE_NAME,
+    name,
     loader:       FIXED_LOADER,
     gameVersion:  FIXED_GAME_VERSION,
     loaderVersion: FIXED_FORGE_VERSION,
@@ -144,20 +174,28 @@ function createDefaultProfile() {
 function normalizeSingleForgeProfile(data) {
   if (!data || typeof data !== 'object') data = { profiles: [], selectedProfileId: null }
   if (!Array.isArray(data.profiles)) data.profiles = []
-  const pick = data.profiles.find(p => p && p.id === data.selectedProfileId) || data.profiles[0]
-  let changed = false
-  if (!pick) {
-    const p = createDefaultProfile()
-    data.profiles = [p]
-    data.selectedProfileId = p.id
-    return { changed: true, data }
+  const names = [FIXED_PROFILE_NAME, NIGHTFALL_PROFILE_NAME]
+  const existing = data.profiles.filter(p => p && p.id && names.includes(p.name))
+  let changed = existing.length !== data.profiles.length
+  for (const name of names) {
+    let p = existing.find(x => x.name === name)
+    if (!p) {
+      p = createDefaultProfile(name)
+      existing.push(p)
+      changed = true
+    }
+    if (p.loader !== FIXED_LOADER)          { p.loader = FIXED_LOADER; changed = true }
+    if (p.gameVersion !== FIXED_GAME_VERSION) { p.gameVersion = FIXED_GAME_VERSION; changed = true }
+    if (!p.loaderVersion || p.loaderVersion !== FIXED_FORGE_VERSION) {
+      p.loaderVersion = FIXED_FORGE_VERSION
+      changed = true
+    }
   }
-  data.profiles = [pick]
-  data.selectedProfileId = pick.id
-  if (pick.loader !== FIXED_LOADER)      { pick.loader = FIXED_LOADER; changed = true }
-  if (pick.gameVersion !== FIXED_GAME_VERSION) { pick.gameVersion = FIXED_GAME_VERSION; changed = true }
-  if (!pick.loaderVersion || pick.loaderVersion !== FIXED_FORGE_VERSION) {
-    pick.loaderVersion = FIXED_FORGE_VERSION
+  const dino = existing.find(x => x.name === FIXED_PROFILE_NAME)
+  const night = existing.find(x => x.name === NIGHTFALL_PROFILE_NAME)
+  data.profiles = [dino, night]
+  if (!data.selectedProfileId || !data.profiles.find(p => p.id === data.selectedProfileId)) {
+    data.selectedProfileId = dino.id
     changed = true
   }
   return { changed, data }

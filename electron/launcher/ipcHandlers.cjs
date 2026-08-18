@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -29,6 +28,36 @@
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 'use strict'
 
 const { ipcMain } = require('electron')
@@ -40,7 +69,8 @@ const { resolveVersion }      = require('./vanilla/versionResolver.cjs')
 const { ensureJava }          = require('./java/javaManager.cjs')
 const { downloadAssets }      = require('./vanilla/assetManager.cjs')
 const { setupForge }          = require('./forge/forgeLoader.cjs')
-const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData } = require('./dataSync.cjs')
+const { runDataSync, checkDataSync, runBaseDataSync, checkBaseData, runRepairDataSync, updateOptionsBackup, optionsBackupInfo } = require('./dataSync.cjs')
+const { checkCfPack, runCfPackInstall } = require('./cfpack.cjs')
 const { launchGame }          = require('./vanilla/gameRunner.cjs')
 const { startPlaytimeTracker, getProfileStats, getProfileAnalytics } = require('./statsTracker.cjs')
 const { normalizeSingleForgeProfile, FIXED_LOADER } = require('../profileManager.cjs')
@@ -101,7 +131,7 @@ function registerLauncherHandlers(getTrustedWindow) {
     const norm = normalizeSingleForgeProfile(profilesData)
     if (norm.changed) writeProfiles(norm.data)
     profilesData = norm.data
-    const profile = profilesData.profiles[0]
+    const profile = profilesData.profiles.find(p => p.id === profileId) || profilesData.profiles[0]
     if (!profile) return { error: 'Profile not found' }
     profileId = profile.id
 
@@ -599,6 +629,24 @@ function registerLauncherHandlers(getTrustedWindow) {
     return checkBaseData(profiles[0])
   })
 
+  ipcMain.handle('dataSync:optionsBackupInfo', async (e) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    const profile = profiles[0]
+    if (!profile) return { error: 'Profile not found' }
+    return { ok: true, ...optionsBackupInfo(profile.instancePath) }
+  })
+
+  ipcMain.handle('dataSync:optionsBackup', async (e) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    const profile = profiles[0]
+    if (!profile) return { error: 'Profile not found' }
+    const res = updateOptionsBackup(profile.instancePath)
+    if (!res.ok) return res
+    return { ok: true, message: 'Đã cập nhật bản sao lưu options.txt từ cài đặt hiện tại' }
+  })
+
   ipcMain.handle('dataSync:runBase', async (e) => {
     const win = getTrustedWindow(e)
     if (!win) return { error: 'Unauthorized' }
@@ -614,6 +662,26 @@ function registerLauncherHandlers(getTrustedWindow) {
     } catch (err) {
       console.error('[dinosync] Lỗi tải dữ liệu gốc:', err)
       send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi tải dữ liệu gốc: ${err.message}` })
+      return { ok: false, error: err.message, stack: err.stack || '' }
+    }
+  })
+
+  ipcMain.handle('dataSync:repair', async (e) => {
+    const win = getTrustedWindow(e)
+    if (!win) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    const profile = profiles[0]
+    if (!profile) return { error: 'Profile not found' }
+    const { isOpActive } = require('./abortControl.cjs')
+    if (isOpActive('dSync') || isOpActive('preDl')) return { ok: false, error: 'busy' }
+    function send(data) {
+      if (!win.isDestroyed()) win.webContents.send('repair:progress', data)
+    }
+    try {
+      return await runRepairDataSync(profile, send)
+    } catch (err) {
+      console.error('[dinosync] Lỗi sửa chữa:', err)
+      send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi sửa chữa: ${err.message}` })
       return { ok: false, error: err.message, stack: err.stack || '' }
     }
   })
@@ -645,6 +713,34 @@ function registerLauncherHandlers(getTrustedWindow) {
     setAction(op, action || 'pause')
     abortOp(op)
     return { ok: true }
+  })
+
+  ipcMain.handle('cfpack:check', async (e, { profileId }) => {
+    if (!getTrustedWindow(e)) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    const profile = profiles.find(p => p.id === profileId) || profiles[1] || profiles[0]
+    if (!profile) return { error: 'Profile not found' }
+    return checkCfPack(profile)
+  })
+
+  ipcMain.handle('cfpack:run', async (e, { profileId }) => {
+    const win = getTrustedWindow(e)
+    if (!win) return { error: 'Unauthorized' }
+    const profiles = readProfiles().profiles
+    const profile = profiles.find(p => p.id === profileId) || profiles[1] || profiles[0]
+    if (!profile) return { error: 'Profile not found' }
+    const { isOpActive } = require('./abortControl.cjs')
+    if (isOpActive('dSync') || isOpActive('preDl') || isOpActive('cfpack')) return { ok: false, error: 'busy' }
+    function send(data) {
+      if (!win.isDestroyed()) win.webContents.send('cfpack:progress', data)
+    }
+    try {
+      return await runCfPackInstall(profile, send)
+    } catch (err) {
+      console.error('[cfpack] Lỗi tải modpack:', err)
+      send({ phase: 'done', item: 'Lỗi', percent: 100, log: `Lỗi tải modpack: ${err.message}` })
+      return { ok: false, error: err.message, stack: err.stack || '' }
+    }
   })
 
   ipcMain.handle('launcher:isRunning', (e, { profileId, accountId }) => {

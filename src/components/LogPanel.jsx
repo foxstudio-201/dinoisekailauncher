@@ -1,3 +1,32 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 import { useEffect, useRef } from 'react'
 
 export default function LogPanel({ logs = [], onClose }) {
@@ -9,7 +38,7 @@ export default function LogPanel({ logs = [], onClose }) {
 
   return (
     <div className="w-[420px] h-[400px] blur-glass rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 flex flex-col overflow-hidden flex-shrink-0">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 flex-shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="relative flex w-2 h-2">
@@ -41,7 +70,7 @@ export default function LogPanel({ logs = [], onClose }) {
         </div>
       </div>
 
-      {/* Logs */}
+      {}
       <div
         className="flex-1 min-h-0 overflow-y-auto p-3 font-mono text-[11px] leading-relaxed"
         style={{ scrollbarColor: 'rgba(255,255,255,0.06) transparent' }}

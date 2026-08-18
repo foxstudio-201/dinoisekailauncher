@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -28,6 +27,36 @@
  *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const { contextBridge, ipcRenderer } = require('electron')
 
@@ -99,11 +128,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
   runDataSync:     ()           => ipcRenderer.invoke('dataSync:run'),
   checkBaseData:   ()           => ipcRenderer.invoke('dataSync:checkBase'),
   runBaseDataSync: ()           => ipcRenderer.invoke('dataSync:runBase'),
+  runRepairDataSync: ()         => ipcRenderer.invoke('dataSync:repair'),
+  optionsBackupInfo: ()         => ipcRenderer.invoke('dataSync:optionsBackupInfo'),
+  optionsBackup:    ()          => ipcRenderer.invoke('dataSync:optionsBackup'),
+  cfPackCheck:     (opts)       => ipcRenderer.invoke('cfpack:check', opts),
+  cfPackRun:       (opts)       => ipcRenderer.invoke('cfpack:run', opts),
+  onCfPackProgress: (cb) => {
+    const handler = (_e, data) => cb(data)
+    ipcRenderer.on('cfpack:progress', handler)
+    return () => ipcRenderer.removeListener('cfpack:progress', handler)
+  },
   dataControl:     (opts)       => ipcRenderer.invoke('data:control', opts),
   onDataSyncProgress: (cb) => {
     const handler = (_e, data) => cb(data)
     ipcRenderer.on('dinosync:progress', handler)
     return () => ipcRenderer.removeListener('dinosync:progress', handler)
+  },
+  onRepairProgress: (cb) => {
+    const handler = (_e, data) => cb(data)
+    ipcRenderer.on('repair:progress', handler)
+    return () => ipcRenderer.removeListener('repair:progress', handler)
   },
   checkUpdate:      ()       => ipcRenderer.invoke('update:check'),
   downloadUpdate:   ()       => ipcRenderer.invoke('update:download'),

@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -29,10 +28,39 @@
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { useState, useEffect, useRef } from 'react'
 import { useAccounts } from '../hooks/useAccounts'
 import PlayerHead from './ui/PlayerHead'
-import martianIcon from '../assets/martian-icon.png'
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
 
@@ -143,7 +171,7 @@ export default function TitleBar({ instances = [], onKillInstance, onCloseReques
   const { selectedAccount } = useAccounts()
   const myUuid = selectedAccount?.uuid
 
-  // Close notif on outside click
+  
   useEffect(() => {
     function handleClick(e) {
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false)
@@ -170,10 +198,6 @@ export default function TitleBar({ instances = [], onKillInstance, onCloseReques
       <div className="drag-region flex items-center justify-between h-9 px-4 absolute top-0 left-0 right-0 z-50">
         {}
         <div className="flex items-center gap-2 no-drag">
-          <img src={martianIcon} alt="Dino Isekai" className="w-5 h-5" />
-          <span className="text-ms font-black text-white tracking-tight">
-            <span className="text-violet-400">Dino Isekai</span>
-          </span>
         </div>
 
         {}
@@ -203,13 +227,13 @@ export default function TitleBar({ instances = [], onKillInstance, onCloseReques
         {}
         <div className="no-drag flex items-center gap-1">
           <button onClick={handleMinimize}
-            className="w-8 h-7 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-white/50 hover:text-white/90"
-            title="Minimize">
+            data-tip="Minimize"
+            className="w-8 h-7 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-white/50 hover:text-white/90">
             <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor"><rect width="10" height="1"/></svg>
           </button>
           <button onClick={handleClose}
-            className="w-8 h-7 flex items-center justify-center rounded hover:bg-red-500/80 transition-colors text-white/50 hover:text-white"
-            title="Close">
+            data-tip="Close"
+            className="w-8 h-7 flex items-center justify-center rounded hover:bg-red-500/80 transition-colors text-white/50 hover:text-white">
             <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.5">
               <line x1="0" y1="0" x2="10" y2="10"/>
               <line x1="10" y1="0" x2="0" y2="10"/>

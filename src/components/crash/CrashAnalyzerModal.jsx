@@ -1,14 +1,43 @@
 /**
- * Dino Isekai — Crash Analyzer Modal
- * Tự động phân tích log crash, hiện root cause, tìm mod bị thiếu và cài đặt.
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
+
+
+
+
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useLang } from '../../i18n/LangProvider'
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
 
-// ─── Parsers ──────────────────────────────────────────────────────────────────
+
 
 export function isFabricIncompatibleCrash(logs) {
   return logs.some(l =>
@@ -38,14 +67,14 @@ export function parseFabricFormattedException(logs) {
   return result
 }
 
-/**
- * Phân tích crash type từ toàn bộ log:
- * - fabric_incompatible
- * - out_of_memory
- * - forge_missing_dep
- * - java_exception  (generic Java exception)
- * - exit_code       (crash không có log)
- */
+
+
+
+
+
+
+
+
 function analyzeCrash(logs, loader, exitCode) {
   const full = logs.join('\n')
 
@@ -62,18 +91,18 @@ function analyzeCrash(logs, loader, exitCode) {
   return 'exit_code'
 }
 
-/** Lấy root exception message từ log */
+
 function extractRootCause(logs) {
-  // Ưu tiên "Caused by:" cuối cùng
+  
   const causedByLines = logs.filter(l => /^\s*(Caused by:|Exception in thread|java\.\w+Exception|net\.\w+Exception)/i.test(l))
   if (causedByLines.length > 0) return causedByLines[causedByLines.length - 1].trim()
 
-  // Fallback: dòng FATAL hoặc ERROR đầu tiên
+  
   const fatalLine = logs.find(l => /FATAL|ERROR/i.test(l) && l.length > 20)
   return fatalLine?.trim() || null
 }
 
-/** Lấy các dòng liên quan nhất để hiển thị trong log preview */
+
 function getRelevantLogLines(logs) {
   const relevant = []
   for (const line of logs) {
@@ -81,13 +110,13 @@ function getRelevantLogLines(logs) {
       relevant.push(line)
     }
   }
-  // Nếu quá ít, lấy 30 dòng cuối
+  
   if (relevant.length < 3) return logs.slice(-30)
   return relevant.slice(0, 40)
 }
 
 
-// ─── Log viewer ───────────────────────────────────────────────────────────────
+
 
 function LogViewer({ logs }) {
   const [copied, setCopied] = useState(false)
@@ -146,7 +175,7 @@ function LogViewer({ logs }) {
   )
 }
 
-// ─── Crash summary block ──────────────────────────────────────────────────────
+
 
 function CrashSummary({ crashType, fabricInfo, rootCause, exitCode, loader }) {
   const isFabric = crashType === 'fabric_incompatible'
@@ -240,7 +269,7 @@ function CrashSummary({ crashType, fabricInfo, rootCause, exitCode, loader }) {
     </div>
   )
 
-  // exit_code fallback
+  
   return (
     <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3.5">
       <div className="flex items-center gap-2 mb-1.5">
@@ -260,7 +289,7 @@ function CrashSummary({ crashType, fabricInfo, rootCause, exitCode, loader }) {
   )
 }
 
-// ─── Main Modal ───────────────────────────────────────────────────────────────
+
 
 const TABS = [
   { id: 'summary', label: 'Tóm tắt' },
@@ -271,7 +300,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
   const { t } = useLang()
   const [activeTab, setActiveTab] = useState('summary')
 
-  // Tất cả hooks phải đặt TRƯỚC mọi early return
+  
   const logs = crashData?.logs || []
   const relevantLines = useMemo(() => getRelevantLogLines(logs), [logs])
 
@@ -294,7 +323,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
         className="border border-violet-500/15 rounded-2xl w-full max-w-2xl flex flex-col"
         style={{ background: 'rgba(23,16,36,0.98)', maxHeight: '90vh' }}
       >
-        {/* Header */}
+        {}
         <div className="flex-shrink-0 flex items-start gap-4 px-6 py-4 border-b border-white/5">
           <div className="w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center flex-shrink-0">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5 text-red-400">
@@ -329,7 +358,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
           </button>
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex-shrink-0 flex border-b border-white/5 px-6">
           {TABS.map(tab => (
             <button
@@ -349,14 +378,14 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
           ))}
         </div>
 
-        {/* Body */}
+        {}
         <div
           className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4"
           style={{ scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}
         >
           {activeTab === 'summary' && (
             <>
-              {/* Crash summary */}
+              {}
               <CrashSummary
                 crashType={crashType}
                 fabricInfo={fabricInfo}
@@ -365,7 +394,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
                 loader={loader}
               />
 
-              {/* Log preview (relevant lines) */}
+              {}
               {relevantLines.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -409,7 +438,7 @@ export default function CrashAnalyzerModal({ crashData, onClose }) {
           )}
         </div>
 
-        {/* Footer */}
+        {}
         <div className="flex-shrink-0 flex items-center justify-between px-6 py-3.5 border-t border-white/5 bg-black/20">
           {crashType === 'out_of_memory' ? (
             <p className="text-xs text-violet-400/60">Tăng RAM trong Profile Settings → General</p>

@@ -1,3 +1,32 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 'use strict'
 
 const fs = require('fs')
@@ -20,6 +49,49 @@ function versionFilePath(instancePath) {
 }
 function baseVersionFilePath(instancePath) {
   return path.join(instancePath, '.dinobase-version')
+}
+const OPTIONS_BACKUP_FILE = 'options.txt.dinobackup'
+
+function optionsBackupPath(instancePath) {
+  return path.join(instancePath, OPTIONS_BACKUP_FILE)
+}
+
+function backupOptionsOnce(instancePath) {
+  const src = path.join(instancePath, 'options.txt')
+  const dst = optionsBackupPath(instancePath)
+  if (!fs.existsSync(src) || fs.existsSync(dst)) return false
+  try {
+    fs.copyFileSync(src, dst)
+    return true
+  } catch { return false }
+}
+
+function restoreOptionsBackup(instancePath) {
+  const src = optionsBackupPath(instancePath)
+  const dst = path.join(instancePath, 'options.txt')
+  if (!fs.existsSync(src)) return false
+  try {
+    fs.copyFileSync(src, dst)
+    return true
+  } catch { return false }
+}
+
+function updateOptionsBackup(instancePath) {
+  const src = path.join(instancePath, 'options.txt')
+  if (!fs.existsSync(src)) return { ok: false, error: 'no_options' }
+  try {
+    fs.copyFileSync(src, optionsBackupPath(instancePath))
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
+}
+
+function optionsBackupInfo(instancePath) {
+  return {
+    backupExists: fs.existsSync(optionsBackupPath(instancePath)),
+    optionsExists: fs.existsSync(path.join(instancePath, 'options.txt')),
+  }
 }
 
 function parseUpdateTxt(content) {
@@ -432,7 +504,7 @@ async function runDataSync(profile, onProgress) {
   let dlDir = null
   let synced = false
   try {
-    // 1. Kiểm tra cập nhật
+    
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Đang kiểm tra phiên bản dữ liệu mới...' })
     const release = await getLatestRelease()
     const assetExt = path.extname(release.asset.name) || '.zip'
@@ -449,6 +521,9 @@ async function runDataSync(profile, onProgress) {
     }
     onProgress({ phase: 'check', item: 'Kiểm tra cập nhật', percent: 100, log: `Có bản dữ liệu mới: ${release.version}` })
     checkAbort()
+
+    const backedUp = backupOptionsOnce(instancePath)
+    if (backedUp) onProgress({ phase: 'check', item: 'Sao lưu options', percent: 100, log: 'Đã sao lưu options.txt (lần đầu — dùng cho mọi lần cập nhật sau)' })
 
     onProgress({ phase: 'download', item: 'Tải dữ liệu', percent: 0, log: 'Đang tải dữ liệu...' })
     await ensureDownloaded(release.asset.browser_download_url, zipPath, (p) => {
@@ -470,6 +545,8 @@ async function runDataSync(profile, onProgress) {
     })
     onProgress({ phase: 'extract', item: 'Giải nén', percent: 100, log: 'Đã giải nén' })
     checkAbort()
+
+    if (restoreOptionsBackup(instancePath)) onProgress({ phase: 'extract', item: 'Sao lưu options', percent: 100, log: 'Đã khôi phục options.txt từ bản sao lưu' })
 
     fs.writeFileSync(versionFilePath(instancePath), release.version, 'utf8')
     synced = true
@@ -537,6 +614,9 @@ async function runBaseDataSync(profile, onProgress) {
     onProgress({ phase: 'check', item: 'Dữ liệu gốc', percent: 100, log: `${local ? `Có bản dữ liệu gốc mới: ${base.version}` : 'Đang cài dữ liệu gốc lần đầu...'}` })
     checkAbort()
 
+    const backedUp = backupOptionsOnce(instancePath)
+    if (backedUp) onProgress({ phase: 'check', item: 'Sao lưu options', percent: 100, log: 'Đã sao lưu options.txt (lần đầu — dùng cho mọi lần cập nhật sau)' })
+
     onProgress({ phase: 'download', item: 'Dữ liệu gốc', percent: 0, log: 'Đang tải dữ liệu gốc...' })
     await ensureDownloaded(base.asset.browser_download_url, zipPath, (p) => {
       const pc = p.total ? Math.round((p.downloaded / p.total) * 100) : 0
@@ -558,6 +638,8 @@ async function runBaseDataSync(profile, onProgress) {
     onProgress({ phase: 'extract', item: 'Dữ liệu gốc', percent: 100, log: 'Đã giải nén' })
     checkAbort()
 
+    if (restoreOptionsBackup(instancePath)) onProgress({ phase: 'extract', item: 'Sao lưu options', percent: 100, log: 'Đã khôi phục options.txt từ bản sao lưu' })
+
     fs.writeFileSync(baseVersionFilePath(instancePath), base.version, 'utf8')
     synced = true
     onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: `Đã cập nhật dữ liệu gốc ${base.version}` })
@@ -575,6 +657,73 @@ async function runBaseDataSync(profile, onProgress) {
     throw err
   } finally {
     endOp('dSync')
+    if (dlDir && synced) await safeRm(dlDir)
+  }
+}
+
+const REPAIR_FOLDERS = ['config', 'kubejs', 'mods', 'shaders', 'resourcepacks']
+
+async function runRepairDataSync(profile, onProgress) {
+  const instancePath = profile?.instancePath
+  if (!instancePath) throw new Error('Profile không có instancePath')
+  const { startOp, endOp, isAborted, getSignal, getAction } = require('./abortControl.cjs')
+  startOp('repair')
+  const abortedErr = Object.assign(new Error('aborted'), { aborted: true })
+  function checkAbort() { if (isAborted('repair')) throw abortedErr }
+
+  let dlDir = null
+  let synced = false
+  try {
+    onProgress({ phase: 'clean', item: 'Dọn dữ liệu cũ', percent: 0, log: 'Đang xóa dữ liệu cũ (config, kubejs, mods, shaders, resourcepacks)...' })
+    let deletedCount = 0
+    for (const name of REPAIR_FOLDERS) {
+      const target = path.join(instancePath, name)
+      if (fs.existsSync(target)) {
+        try { fs.rmSync(target, { recursive: true, force: true }); deletedCount++ } catch {}
+      }
+    }
+    onProgress({ phase: 'clean', item: 'Dọn dữ liệu cũ', percent: 100, log: `Đã xóa ${deletedCount} thư mục cũ` })
+    checkAbort()
+
+    onProgress({ phase: 'download', item: 'Tải dữ liệu gốc', percent: 0, log: 'Đang tải dữ liệu gốc...' })
+    const base = await getBaseRelease()
+    const assetExt = path.extname(base.asset.name) || '.zip'
+    dlDir = dlCacheDir(instancePath, base.asset.browser_download_url)
+    fs.mkdirSync(dlDir, { recursive: true })
+    const zipPath = path.join(dlDir, 'base' + assetExt)
+    await ensureDownloaded(base.asset.browser_download_url, zipPath, (p) => {
+      const pc = p.total ? Math.round((p.downloaded / p.total) * 100) : 0
+      onProgress({ phase: 'download', item: 'Tải dữ liệu gốc', percent: pc, downloaded: p.downloaded, total: p.total, speed: p.speed })
+    }, getSignal('repair'))
+    checkAbort()
+
+    const rootDir = detectZipRootDir(zipPath)
+    onProgress({ phase: 'extract', item: 'Giải nén', percent: 0, log: 'Đang giải nén... Xin vui lòng chờ' })
+    await extractZipDirectly(zipPath, instancePath, {
+      skipNames: ['options.txt'],
+      rootDir,
+      onProgress: (p) => onProgress({ phase: 'extract', item: 'Giải nén', percent: p.percent, log: 'Đang giải nén... Xin vui lòng chờ' }),
+    })
+    onProgress({ phase: 'extract', item: 'Giải nén', percent: 100, log: 'Đã giải nén' })
+    checkAbort()
+
+    fs.writeFileSync(baseVersionFilePath(instancePath), base.version, 'utf8')
+    synced = true
+    onProgress({ phase: 'done', item: 'Hoàn tất', percent: 100, log: 'Đã sửa chữa profile thành công' })
+    return { ok: true, version: base.version, deletedCount }
+  } catch (err) {
+    if (err?.aborted) {
+      const action = getAction('repair')
+      if (action === 'cancel') {
+        onProgress({ phase: 'cancelled', item: 'Đã hủy', percent: 0, log: 'Đã hủy sửa chữa.' })
+        return { ok: false, cancelled: true }
+      }
+      onProgress({ phase: 'paused', item: 'Tạm dừng', percent: 0, log: 'Đã tạm dừng sửa chữa.' })
+      return { ok: false, paused: true }
+    }
+    throw err
+  } finally {
+    endOp('repair')
     if (dlDir && synced) await safeRm(dlDir)
   }
 }
@@ -600,4 +749,4 @@ async function checkBaseData(profile) {
   }
 }
 
-module.exports = { runDataSync, checkDataSync, runBaseDataSync, checkBaseData }
+module.exports = { runDataSync, checkDataSync, runBaseDataSync, checkBaseData, runRepairDataSync, downloadFile, updateOptionsBackup, optionsBackupInfo }

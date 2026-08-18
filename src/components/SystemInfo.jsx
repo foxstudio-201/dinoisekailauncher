@@ -1,20 +1,49 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 import { useEffect, useState } from 'react'
 import { Cpu, GraphicsCard } from '@phosphor-icons/react'
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI
 
-// Tách tên thành 2 dòng: hãng / model
-// VD: "NVIDIA Corporation TU117 [GeForce GTX 1650]" → "NVIDIA Corporation TU117" / "GeForce GTX 1650"
-//     "Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz" → "Intel(R) Core(TM)" / "i5-10400F CPU @ 2.90GHz"
+
+
+
 function splitLines(name) {
   const n = String(name || '').trim()
   if (!n) return ['', '']
 
-  // Có dạng "[Model]" → dòng 1 trước ngoặc, dòng 2 trong ngoặc
+  
   const b = n.match(/^(.+?)\s*\[\s*([^\]]+)\s*\]\s*$/)
   if (b && b[1] && b[2]) return [b[1].trim(), b[2].trim()]
 
-  // Cắt trước token model (i5/r5/Ryzen/GeForce/Radeon/RTX/Arc/...)
+  
   const tokens = n.split(/\s+/)
   const idx = tokens.findIndex(t => /^(i\d|r\d|Ryzen|A\d|GeForce|Radeon|RTX|Arc|Quadro|Ultra|EPYC|PRO\d?)/i.test(t))
   if (idx > 0) return [tokens.slice(0, idx).join(' '), tokens.slice(idx).join(' ')]

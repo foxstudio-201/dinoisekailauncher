@@ -1,11 +1,40 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 import { useState, useEffect, useRef } from 'react'
 import JavaManagerModal from '../JavaManagerModal'
 import { isElectron, Icons } from './shared'
 import { useLang } from '../../../i18n/LangProvider'
 
-// ─────────────────────────────────────────────────────────────────────────────
 
-export default function GeneralTab({ profile, onProfileUpdated }) {
+
+export default function GeneralTab({ profile, onProfileUpdated, onRepair, repairing }) {
   const { t } = useLang()
   const [name, setName] = useState(profile?.name || '')
   const [ram, setRam] = useState(profile?.ramGb || 2)
@@ -17,6 +46,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [showJavaModal, setShowJavaModal] = useState(false)
+  const [confirmRepair, setConfirmRepair] = useState(false)
   const [javaList, setJavaList] = useState([])
   const saveTimerRef = useRef(null)
 
@@ -68,7 +98,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
 
   return (
     <div className="p-4 flex flex-col gap-4">
-      {/* Tên profile */}
+      {}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-white/50">{t('profileSettings.general.nameLabel')}</label>
         <input
@@ -80,7 +110,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         />
       </div>
 
-      {/* Loader/Version cố định */}
+      {}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-white/50">Loader</label>
@@ -95,12 +125,12 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
           <span className="text-xs text-white/40">
             <span className="text-violet-400">Forge</span>
             {' · '}{profile?.loaderVersion || '47.2.0'}
-            {' — '}Cố định (Dino Isekai 1.20.1)
+            {' — '}Cố định ({profile?.gameVersion})
           </span>
         </div>
       </div>
 
-      {/* RAM */}
+      {}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-white/50">{t('profileSettings.general.ramLabel')}</label>
@@ -143,7 +173,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         </div>
       </div>
 
-      {/* Kích thước cửa sổ */}
+      {}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-white/50">{t('profileSettings.general.windowSize')}</label>
         <div className="flex items-center gap-2">
@@ -176,7 +206,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         </div>
       </div>
 
-      {/* JVM Args */}
+      {}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-white/50">{t('profileSettings.general.jvmArgs')}</label>
         <textarea
@@ -188,7 +218,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         />
       </div>
 
-      {/* Java Runtime */}
+      {}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-medium text-white/50">{t('profileSettings.general.javaRuntime')}</label>
         <div className="flex items-center gap-2">
@@ -229,7 +259,7 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         )}
       </div>
 
-      {/* Auto Performance Mods — chỉ hiện với Fabric */}
+      {}
       {profile?.loader === 'fabric' && (
         <div className="flex items-start justify-between gap-3 px-4 py-3 rounded-xl bg-white/3 border border-white/6">
           <div className="flex-1 min-w-0">
@@ -246,7 +276,44 @@ export default function GeneralTab({ profile, onProfileUpdated }) {
         </div>
       )}
 
-      {/* Lưu */}
+      {}
+      {onRepair && (
+      <div className="flex flex-col gap-2 rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-red-300">{t('profileSettings.general.repair')}</p>
+            <p className="text-[10px] text-white/35 mt-0.5 leading-relaxed">{t('profileSettings.general.repairDesc')}</p>
+          </div>
+          <button
+            onClick={() => setConfirmRepair(true)}
+            disabled={repairing}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/25 text-red-300 text-xs font-bold hover:bg-red-500/25 transition-all disabled:opacity-50"
+          >
+            {repairing ? Icons.spin : Icons.trash}
+            {repairing ? t('profileSettings.general.repairing') : t('profileSettings.general.repairBtn')}
+          </button>
+        </div>
+        {confirmRepair && (
+          <div className="flex items-center gap-2 bg-black/20 rounded-lg px-3 py-2">
+            <span className="text-[10px] text-red-200/80 flex-1">{t('profileSettings.general.repairConfirmMsg')}</span>
+            <button
+              onClick={() => { setConfirmRepair(false); onRepair?.() }}
+              className="flex-shrink-0 px-2.5 py-1 rounded-md bg-red-500/20 border border-red-500/30 text-red-200 text-[10px] font-bold hover:bg-red-500/30 transition-all"
+            >
+              {t('profileSettings.general.repairConfirm')}
+            </button>
+            <button
+              onClick={() => setConfirmRepair(false)}
+              className="flex-shrink-0 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-white/50 text-[10px] font-bold hover:bg-white/10 transition-all"
+            >
+              {t('profileSettings.general.repairCancel')}
+            </button>
+          </div>
+        )}
+      </div>
+      )}
+
+      {}
       <button
         onClick={handleSave}
         disabled={saving}

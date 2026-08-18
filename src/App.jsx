@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -29,12 +28,43 @@
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import TitleBar from './components/TitleBar'
 import CloseModal from './components/CloseModal'
 import NavBar from './components/NavBar'
 import HomePage from './components/HomePage'
 import MinecraftPage from './components/MinecraftPage'
+import NightfallPage from './components/NightfallPage'
 import InitialSetup from './components/InitialSetup'
 import CursorTrail from './components/CursorTrail'
 import TooltipProvider from './components/ui/TooltipProvider'
@@ -70,7 +100,7 @@ function PageLoading() {
   )
 }
 
-const PAGE_ORDER = ['home', 'minecraft']
+const PAGE_ORDER = ['home', 'minecraft', 'nightfall']
 
 function AppInner() {
   const { t } = useLang()
@@ -79,7 +109,7 @@ function AppInner() {
   const [direction, setDirection] = useState('forward')
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Preload ảnh nền trang Minecraft để chuyển trang không bị nháy đen
+  
   useEffect(() => {
     const img = new Image()
     img.src = vanillaBg
@@ -96,7 +126,7 @@ function AppInner() {
   const [showCloseModal, setShowCloseModal] = useState(false)
 
   const [instances, setInstances] = useState(new Map())
-  // Ref để track logs realtime, tránh race condition khi onGameStopped đến trước React re-render
+  
   const instancesRef = useRef(new Map())
 
   const [launchState, setLaunchState] = useState('idle')
@@ -128,7 +158,7 @@ function AppInner() {
       setProgress(data)
       if (data.phase === 'running') {
         setLaunchState('running')
-        // Bắt đầu scan LAN khi game đã chạy
+        
         window.electronAPI.lanStartScan?.().catch?.(() => {})
       }
       if (data.phase === 'error') {
@@ -213,28 +243,28 @@ function AppInner() {
         ? `${data.profileId}::${data.accountId}`
         : null
 
-      // Dừng LAN scan khi game thoát
+      
       window.electronAPI.lanStopScan?.().catch?.(() => {})
 
-      // Crash detection: exit code !== 0 → phân tích log
-      // Đọc từ ref để tránh race condition (state có thể chưa update kịp)
+      
+      
       const exitCode = data?.code ?? 0
       if (exitCode !== 0 && isElectron) {
         const currentInstances = instancesRef.current
 
-        // Tìm instance: thử realKey trước, rồi pending key, rồi theo profileId
+        
         let inst = realKey ? currentInstances.get(realKey) : null
         if (!inst && data?.profileId) {
           inst = currentInstances.get(`${data.profileId}::`)
         }
         if (!inst && data?.profileId) {
-          // Tìm theo profileId bất kỳ key nào
+          
           inst = [...currentInstances.values()].find(i => i.profileId === data.profileId)
         }
 
         const logs = inst?.logs || []
 
-        // Luôn hiện modal khi crash (exitCode !== 0), kể cả khi logs rỗng
+        
         window.electronAPI.getProfiles().then(profilesData => {
           const profile = profilesData?.profiles?.find(p => p.id === data.profileId)
           setCrashData({
@@ -365,6 +395,10 @@ function AppInner() {
     if (activePage === 'minecraft') mcCls = isForward ? 'page-enter-f' : 'page-enter-b'
     else if (outgoingPage === 'minecraft') mcCls = isForward ? 'page-exit-f' : 'page-exit-b'
 
+    let nfCls = 'page-hidden'
+    if (activePage === 'nightfall') nfCls = isForward ? 'page-enter-f' : 'page-enter-b'
+    else if (outgoingPage === 'nightfall') nfCls = isForward ? 'page-exit-f' : 'page-exit-b'
+
     return (
       <div className="relative flex-1 min-h-0 overflow-hidden">
         <div key="home-page" className={`absolute inset-0 ${homeCls}`}>
@@ -384,6 +418,15 @@ function AppInner() {
         </div>
         <div key="mc-page" className={`absolute inset-0 ${mcCls}`}>
           <MinecraftPage />
+        </div>
+        <div key="nf-page" className={`absolute inset-0 ${nfCls}`}>
+          <NightfallPage
+            onLaunch={handleLaunch}
+            onLaunchReset={handleLaunchReset}
+            instances={instanceList}
+            onKillInstance={handleKillInstance}
+            onLogPanelOpen={setLogPanelOpen}
+          />
         </div>
       </div>
     )

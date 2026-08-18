@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -28,6 +27,36 @@
  *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 'use strict'
 
@@ -132,9 +161,9 @@ function resolveJvmArgs(rawArgs, librariesDir, versionName) {
 }
 
 async function setupNeoForge(mcVersion, neoVersion, librariesDir, clientJar, javaPath, instanceRoot, onProgress) {
-  // NeoForge 47.x (MC 1.20.1) uses the "1.20.1-47.x.x" naming and is hosted in
-  // the net/neoforged/forge group with a "forge-...-installer.jar" artifact.
-  // Newer versions (20.4.x, 21.1.x, ...) live in net/neoforged/neoforge.
+  
+  
+  
   const isLegacyNeo = /^\d+\.\d+\.\d+-/.test(neoVersion)
   const installerName = isLegacyNeo ? `forge-${neoVersion}-installer.jar` : `neoforge-${neoVersion}-installer.jar`
   const installerGroup = isLegacyNeo ? 'net/neoforged/forge' : 'net/neoforged/neoforge'
@@ -160,7 +189,7 @@ async function setupNeoForge(mcVersion, neoVersion, librariesDir, clientJar, jav
     onProgress?.({ phase: 'neoforge_download', log: 'NeoForge installer already cached.', done: 1, total: 1 })
   }
 
-  // ── Preferred path: build config from the installer's embedded version.json ──
+  
   const config = await buildLoaderConfig({ installerPath, mcVersion, loaderName: 'neoforge', versionSuffix: neoVersion, librariesDir, instanceRoot, onProgress, javaPath })
 
   if (config) {
@@ -183,10 +212,10 @@ async function setupNeoForge(mcVersion, neoVersion, librariesDir, clientJar, jav
     fs.copyFileSync(clientJar, vanillaJarDest)
     onProgress?.({ phase: 'neoforge_install', log: 'Placed vanilla client.jar for installer.' })
   }
-  // The modern NeoForge installer (20.4+) refuses to run without a minecraft
-  // launcher profile and a vanilla version JSON in position, otherwise it exits
-  // with "There is no minecraft launcher profile ... you need to run the launcher
-  // first!". Create a minimal one if missing.
+  
+  
+  
+  
   const launcherProfilePath  = path.join(instanceRoot, 'launcher_profiles.json')
   const launcherProfileStore = path.join(instanceRoot, 'launcher_profiles_microsoft_store.json')
   if (!fs.existsSync(launcherProfilePath) && !fs.existsSync(launcherProfileStore)) {
@@ -205,8 +234,8 @@ async function setupNeoForge(mcVersion, neoVersion, librariesDir, clientJar, jav
   }
   const vanillaJsonDest = path.join(vanillaVersionDir, `${mcVersion}.json`)
   if (!fs.existsSync(vanillaJsonDest)) {
-    // If the vanilla version json is already cached next to the shared client
-    // jar, copy it; otherwise the installer re-downloads it from Mojang.
+    
+    
     try {
       const shared = path.join(instanceRoot, 'versions', mcVersion, `${mcVersion}.json`)
       if (fs.existsSync(shared)) fs.copyFileSync(shared, vanillaJsonDest)
@@ -217,10 +246,10 @@ async function setupNeoForge(mcVersion, neoVersion, librariesDir, clientJar, jav
   const versionDir      = path.join(instanceRoot, 'versions', versionId)
   const versionJsonPath = path.join(versionDir, `${versionId}.json`)
 
-  // Modern NeoForge (20.4+) needs the three FML client jars that only the
-  // installer generates (client-<mc>-<neoForm>-srg/extra.jar +
-  // neoforge-<ver>-client.jar). A stale version.json must NOT make us skip
-  // the installer while those jars are still missing.
+  
+  
+  
+  
   const isLegacyNeoName = /^\d+\.\d+\.\d+-/.test(neoVersion)
   const isModernNeoName = !isLegacyNeoName
   const instLibDirNeo   = path.join(instanceRoot, 'libraries')

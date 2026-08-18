@@ -1,3 +1,32 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Monitor, SpeakerHigh, ChatCircle, GameController, GearSix } from '@phosphor-icons/react'
 
@@ -172,6 +201,8 @@ export default function OptionsModal({ profile, onClose }) {
   const [options, setOptions] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [backingUp, setBackingUp] = useState(false)
+  const [backupInfo, setBackupInfo] = useState(null)
   const [toast, setToast] = useState('')
   const toastTimer = useRef(null)
 
@@ -191,6 +222,28 @@ export default function OptionsModal({ profile, onClose }) {
   }, [profile?.id])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI.optionsBackupInfo) return
+    window.electronAPI.optionsBackupInfo().then(r => {
+      if (r?.ok) setBackupInfo(r)
+    }).catch(() => {})
+  }, [profile?.id])
+
+  async function updateBackup() {
+    if (!isElectron || !window.electronAPI.optionsBackup) return
+    setBackingUp(true)
+    try {
+      const r = await window.electronAPI.optionsBackup()
+      if (r?.ok) {
+        setBackupInfo(b => ({ ...(b || {}), backupExists: true }))
+        showToast(r.message || 'Đã cập nhật bản sao lưu options.txt')
+      } else {
+        showToast('Sao lưu thất bại: ' + (r?.error === 'no_options' ? 'chưa có options.txt' : (r?.error || '')))
+      }
+    } catch (e) { showToast('Sao lưu thất bại: ' + e.message) }
+    setBackingUp(false)
+  }
 
   const set = (key, val) => setOptions(o => {
     const next = { ...(o || {}) }
@@ -215,7 +268,7 @@ export default function OptionsModal({ profile, onClose }) {
       <div className="border border-blue-500/15 rounded-2xl w-full max-w-3xl flex flex-col overflow-hidden"
         style={{ background: 'linear-gradient(165deg, #0c1526 0%, #05070d 55%, #03040a 100%)', maxHeight: '88vh' }}
       >
-        {/* Header */}
+        {}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 flex-shrink-0">
           <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center flex-shrink-0">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-blue-300"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.484.484 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
@@ -225,6 +278,17 @@ export default function OptionsModal({ profile, onClose }) {
             <p className="text-[11px] text-white/40 mt-0.5">{profile?.name} · options.txt</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={updateBackup}
+              disabled={backingUp}
+              data-tip={backupInfo?.backupExists ? 'Cập nhật bản sao lưu options.txt theo cài đặt hiện tại' : 'Tạo bản sao lưu options.txt — dùng cho mọi lần cập nhật sau'}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                backingUp ? 'bg-white/10 text-white/40 cursor-wait' : backupInfo?.backupExists ? 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/25' : 'bg-amber-500/15 border border-amber-500/25 text-amber-300 hover:bg-amber-500/25'
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+              {backingUp ? 'Đang sao lưu...' : backupInfo?.backupExists ? 'Cập nhật sao lưu' : 'Tạo sao lưu options'}
+            </button>
             <button
               onClick={save}
               disabled={saving || !options}
@@ -241,7 +305,7 @@ export default function OptionsModal({ profile, onClose }) {
           </div>
         </div>
 
-        {/* Tabs */}
+        {}
         <div className="flex items-center gap-1 px-5 pt-3 border-b border-white/5 flex-shrink-0 overflow-x-auto">
           {TABS.map(t => {
             const IconComp = t.Icon
@@ -260,7 +324,7 @@ export default function OptionsModal({ profile, onClose }) {
           })}
         </div>
 
-        {/* Body */}
+        {}
         <div className="flex-1 min-h-0 overflow-y-auto p-5" style={{ scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
           {loading ? (
             <div className="flex items-center justify-center h-full text-white/30 text-xs">Đang tải...</div>
@@ -304,9 +368,17 @@ export default function OptionsModal({ profile, onClose }) {
           )}
         </div>
 
-        {/* Footer */}
+        {}
         <div className="px-5 py-2 border-t border-white/5 text-[11px] text-center text-white/25 flex-shrink-0">
-          Cài đặt được lưu trực tiếp vào options.txt
+          {backupInfo?.backupExists ? (
+            <span>
+              <span className="text-emerald-400/80 font-semibold">Đã có bản sao lưu options.txt</span> — tự khôi phục sau mỗi lần cập nhật dữ liệu. Bấm "Cập nhật sao lưu" để lưu cài đặt hiện tại làm bản sao mới.
+            </span>
+          ) : (
+            <span>
+              Chưa có bản sao lưu — lần cập nhật dữ liệu đầu tiên sẽ tự sao lưu options.txt để giữ cài đặt của bạn.
+            </span>
+          )}
         </div>
         {toast && (
           <div className="px-5 py-2 text-[11px] text-center bg-emerald-500/15 text-emerald-300 border-t border-white/5 flex-shrink-0">{toast}</div>

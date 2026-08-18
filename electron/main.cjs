@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -29,6 +28,36 @@
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const { app, BrowserWindow, ipcMain, nativeImage, Tray, Menu, shell, protocol, net } = require('electron')
 const path = require('path')
 const fs   = require('fs')
@@ -42,6 +71,8 @@ const { checkUpdate, downloadUpdateToTemp, installUpdate } = require('./updater.
 
 
 const isDev = process.env.NODE_ENV === 'development'
+
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
@@ -373,8 +404,8 @@ async function linuxGpuName() {
         const m = line.match(/(?:VGA compatible controller|3D controller|Display controller)\s*(\[[0-9a-f]{4}\])?:\s*(.+)$/i)
         if (m && m[2]) {
           let name = m[2]
-          name = name.replace(/\s*\(rev\s+[0-9a-f]+\)\s*$/i, '')          // bỏ (rev a1)
-          name = name.replace(/\s*\[[0-9a-f]{4}:[0-9a-f]{4}\]\s*$/, '')     // bỏ [10de:1f82]
+          name = name.replace(/\s*\(rev\s+[0-9a-f]+\)\s*$/i, '')          
+          name = name.replace(/\s*\[[0-9a-f]{4}:[0-9a-f]{4}\]\s*$/, '')     
           name = name.trim()
           if (name) return name
         }
@@ -704,11 +735,11 @@ ipcMain.handle('forge:getVersions', async (e, gameVersion) => {
     const promos = data.promos || {}
     const recommended = promos[`${gameVersion}-recommended`] || null
     const latest      = promos[`${gameVersion}-latest`]      || null
-    // Collect all forge versions for this MC version
+    
     const versions = Object.entries(promos)
       .filter(([k]) => k.startsWith(gameVersion + '-'))
       .map(([, v]) => `${gameVersion}-${v}`)
-      .filter((v, i, a) => a.indexOf(v) === i) // dedupe
+      .filter((v, i, a) => a.indexOf(v) === i) 
     return { ok: true, data: { versions, recommended: recommended ? `${gameVersion}-${recommended}` : null, latest: latest ? `${gameVersion}-${latest}` : null } }
   } catch (err) {
     return { error: err.message }

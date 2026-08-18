@@ -1,3 +1,32 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 import { useState, useCallback, useEffect } from 'react'
 import { getFileExt } from '../utils/fileExt'
 
@@ -131,7 +160,7 @@ export default function ProfileFilesModal({ profile, onClose }) {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
       >
-        {/* Header */}
+        {}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 flex-shrink-0">
           <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center flex-shrink-0">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-blue-300"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
@@ -141,7 +170,7 @@ export default function ProfileFilesModal({ profile, onClose }) {
             <p className="text-[11px] text-white/40 mt-0.5">{profile?.name}</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {/* Menu xóa nhanh theo preset */}
+            {}
             <div className="relative">
               <button
                 onClick={() => setPresetOpen(v => !v)}
@@ -196,7 +225,7 @@ export default function ProfileFilesModal({ profile, onClose }) {
           </div>
         </div>
 
-        {/* Toolbar: search + delete */}
+        {}
         <div className="flex items-center gap-2 px-5 py-3 border-b border-white/5 flex-shrink-0">
           <div className="relative flex-1">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25">
@@ -221,7 +250,7 @@ export default function ProfileFilesModal({ profile, onClose }) {
           </button>
         </div>
 
-        {/* Breadcrumb */}
+        {}
         <div className="flex items-center gap-2 px-5 py-2 border-b border-white/5 flex-shrink-0">
           <button onClick={() => loadDir('')} className="text-[11px] text-blue-300 hover:text-blue-200 transition-colors flex-shrink-0">root</button>
           {breadcrumbs.map((part, i, arr) => (
@@ -235,7 +264,7 @@ export default function ProfileFilesModal({ profile, onClose }) {
           ))}
         </div>
 
-        {/* File list */}
+        {}
         <div className="flex-1 min-h-0 overflow-y-auto p-3" style={{ scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
           {loading ? (
             <div className="flex items-center justify-center h-full text-white/30 text-xs">Đang tải...</div>
@@ -276,7 +305,7 @@ export default function ProfileFilesModal({ profile, onClose }) {
           )}
         </div>
 
-        {/* Drop hint */}
+        {}
         <div className={`px-5 py-2 border-t border-white/5 text-[11px] text-center flex-shrink-0 transition-colors ${
           dragging ? 'bg-blue-500/15 text-blue-300' : 'text-white/25'
         }`}>

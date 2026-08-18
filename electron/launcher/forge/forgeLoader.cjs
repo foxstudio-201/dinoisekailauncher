@@ -11,8 +11,7 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
- /**
+/**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
  *
@@ -28,6 +27,36 @@
  *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 'use strict'
 const https  = require('https')
@@ -177,7 +206,7 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
 
   if (!fs.existsSync(installerDir)) fs.mkdirSync(installerDir, { recursive: true })
 
-  // ── Download installer ─────────────────────────────────────────────────────
+  
   if (!fs.existsSync(installerPath) || fs.statSync(installerPath).size === 0) {
     onProgress?.({ phase: 'forge_download', log: `Downloading Forge ${fullVersion} installer...`, done: 0, total: 1 })
     let downloaded = false
@@ -224,7 +253,7 @@ async function setupForge(mcVersion, forgeVersion, librariesDir, clientJar, java
     }
   }
 
-  // ── Fallback: place vanilla jar and run the installer ─────────────────────
+  
   const vanillaVersionDir = path.join(instanceRoot, 'versions', mcVersion)
   const vanillaJarDest    = path.join(vanillaVersionDir, `${mcVersion}.jar`)
   if (!fs.existsSync(vanillaJarDest) && clientJar && fs.existsSync(clientJar)) {

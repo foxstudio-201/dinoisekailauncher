@@ -1,3 +1,32 @@
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - This software is provided as-is without warranty of any kind.
+ *   - Do not redistribute or resell without explicit permission from FoxStudio.
+ *   - If you use or reference this code, please credit FoxStudio.
+ *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
+ */
+/**
+ * Dino Isekai — Minecraft Launcher
+ * Created by FoxStudio. AI-assisted development.
+ *
+ * Source code : https://github.com/foxstudio-201/VoxelXLauncher
+ * Website     : https://voxxelxclient.vercel.app
+ *
+ * NOTICE:
+ *   - Dành cho mấy cháu cứ thích phỉ báng.
+ *   - Launcher sử dụng ai đi kèm trong việc tạo, bản thân người tạo không tự nhận là code toàn bộ do có sự hỗ trợ của ai.
+ *   - Giỏi giang thì tự code bằng năng lực của mình đang video làm toàn bộ từ đầu đến cuối, còn không làm được đừng có kích đểu ảnh hưởng đến người sử dụng.
+ *   - Bạn chẳng phải là anh hùng mặc áo choàng đỏ mặc quần xịt như thằng trẻ trâu rồi lên mạng ra vẻ ta đây là người tốt, là anh hùng, là người bảo vệ công lý gì đâu :).
+ *   - Vậy nên bớt ảo tưởng đi.
+ *   - Nếu có sử dụng hoặc tham khảo code này, hãy ghi công cho FoxStudio.
+ *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
+ */
 import { useState, useRef, useEffect } from 'react'
 import { useAccounts } from '../hooks/useAccounts'
 import { useLang } from '../i18n/LangProvider'
@@ -80,7 +109,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const introRef = useRef(null)
   const introText = lang?.startsWith('vi') ? INTRO_VI : INTRO_EN
 
-  // Đánh chữ từng chữ giới thiệu (chỉ theo ngôn ngữ launcher)
+  
   useEffect(() => {
     let i = 0
     let cancelled = false
@@ -92,7 +121,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     return () => { cancelled = true; clearInterval(iv) }
   }, [introText])
 
-  // Tự động cuộn xuống theo chữ mới
+  
   useEffect(() => {
     if (introRef.current) introRef.current.scrollTop = introRef.current.scrollHeight
   }, [typedIntro])
@@ -111,8 +140,11 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const [predownload, setPredownload] = useState(null)
   const [preDl, setPreDl] = useState(null)
   const [dSync, setDSync] = useState(null)
+  const [repair, setRepair] = useState(null)
   const dSyncChecked = useRef(false)
   const preDlStarted = useRef(false)
+  const preDlRef = useRef(null)
+  const dSyncRef = useRef(null)
   const [checkingUpdates, setCheckingUpdates] = useState(false)
   const checkingUpdatesRef = useRef(false)
   const [dataUpdate, setDataUpdate] = useState(false)
@@ -128,7 +160,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const initLoaded = useRef(false)
   const usernameRef = useRef(null)
 
-  // Sync input khi selectedAccount thay đổi
+  
   useEffect(() => {
     if (selectedAccount?.username) setUsernameInput(selectedAccount.username)
   }, [selectedAccount?.id])
@@ -137,7 +169,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     if (usernameExpanded) usernameRef.current?.focus()
   }, [usernameExpanded])
 
-  // Poll trạng thái ping server từ instance
+  
   useEffect(() => {
     if (!isElectron || !window.electronAPI.getServerStatus) return
     let cancelled = false
@@ -186,11 +218,27 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     })
   }, [])
 
-  // Kiểm tra CẢ 2 loại dữ liệu: data update (update.zip) + data gốc (base) cùng lúc.
-  // Chạy khi mở launcher (sau 6s) và khi bấm nút kiểm tra cập nhật — khỏi phải đóng/mở lại launcher.
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI.onRepairProgress) return
+    return window.electronAPI.onRepairProgress(data => {
+      if (data.phase === 'paused') setPausedOp('repair')
+      else if (data.phase === 'cancelled') setPausedOp(null)
+      setRepair(prev => ({ ...(prev || {}), active: true, closing: false, ...data }))
+      if (data.phase === 'done') {
+        setTimeout(() => {
+          setRepair(prev => prev ? { ...prev, closing: true } : prev)
+          setTimeout(() => setRepair(prev => prev ? { ...prev, active: false, closing: false } : prev), 450)
+        }, 2500)
+      }
+    })
+  }, [])
+
+  
+  
   async function checkDataVersions({ toast = false } = {}) {
     if (!isElectron || !window.electronAPI.checkDataSync) return
     if (checkingUpdatesRef.current) return
+    if (preDlRef.current?.active && !preDlRef.current?.closing) return
     checkingUpdatesRef.current = true
     setCheckingUpdates(true)
     const result = { dataUpdate: false, dataLatest: '', baseSynced: false, baseLatest: '', dataError: null, baseError: null }
@@ -251,25 +299,28 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     }
   }
 
-  // Chạy kiểm tra cập nhật mỗi lần mở launcher (modal "đang kiểm tra phiên bản")
+  
   useEffect(() => {
     if (!isElectron || !window.electronAPI.checkDataSync) return
     if (dSyncChecked.current || profiles.length === 0) return
     dSyncChecked.current = true
-    const t = setTimeout(() => { checkDataVersions() }, 6000)
-    return () => clearTimeout(t)
+    checkDataVersions()
   }, [profiles])
 
-  // Lần đầu mở launcher: chưa có tài nguyên game (marker .assets.ready) thì tự tải
-  // + hiện modal tiến trình 1 lần; đã có rồi thì bỏ qua hoàn toàn, không hiện gì.
-  // Các lần mở sau cũng không tải lại (marker đã tồn tại).
+  
+  
+  
   useEffect(() => {
     if (!isElectron || !window.electronAPI.preDownload) return
     if (preDlStarted.current || profiles.length === 0) return
     preDlStarted.current = true
     const pid = profiles[0]?.id
     if (!pid) return
-    const t = setTimeout(() => {
+    const checkReadyAndRun = () => {
+      if (dSyncRef.current?.active && !dSyncRef.current?.closing) {
+        setTimeout(checkReadyAndRun, 2000)
+        return
+      }
       window.electronAPI.hasGameResources?.({ profileId: pid })
         .then(st => {
           if (st?.ready) return
@@ -282,7 +333,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           }
         })
         .catch(() => {})
-    }, 3000)
+    }
+    const t = setTimeout(checkReadyAndRun, 3000)
     return () => clearTimeout(t)
   }, [profiles])
 
@@ -322,7 +374,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const colors = LOADER_COLORS[currentProfile?.loader] || LOADER_COLORS.vanilla
   const profileIcon = currentProfile?.importIconUrl || LOADER_ICONS[currentProfile?.loader] || vanillaIcon
 
-  // Tìm instance đang chạy của một profile cụ thể
+  
   function getProfileInstance(profileId, accountId) {
     if (!instances || !profileId) return null
     const exact = instances.find(inst =>
@@ -331,7 +383,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       (!accountId || inst.accountId === accountId)
     )
     if (exact) return exact
-    // Fallback: bất kỳ instance đang chạy của profile (account có thể lệch nhịp)
+    
     return instances.find(inst =>
       inst.profileId === profileId && inst.state !== 'stopped'
     ) || null
@@ -340,7 +392,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   function getProfileState(profileId, accountId) {
     const inst = getProfileInstance(profileId, accountId)
     if (!inst) return 'idle'
-    return inst.state // 'downloading' | 'running' | 'error' | 'stopped'
+    return inst.state 
   }
 
   function playSelectSound() {}
@@ -360,7 +412,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     onKillInstance(inst.key)
   }
 
-  // Validate + lưu account rồi tự động launch
+  
   async function saveAccountAndLaunch() {
     const name = usernameInput.trim()
     if (!name) {
@@ -380,7 +432,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     } else {
       const result = await addAccount({ type: 'offline', username: name })
       if (result?.error) { setUsernameError(result.error); return }
-      // id của account offline = offlineUUID(username); select để chắc chắn dùng tên mới
+      
       accId = offlineUUID(name)
       await selectAccount(accId)
     }
@@ -388,26 +440,26 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     syncThenLaunch(undefined, undefined, undefined, name, serverStatus?.server?.ip, accId)
   }
 
-  // Đồng bộ dữ liệu server (khi có bản cập nhật) rồi mới khởi động game
+  
   async function syncThenLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId) {
     if (isElectron && window.electronAPI.runDataSync && dataUpdate) {
       setDSync({ active: true, closing: false, phase: 'check', item: 'Kiểm tra cập nhật', percent: 0, log: 'Có bản cập nhật — đang tải về temp...' })
       const res = await window.electronAPI.runDataSync().catch(() => null)
       if (res && res.ok === false) {
-        if (res.paused) return // tạm dừng — không launch, người dùng bấm Play để tiếp tục
+        if (res.paused) return 
         setDataUpdate(false)
         setDlError({ type: 'data', message: res.error || 'Lỗi tải dữ liệu server', stack: res.stack })
-        return // LỖI → không tự động khởi động game
+        return 
       }
       setDataUpdate(false)
-      // Có file bị bỏ qua (EPERM...) → vẫn hiện modal báo lỗi file nhưng vẫn chạy game
+      
       if (res && res.skippedFiles && res.skippedFiles.length) {
         const list = res.skippedFiles.slice(0, 20).map(s => `• ${s.file} (${s.error})`).join('\n')
         const more = res.skippedFiles.length > 20 ? `\n... còn ${res.skippedFiles.length - 20} file nữa` : ''
         setDlError({ type: 'data', message: `Một số file bị lỗi quyền và đã được bỏ qua (${res.skippedFiles.length}):\n${list}${more}` })
       }
     }
-    // Dữ liệu gốc: còn bản đang chờ cập nhật → chạy base sync trước khi vào game
+    
     if (isElectron && window.electronAPI.runBaseDataSync && baseUpdate) {
       setDSync({ active: true, closing: false, phase: 'check', item: 'Dữ liệu gốc', percent: 0, log: 'Có bản dữ liệu gốc mới — đang cập nhật...' })
       const res = await window.electronAPI.runBaseDataSync().catch(() => null)
@@ -419,24 +471,41 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       }
       setBaseUpdate(false)
     }
+    await waitForDSyncClosed()
     handleLaunch(profileId, ramMb, profileName, accountName, serverAddress, accId)
   }
 
-  // Đang tải tài nguyên / tải file GitHub → chặn nút Play/Update
-  const busyDownloading = (preDl?.active && !preDl.closing) || (dSync?.active && !dSync.closing)
+  function waitForDSyncClosed() {
+    return new Promise(resolve => {
+      const check = () => {
+        if (!dSyncRef.current?.active) resolve()
+        else setTimeout(check, 150)
+      }
+      check()
+    })
+  }
 
-  // Tiến trình tổng (0-100) + ETA toàn bộ
+  
+  const busyDownloading = (preDl?.active && !preDl.closing) || (dSync?.active && !dSync.closing) || (repair?.active && !repair.closing)
+
+  
   const preDlPhases = preDl?.phases ? Object.values(preDl.phases) : []
   const preDlTotal = preDlPhases.length
     ? preDlPhases.reduce((s, p) => s + (p.percent || 0), 0) / preDlPhases.length
     : (preDl?.percent || 0)
   const overallPct = dSync?.active && !dSync.closing
     ? (dSync.percent || 0)
-    : (preDl?.active && !preDl.closing ? preDlTotal : 0)
+    : (repair?.active && !repair.closing
+        ? (repair.percent || 0)
+        : (preDl?.active && !preDl.closing ? preDlTotal : 0))
   const busyStartRef = useRef(null)
   const [pausedOp, setPausedOp] = useState(null)
   const [dlError, setDlError] = useState(null)
   const [successToast, setSuccessToast] = useState(null)
+  useEffect(() => {
+    preDlRef.current = preDl
+    dSyncRef.current = dSync
+  }, [preDl, dSync])
   useEffect(() => {
     if (busyDownloading && !busyStartRef.current) busyStartRef.current = Date.now()
     if (!busyDownloading) { busyStartRef.current = null; setPausedOp(null) }
@@ -449,6 +518,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
 
   const activeOp = pausedOp
     || (dSync?.active && !dSync.closing ? 'dSync' : null)
+    || (repair?.active && !repair.closing ? 'repair' : null)
     || (preDl?.active && !preDl.closing ? 'preDl' : null)
   const isPaused = pausedOp && busyDownloading
   const isPausedAny = pausedOp != null
@@ -459,9 +529,23 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     showSuccessToast._t = setTimeout(() => setSuccessToast(null), 3000)
   }
 
+  async function startRepair() {
+    if (!isElectron || !window.electronAPI.runRepairDataSync) return
+    if (busyDownloading) return
+    setProfileSettingsOpen(false)
+    setRepair({ active: true, closing: false, phase: 'clean', item: 'Dọn dữ liệu cũ', percent: 0, log: 'Đang xóa dữ liệu cũ...' })
+    const res = await window.electronAPI.runRepairDataSync().catch(() => null)
+    if (res && res.ok === false) {
+      if (res.paused || res.cancelled) return
+      setDlError({ type: 'repair', message: res.error || 'Lỗi sửa chữa profile', stack: res.stack })
+      return
+    }
+    if (res?.ok) showSuccessToast('Đã sửa chữa profile thành công')
+  }
+
   function togglePause() {
     if (isPaused) {
-      // Resume: chạy lại tác vụ (tiếp tục từ phần đã tải)
+      
       setPausedOp(null)
       if (pausedOp === 'preDl' && window.electronAPI.preDownload) {
         window.electronAPI.preDownload({ profileId: currentProfile?.id }).catch(() => {})
@@ -476,7 +560,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   }
 
   function handlePlayClick() {
-    if (busyDownloading) { togglePause(); return }
+    if (busyDownloading) return
     playClickSound()
     if (playing) {
       handleKill(currentProfile?.id, selectedAccount?.id)
@@ -490,7 +574,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
   const downloading = getProfileState(currentProfile?.id, selectedAccount?.id) === 'downloading'
   const currentProgress = currentInst?.progress
 
-  // Auto-show log panel on new launch, don't auto-hide
+  
   useEffect(() => {
     if (launchState === 'downloading') {
       setLogPanelVisible(true)
@@ -502,7 +586,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     }
   }, [launchState])
 
-  // Persist logs so they survive instance deletion (after game stops)
+  
   useEffect(() => {
     const ll = currentInst?.logs
     if (ll?.length > 0) {
@@ -510,7 +594,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
     }
   }, [currentInst?.logs])
 
-  // Display live logs when available, otherwise persisted (from last session)
+  
   const displayLogs = currentInst?.logs || persistedLauncherLogs
 
   function handleCloseLogPanel() {
@@ -539,11 +623,11 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         '@keyframes home-slide-in{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:translateX(0)}}',
       ].join('')}} />
 
-      {/* Profile display */}
+      {}
       <div className="flex-1 flex flex-col justify-center pl-36 gap-6">
         <SystemInfo />
         <div className="flex items-start gap-6">
-          {/* Cột trái: logo + 2 nút tab */}
+          {}
           <div className="flex flex-col items-center gap-3 pt-2">
             <img src={martianIcon} alt="Dino Isekai" className="w-24 h-24 object-contain drop-shadow-xl" draggable={false} />
 
@@ -571,7 +655,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           </div>
 
             <div className="text-left">
-              {/* Server box — luôn hiện */}
+              {}
               <div className="rounded-2xl blur-glass bg-black/10 backdrop-blur-[2px] border border-white/10 p-6">
                 <h1 className="text-5xl font-extrabold text-white tracking-tight drop-shadow-lg">
                   Dino Isekai Server
@@ -595,7 +679,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                   ))}
                 </div>
 
-                {/* Ping status */}
+                {}
                 <div className="flex items-center gap-3 mt-5">
                   {!serverStatus ? (
                     <>
@@ -618,7 +702,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 </div>
               </div>
 
-              {/* Cấu hình — hiện khi ấn nút Gauge */}
+              {}
               {profileTab === 'config' && (
               <div className="mt-4 rounded-2xl blur-glass bg-black/10 backdrop-blur-[2px] border border-white/10 px-5 py-4">
                 <p className="text-sm text-white/50">Launcher hiện tại: 1.20.1</p>
@@ -644,7 +728,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               </div>
               )}
 
-              {/* Giới thiệu — hiện khi ấn nút BookOpen */}
+              {}
               {profileTab === 'intro' && (
               <div className="mt-4 max-w-[500px]">
                 <div className="rounded-2xl blur-glass bg-black/10 backdrop-blur-[2px] border border-white/10 px-5 py-4">
@@ -666,7 +750,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               )}
             </div>
 
-          {/* Log — luôn giữ chỗ cố định để không dịch layout khi mở/đóng */}
+          {}
           <div className="w-[420px] h-[400px] flex-shrink-0">
             {logPanelVisible && (
               <LogPanel logs={displayLogs} onClose={handleCloseLogPanel} />
@@ -675,7 +759,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           </div>
         </div>
 
-      {/* Bottom-right: username + Play + Settings */}
+      {}
       <div className="absolute bottom-6 right-7 flex flex-col items-end gap-2">
         {successToast && (
           <p className="text-sm font-bold text-white bg-emerald-600 px-3 py-1.5 rounded-lg shadow-lg">{successToast}</p>
@@ -684,13 +768,14 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
           <p className="text-sm font-bold text-white bg-red-600 px-3 py-1.5 rounded-lg">{usernameError}</p>
         )}
         <div className="flex items-center gap-3">
-          {/* Kiểm tra cập nhật data — bên trái nút tài khoản */}
+          {}
           <div
             className="rounded-2xl blur-glass overflow-hidden border border-white/15 transition-all active:scale-95"
             style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
           >
             <button
               onClick={() => {
+                if (busyDownloading || checkingUpdates) return
                 playClickSound()
                 checkDataVersions({ toast: true })
               }}
@@ -701,7 +786,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </button>
           </div>
 
-          {/* Username: icon + phần nhập nằm chung một khối mở rộng */}
+          {}
           <div className="flex items-center">
             <div
               className={`flex items-center blur-glass overflow-hidden rounded-2xl border transition-all duration-300 ${
@@ -721,7 +806,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 )}
               </button>
 
-              {/* Phần nhập mở rộng ra từ nút */}
+              {}
               <div className={`flex items-center gap-2 whitespace-nowrap overflow-hidden transition-all duration-700 ease-out ${
                 usernameExpanded ? 'max-w-[430px] opacity-100 px-1.5' : 'max-w-0 opacity-0'
               }`}>
@@ -760,7 +845,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
           </div>
 
-          {/* Play / Kill */}
+          {}
           {playing ? (
             <button
               onClick={handlePlayClick}
@@ -787,11 +872,10 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             <div className="glow-play" style={{ '--gc': isPaused ? '#f59e0b' : (dataUpdate ? '#a78bfa' : colors.primary) }}>
               <span className="glow-edge" />
               <div className="glow-inner">
-                <button
-                  onClick={handlePlayClick}
-                  disabled={busyDownloading}
-                  className="glow-btn transition-transform active:scale-95"
-                >
+<button
+              onClick={handlePlayClick}
+              className="glow-btn transition-transform active:scale-95"
+            >
                   {busyDownloading ? (
                     isPaused ? (
                       <>
@@ -834,10 +918,10 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
             </div>
           )}
 
-          {/* Profile menu — open up: thư mục profile + profile settings */}
+          {}
           {currentProfile && (
             <div className="relative" ref={profileMenuRef}>
-              {/* Menu popup: 2 nút icon riêng biệt */}
+              {}
               <div
                 className={`absolute bottom-full mb-2 right-0 z-[80] flex flex-col items-end gap-2 transition-all duration-200 origin-bottom-right ${
                   profileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
@@ -882,7 +966,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
                 </button>
               </div>
 
-              {/* Menu toggle */}
+              {}
               <div
                 className="rounded-2xl blur-glass border border-white/15 overflow-hidden transition-all active:scale-95"
                 style={{ backgroundColor: 'rgba(20,20,28,0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
@@ -903,7 +987,7 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
       {preDl?.active && (
         <div className={`absolute bottom-[116px] right-7 w-[380px] ${preDl.closing ? 'preDl-down' : 'preDl-modal'}`}>
           <div className="rounded-2xl bg-[#12101c] border border-white/10 p-4">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <svg className={`animate-spin w-3.5 h-3.5 ${preDl.phase === 'done' ? 'text-green-400' : 'text-violet-400'}`} viewBox="0 0 24 24" fill="none">
@@ -925,10 +1009,10 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               </button>
             </div>
 
-            {/* Message */}
+            {}
             <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed break-words max-h-[60px] overflow-hidden">{preDl.log}</p>
 
-            {/* Single progress bar — mỗi giai đoạn về 0 rồi chạy lên 100% */}
+            {}
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs">
                 <span className={`font-bold ${preDl.phase === 'done' ? 'text-emerald-300' : 'text-white'}`}>
@@ -952,10 +1036,10 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         </div>
       )}
 
-      {dSync?.active && (
+      {dSync?.active && !(preDl?.active && !preDl.closing) && (
         <div className={`absolute bottom-[116px] right-7 w-[380px] ${dSync.closing ? 'preDl-down' : 'preDl-modal'}`}>
           <div className="rounded-2xl bg-[#12101c] border border-white/10 p-4">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <svg className={`animate-spin w-3.5 h-3.5 ${dSync.phase === 'done' ? 'text-green-400' : 'text-violet-400'}`} viewBox="0 0 24 24" fill="none">
@@ -977,10 +1061,10 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               </button>
             </div>
 
-            {/* Message */}
+            {}
             <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed break-words max-h-[60px] overflow-hidden">{dSync.log}</p>
 
-            {/* Current phase */}
+            {}
             <div className="mt-3">
               {dSync.phase === 'extract' ? (
                 <div className="flex items-center gap-2 text-xs">
@@ -1022,6 +1106,60 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
         </div>
       )}
 
+      {repair?.active && (
+        <div className={`absolute bottom-[116px] right-7 w-[380px] ${repair.closing ? 'preDl-down' : 'preDl-modal'}`}>
+          <div className="rounded-2xl bg-[#12101c] border border-white/10 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className={`animate-spin w-3.5 h-3.5 ${repair.phase === 'done' ? 'text-green-400' : 'text-red-400'}`} viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                <span className="text-xs font-bold text-white">
+                  {repair.phase === 'done' ? 'Sửa chữa hoàn tất' : 'Đang sửa chữa profile'}
+                </span>
+              </div>
+              <button
+                onClick={() => { window.electronAPI.dataControl?.({ op: 'repair', action: 'cancel' }); setPausedOp(null); setRepair(prev => prev ? { ...prev, active: false } : prev) }}
+                className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
+                data-tip="Đóng"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-[12px] font-semibold text-white mt-2 leading-relaxed break-words max-h-[60px] overflow-hidden">{repair.log}</p>
+
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className={`font-bold ${repair.phase === 'done' ? 'text-emerald-300' : 'text-white'}`}>
+                  {repair.item || '...'}
+                </span>
+                <span className="text-white/80 font-mono font-semibold">{Math.round(repair.percent || 0)}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden mt-1">
+                <div className="h-full rounded-full transition-all duration-300 relative overflow-hidden"
+                  style={{ width: `${Math.max(0, Math.min(100, repair.percent || 0))}%`, background: repair.phase === 'done' ? '#34d399' : '#f87171' }}>
+                  {repair.phase !== 'done' && repair.phase !== 'paused' && (
+                    <span className="progress-shine absolute inset-0" />
+                  )}
+                </div>
+              </div>
+              {repair.downloaded != null && (
+                <p className="text-[11px] font-medium text-white/80 mt-1.5 font-mono">
+                  Đã tải: {fmtBytes(repair.downloaded)} / {fmtBytes(repair.total)}
+                  {repair.speed != null && repair.speed > 0 && repair.phase === 'download' && (
+                    <span className="text-emerald-300"> · {fmtSpeed(repair.speed)}/s</span>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {profileSettingsOpen && currentProfile && (
         <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[150] p-4"
@@ -1037,6 +1175,8 @@ export default function HomePage({ launchState, launchError, onLaunch, instances
               accountId={accountId}
               onClose={() => setProfileSettingsOpen(false)}
               onProfileUpdated={handleProfileUpdated}
+              onRepair={startRepair}
+              repairing={repair?.active && !repair.closing}
             />
           </GamingModalWrapper>
         </div>

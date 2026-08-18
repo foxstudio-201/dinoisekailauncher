@@ -11,7 +11,6 @@
  *   - If you use or reference this code, please credit FoxStudio.
  *   - Minecraft is a trademark of Mojang Studios / Microsoft. This project is not affiliated with Mojang.
  */
-
 /**
  * Dino Isekai — Minecraft Launcher
  * Created by FoxStudio. AI-assisted development.
@@ -29,13 +28,43 @@
  *   - Minecraft là một thương hiệu của Mojang Studios / Microsoft. Dự án này không liên kết với Mojang.
  */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { useState, useEffect } from 'react'
 import { Icons } from './tab/shared'
 import GeneralTab from './tab/GeneralTab'
 import { useLang } from '../../i18n/LangProvider'
 import { useModalClose } from '../ui/GamingModalWrapper'
 
-export default function ProfileSettingsPanel({ profile, onClose: onCloseProp, onProfileUpdated, accountId }) {
+export default function ProfileSettingsPanel({ profile, onClose: onCloseProp, onProfileUpdated, accountId, onRepair, repairing }) {
   const { t } = useLang()
   const onClose = useModalClose(onCloseProp)
 
@@ -60,7 +89,7 @@ export default function ProfileSettingsPanel({ profile, onClose: onCloseProp, on
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
+      {}
       <div className="flex-shrink-0 flex items-center gap-2 px-4 py-3 border-b border-white/5">
         <button
           onClick={onClose}
@@ -80,7 +109,7 @@ export default function ProfileSettingsPanel({ profile, onClose: onCloseProp, on
         </div>
       </div>
 
-      {/* Tab bar */}
+      {}
       <div className="flex-shrink-0 flex gap-1 px-4 border-b border-white/5">
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -97,13 +126,15 @@ export default function ProfileSettingsPanel({ profile, onClose: onCloseProp, on
         ))}
       </div>
 
-      {/* Tab content */}
+      {}
       <div className="flex-1 overflow-y-auto" style={{ scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
         {TabComponent && (
           <TabComponent
             profile={profile}
             onProfileUpdated={onProfileUpdated}
             accountId={accountId}
+            onRepair={onRepair}
+            repairing={repairing}
           />
         )}
       </div>
